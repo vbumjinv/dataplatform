@@ -1,0 +1,1068 @@
+[
+  {
+    "id": "wf-1770194205501",
+    "name": "API테스트",
+    "workflow": {
+      "nodes": [
+        {
+          "id": "node-2",
+          "type": "dataCollector",
+          "position": {
+            "x": 591.8441429227416,
+            "y": 289.7114114321091
+          },
+          "data": {
+            "label": "API 수집",
+            "kind": "api",
+            "status": "success",
+            "preview": "{\n  \"successCount\": 4,\n  \"failureCount\": 0,\n  \"results\": [\n    {\n      \"sourceId\": \"3\",\n      \"groupId\": \"5\",\n      \"ok\": true,\n      \"data\": \"<?xml version=\\\"1.0\\\" encoding=\\\"UTF-8\\\" standalone=\\\"yes\\\"?><response><header><resultCode>00</resultCode><resultMsg>정상서비스.</resultMsg></header><body><items><item><balPayments>9489247734</balPayments><expCnt>1152598</expCnt><expDlr>60769032531</expDlr><impCnt>4883282</impCnt><impDlr>51279784797</impDlr><year>2025.11</year></item><item><balPayments>12170282027</balPayments><expCnt>1276043</expCnt><expDlr>69538561355</expDlr><impCnt>4883840</impCnt><impDlr>57368279328</impDlr><year>2025.12</year></item><item><balPayments>9162162303</balPayments><expCnt>1029744</expCnt><expDlr>65854869569</expDlr><impCnt>4937149</impCnt><impDlr>56692707266</impDlr><year>2026.01</year></item><item><balPayments>-1144798808</balPayments><expCnt>97627</expCnt><expDlr>5314080177</expDlr><impCnt>501980</impCnt><impDlr>6458878985</impDlr><year>2026.02</year></item><item><balPayments>29676893256</balPayments><expCnt>3556012</expCnt><expDlr>201476543632</expDlr><impCnt>15206251</impCnt><impDlr>171799650376</impDlr><year>총계</year></item></items></body></response>\"\n    },\n    {\n      \"sourceId\": \"2\",\n      \"groupId\": \"6\",\n      \"ok\": true,\n      \"data\": \"[{\\\"C1_OBJ_NM\\\":\\\"농산물 및 석유류제외\\\",\\\"DT\\\":\\\"115.82\\\",\\\"C1\\\":\\\"QB\\\",\\\"PRD_SE\\\":\\\"M\\\",\\\"UNIT_NM_ENG\\\":\\\"2020＝100\\\",\\\"ITM_ID\\\":\\\"T\\\",\\\"TBL_ID\\\":\\\"DT_1J22007\\\",\\\"ITM_NM\\\":\\\"소비자물가지수\\\",\\\"TBL_NM\\\":\\\"농산물 및 석유류제외지수(2020＝100)\\\",\\\"PRD_DE\\\":\\\"202511\\\",\\\"LST_CHN_DE\\\":\\\"20251128\\\",\\\"C1_NM_ENG\\\":\\\"Excluding Agricultural products ＆ oils\\\",\\\"C1_NM\\\":\\\"농산물및석유류제외지수\\\",\\\"UNIT_NM\\\":\\\"2020＝100\\\",\\\"ITM_NM_ENG\\\":\\\"CPI\\\",\\\"ORG_ID\\\":\\\"101\\\",\\\"C1_OBJ_NM_ENG\\\":\\\"Excluding Agricultural Products ＆ Oils\\\"},{\\\"C1_OBJ_NM\\\":\\\"농산물 및 석유류제외\\\",\\\"DT\\\":\\\"116.02\\\",\\\"C1\\\":\\\"QB\\\",\\\"PRD_SE\\\":\\\"M\\\",\\\"UNIT_NM_ENG\\\":\\\"2020＝100\\\",\\\"ITM_ID\\\":\\\"T\\\",\\\"TBL_ID\\\":\\\"DT_1J22007\\\",\\\"ITM_NM\\\":\\\"소비자물가지수\\\",\\\"TBL_NM\\\":\\\"농산물 및 석유류제외지수(2020＝100)\\\",\\\"PRD_DE\\\":\\\"202512\\\",\\\"LST_CHN_DE\\\":\\\"20251226\\\",\\\"C1_NM_ENG\\\":\\\"Excluding Agricultural products ＆ oils\\\",\\\"C1_NM\\\":\\\"농산물및석유류제외지수\\\",\\\"UNIT_NM\\\":\\\"2020＝100\\\",\\\"ITM_NM_ENG\\\":\\\"CPI\\\",\\\"ORG_ID\\\":\\\"101\\\",\\\"C1_OBJ_NM_ENG\\\":\\\"Excluding Agricultural Products ＆ Oils\\\"},{\\\"C1_OBJ_NM\\\":\\\"농산물 및 석유류제외\\\",\\\"DT\\\":\\\"116.57\\\",\\\"C1\\\":\\\"QB\\\",\\\"PRD_SE\\\":\\\"M\\\",\\\"UNIT_NM_ENG\\\":\\\"2020＝100\\\",\\\"ITM_ID\\\":\\\"T\\\",\\\"TBL_ID\\\":\\\"DT_1J22007\\\",\\\"ITM_NM\\\":\\\"소비자물가지수\\\",\\\"TBL_NM\\\":\\\"농산물 및 석유류제외지수(2020＝100)\\\",\\\"PRD_DE\\\":\\\"202601\\\",\\\"LST_CHN_DE\\\":\\\"20260129\\\",\\\"C1_NM_ENG\\\":\\\"Excluding Agricultural products ＆ oils\\\",\\\"C1_NM\\\":\\\"농산물및석유류제외지수\\\",\\\"UNIT_NM\\\":\\\"2020＝100\\\",\\\"ITM_NM_ENG\\\":\\\"CPI\\\",\\\"ORG_ID\\\":\\\"101\\\",\\\"C1_OBJ_NM_ENG\\\":\\\"Excluding Agricultural Products ＆ Oils\\\"}]\"\n    },\n    {\n      \"sourceId\": \"1\",\n      \"groupId\": \"2\",\n      \"ok\": true,\n      \"data\": {\n        \"StatisticSearch\": {\n          \"list_total_count\": 10,\n          \"row\": [\n            {\n              \"STAT_CODE\": \"901Y067\",\n              \"STAT_NAME\": \"8.1.2. 경기종합지수\",\n              \"ITEM_CODE1\": \"I16A\",\n              \"ITEM_NAME1\": \"선행종합지수 1)\",\n              \"ITEM_CODE2\": null,\n              \"ITEM_NAME2\": null,\n              \"ITEM_CODE3\": null,\n              \"ITEM_NAME3\": null,\n              \"ITEM_CODE4\": null,\n              \"ITEM_NAME4\": null,\n              \"UNIT_NAME\": \"2020=100\",\n              \"WGT\": null,\n              \"TIME\": \"202511\",\n              \"DATA_VALUE\": \"123\"\n            },\n            {\n              \"STAT_CODE\": \"901Y067\",\n              \"STAT_NAME\": \"8.1.2. 경기종합지수\",\n              \"ITEM_CODE1\": \"I16B\",\n              \"ITEM_NAME1\": \"동행종합지수 2)\",\n              \"ITEM_CODE2\": null,\n              \"ITEM_NAME2\": null,\n              \"ITEM_CODE3\": null,\n              \"ITEM_NAME3\": null,\n              \"ITEM_CODE4\": null,\n              \"ITEM_NAME4\": null,\n              \"UNIT_NAME\": \"2020=100\",\n              \"WGT\": null,\n              \"TIME\": \"202511\",\n              \"DATA_VALUE\": \"113.6\"\n            },\n            {\n              \"STAT_CODE\": \"901Y067\",\n              \"STAT_NAME\": \"8.1.2. 경기종합지수\",\n              \"ITEM_CODE1\": \"I16C\",\n              \"ITEM_NAME1\": \"후행종합지수 3)\",\n              \"ITEM_CODE2\": null,\n              \"ITEM_NAME2\": null,\n              \"ITEM_CODE3\": null,\n              \"ITEM_NAME3\": null,\n              \"ITEM_CODE4\": null,\n              \"ITEM_NAME4\": null,\n              \"UNIT_NAME\": \"2020=100\",\n              \"WGT\": null,\n              \"TIME\": \"202511\",\n              \"DATA_VALUE\": \"119.9\"\n            },\n            {\n              \"STAT_CODE\": \"901Y067\",\n              \"STAT_NAME\": \"8.1.2. 경기종합지수\",\n              \"ITEM_CODE1\": \"I16D\",\n              \"ITEM_NAME1\": \"동행지수순환변동치\",\n              \"ITEM_CODE2\": null,\n              \"ITEM_NAME2\": null,\n              \"ITEM_CODE3\": null,\n              \"ITEM_NAME3\": null,\n              \"ITEM_CODE4\": null,\n              \"ITEM_NAME4\": null,\n              \"UNIT_NAME\": \"2020=100\",\n              \"WGT\": null,\n              \"TIME\": \"202511\",\n              \"DATA_VALUE\": \"98.7\"\n            },\n            {\n              \"STAT_CODE\": \"901Y067\",\n              \"STAT_NAME\": \"8.1.2. 경기종합지수\",\n              \"ITEM_CODE1\": \"I16E\",\n              \"ITEM_NAME1\": \"선행지수순환변동치\",\n              \"ITEM_CODE2\": null,\n              \"ITEM_NAME2\": null,\n              \"ITEM_CODE3\": null,\n              \"ITEM_NAME3\": null,\n              \"ITEM_CODE4\": null,\n              \"ITEM_NAME4\": null,\n              \"UNIT_NAME\": \"2020=100\",\n              \"WGT\": null,\n              \"TIME\": \"202511\",\n              \"DATA_VALUE\": \"102.5\"\n            },\n            {\n              \"STAT_CODE\": \"901Y067\",\n              \"STAT_NAME\": \"8.1.2. 경기종합지수\",\n              \"ITEM_CODE1\": \"I16A\",\n              \"ITEM_NAME1\": \"선행종합지수 1)\",\n              \"ITEM_CODE2\": null,\n              \"ITEM_NAME2\": null,\n              \"ITEM_CODE3\": null,\n              \"ITEM_NAME3\": null,\n              \"ITEM_CODE4\": null,\n              \"ITEM_NAME4\": null,\n              \"UNIT_NAME\": \"2020=100\",\n              \"WGT\": null,\n              \"TIME\": \"202512\",\n              \"DATA_VALUE\": \"124\"\n            },\n            {\n              \"STAT_CODE\": \"901Y067\",\n              \"STAT_NAME\": \"8.1.2. 경기종합지수\",\n              \"ITEM_CODE1\": \"I16B\",\n              \"ITEM_NAME1\": \"동행종합지수 2)\",\n              \"ITEM_CODE2\": null,\n              \"ITEM_NAME2\": null,\n              \"ITEM_CODE3\": null,\n              \"ITEM_NAME3\": null,\n              \"ITEM_CODE4\": null,\n              \"ITEM_NAME4\": null,\n              \"UNIT_NAME\": \"2020=100\",\n              \"WGT\": null,\n              \"TIME\": \"202512\",\n              \"DATA_VALUE\": \"113.6\"\n            },\n            {\n              \"STAT_CODE\": \"901Y067\",\n              \"STAT_NAME\": \"8.1.2. 경기종합지수\",\n              \"ITEM_CODE1\": \"I16C\",\n              \"ITEM_NAME1\": \"후행종합지수 3)\",\n              \"ITEM_CODE2\": null,\n              \"ITEM_NAME2\": null,\n              \"ITEM_CODE3\": null,\n              \"ITEM_NAME3\": null,\n              \"ITEM_CODE4\": null,\n              \"ITEM_NAME4\": null,\n              \"UNIT_NAME\": \"2020=100\",\n              \"WGT\": null,\n              \"TIME\": \"202512\",\n              \"DATA_VALUE\": \"120.2\"\n            },\n            {\n              \"STAT_CODE\": \"901Y067\",\n              \"STAT_NAME\": \"8.1.2. 경기종합지수\",\n              \"ITEM_CODE1\": \"I16D\",\n              \"ITEM_NAME1\": \"동행지수순환변동치\",\n              \"ITEM_CODE2\": null,\n              \"ITEM_NAME2\": null,\n              \"ITEM_CODE3\": null,\n              \"ITEM_NAME3\": null,\n              \"ITEM_CODE4\": null,\n              \"ITEM_NAME4\": null,\n              \"UNIT_NAME\": \"2020=100\",\n              \"WGT\": null,\n              \"TIME\": \"202512\",\n              \"DATA_VALUE\": \"98.5\"\n            },\n            {\n              \"STAT_CODE\": \"901Y067\",\n              \"STAT_NAME\": \"8.1.2. 경기종합지수\",\n              \"ITEM_CODE1\": \"I16E\",\n              \"ITEM_NAME1\": \"선행지수순환변동치\",\n              \"ITEM_CODE2\": null,\n              \"ITEM_NAME2\": null,\n              \"ITEM_CODE3\": null,\n              \"ITEM_NAME3\": null,\n              \"ITEM_CODE4\": null,\n              \"ITEM_NAME4\": null,\n              \"UNIT_NAME\": \"2020=100\",\n              \"WGT\": null,\n              \"TIME\": \"202512\",\n              \"DATA_VALUE\": \"103.1\"\n            }\n          ]\n        }\n      }\n    },\n    {\n      \"sourceId\": \"1\",\n      \"groupId\": \"1\",\n      \"ok\": true,\n      \"data\": {\n        \"StatisticSearch\": {\n          \"list_total_count\": 6,\n          \"row\": [\n            {\n              \"STAT_CODE\": \"513Y001\",\n              \"STAT_NAME\": \"6.3. 경제심리지수\",\n              \"ITEM_CODE1\": \"E1000\",\n              \"ITEM_NAME1\": \"경제심리지수(원계열)\",\n              \"ITEM_CODE2\": null,\n              \"ITEM_NAME2\": null,\n              \"ITEM_CODE3\": null,\n              \"ITEM_NAME3\": null,\n              \"ITEM_CODE4\": null,\n              \"ITEM_NAME4\": null,\n              \"UNIT_NAME\": null,\n              \"WGT\": null,\n              \"TIME\": \"202511\",\n              \"DATA_VALUE\": \"94.5\"\n            },\n            {\n              \"STAT_CODE\": \"513Y001\",\n              \"STAT_NAME\": \"6.3. 경제심리지수\",\n              \"ITEM_CODE1\": \"E2000\",\n              \"ITEM_NAME1\": \"경제심리지수(순환변동치)\",\n              \"ITEM_CODE2\": null,\n              \"ITEM_NAME2\": null,\n              \"ITEM_CODE3\": null,\n              \"ITEM_NAME3\": null,\n              \"ITEM_CODE4\": null,\n              \"ITEM_NAME4\": null,\n              \"UNIT_NAME\": null,\n              \"WGT\": null,\n              \"TIME\": \"202511\",\n              \"DATA_VALUE\": \"94.6\"\n            },\n            {\n              \"STAT_CODE\": \"513Y001\",\n              \"STAT_NAME\": \"6.3. 경제심리지수\",\n              \"ITEM_CODE1\": \"E1000\",\n              \"ITEM_NAME1\": \"경제심리지수(원계열)\",\n              \"ITEM_CODE2\": null,\n              \"ITEM_NAME2\": null,\n              \"ITEM_CODE3\": null,\n              \"ITEM_NAME3\": null,\n              \"ITEM_CODE4\": null,\n              \"ITEM_NAME4\": null,\n              \"UNIT_NAME\": null,\n              \"WGT\": null,\n              \"TIME\": \"202512\",\n              \"DATA_VALUE\": \"93.5\"\n            },\n            {\n              \"STAT_CODE\": \"513Y001\",\n              \"STAT_NAME\": \"6.3. 경제심리지수\",\n              \"ITEM_CODE1\": \"E2000\",\n              \"ITEM_NAME1\": \"경제심리지수(순환변동치)\",\n              \"ITEM_CODE2\": null,\n              \"ITEM_NAME2\": null,\n              \"ITEM_CODE3\": null,\n              \"ITEM_NAME3\": null,\n              \"ITEM_CODE4\": null,\n              \"ITEM_NAME4\": null,\n              \"UNIT_NAME\": null,\n              \"WGT\": null,\n              \"TIME\": \"202512\",\n              \"DATA_VALUE\": \"95.2\"\n            },\n            {\n              \"STAT_CODE\": \"513Y001\",\n              \"STAT_NAME\": \"6.3. 경제심리지수\",\n              \"ITEM_CODE1\": \"E1000\",\n              \"ITEM_NAME1\": \"경제심리지수(원계열)\",\n              \"ITEM_CODE2\": null,\n              \"ITEM_NAME2\": null,\n              \"ITEM_CODE3\": null,\n              \"ITEM_NAME3\": null,\n              \"ITEM_CODE4\": null,\n              \"ITEM_NAME4\": null,\n              \"UNIT_NAME\": null,\n              \"WGT\": null,\n              \"TIME\": \"202601\",\n              \"DATA_VALUE\": \"94\"\n            },\n            {\n              \"STAT_CODE\": \"513Y001\",\n              \"STAT_NAME\": \"6.3. 경제심리지수\",\n              \"ITEM_CODE1\": \"E2000\",\n              \"ITEM_NAME1\": \"경제심리지수(순환변동치)\",\n              \"ITEM_CODE2\": null,\n              \"ITEM_NAME2\": null,\n              \"ITEM_CODE3\": null,\n              \"ITEM_NAME3\": null,\n              \"ITEM_CODE4\": null,\n              \"ITEM_NAME4\": null,\n              \"UNIT_NAME\": null,\n              \"WGT\": null,\n              \"TIME\": \"202601\",\n              \"DATA_VALUE\": \"95.8\"\n            }\n          ]\n        }\n      }\n    }\n  ]\n}",
+            "config": {
+              "endpoint": "",
+              "method": "GET",
+              "timeout": 5000,
+              "apiKey": "",
+              "apiKeyByProvider": {},
+              "apiProviderConfigs": {},
+              "apiKeyParam": "",
+              "queryParams": "",
+              "apiListMode": true,
+              "apiFormat": "json",
+              "apiLang": "kr",
+              "apiStatCode": "",
+              "apiPeriod": "M",
+              "apiStart": "",
+              "apiEnd": "",
+              "apiUserStatsId": "",
+              "apiPrdSe": "Y",
+              "apiStartPrdDe": "",
+              "apiEndPrdDe": "",
+              "apiStrtYymm": "",
+              "apiEndYymm": "",
+              "apiOrgCode": "",
+              "apiName": "",
+              "apiFunctionName": ""
+            },
+            "apiResult": [
+              {
+                "sourceId": "3",
+                "groupId": "5",
+                "ok": true,
+                "data": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><response><header><resultCode>00</resultCode><resultMsg>정상서비스.</resultMsg></header><body><items><item><balPayments>9489247734</balPayments><expCnt>1152598</expCnt><expDlr>60769032531</expDlr><impCnt>4883282</impCnt><impDlr>51279784797</impDlr><year>2025.11</year></item><item><balPayments>12170282027</balPayments><expCnt>1276043</expCnt><expDlr>69538561355</expDlr><impCnt>4883840</impCnt><impDlr>57368279328</impDlr><year>2025.12</year></item><item><balPayments>9162162303</balPayments><expCnt>1029744</expCnt><expDlr>65854869569</expDlr><impCnt>4937149</impCnt><impDlr>56692707266</impDlr><year>2026.01</year></item><item><balPayments>-1144798808</balPayments><expCnt>97627</expCnt><expDlr>5314080177</expDlr><impCnt>501980</impCnt><impDlr>6458878985</impDlr><year>2026.02</year></item><item><balPayments>29676893256</balPayments><expCnt>3556012</expCnt><expDlr>201476543632</expDlr><impCnt>15206251</impCnt><impDlr>171799650376</impDlr><year>총계</year></item></items></body></response>"
+              },
+              {
+                "sourceId": "2",
+                "groupId": "6",
+                "ok": true,
+                "data": "[{\"C1_OBJ_NM\":\"농산물 및 석유류제외\",\"DT\":\"115.82\",\"C1\":\"QB\",\"PRD_SE\":\"M\",\"UNIT_NM_ENG\":\"2020＝100\",\"ITM_ID\":\"T\",\"TBL_ID\":\"DT_1J22007\",\"ITM_NM\":\"소비자물가지수\",\"TBL_NM\":\"농산물 및 석유류제외지수(2020＝100)\",\"PRD_DE\":\"202511\",\"LST_CHN_DE\":\"20251128\",\"C1_NM_ENG\":\"Excluding Agricultural products ＆ oils\",\"C1_NM\":\"농산물및석유류제외지수\",\"UNIT_NM\":\"2020＝100\",\"ITM_NM_ENG\":\"CPI\",\"ORG_ID\":\"101\",\"C1_OBJ_NM_ENG\":\"Excluding Agricultural Products ＆ Oils\"},{\"C1_OBJ_NM\":\"농산물 및 석유류제외\",\"DT\":\"116.02\",\"C1\":\"QB\",\"PRD_SE\":\"M\",\"UNIT_NM_ENG\":\"2020＝100\",\"ITM_ID\":\"T\",\"TBL_ID\":\"DT_1J22007\",\"ITM_NM\":\"소비자물가지수\",\"TBL_NM\":\"농산물 및 석유류제외지수(2020＝100)\",\"PRD_DE\":\"202512\",\"LST_CHN_DE\":\"20251226\",\"C1_NM_ENG\":\"Excluding Agricultural products ＆ oils\",\"C1_NM\":\"농산물및석유류제외지수\",\"UNIT_NM\":\"2020＝100\",\"ITM_NM_ENG\":\"CPI\",\"ORG_ID\":\"101\",\"C1_OBJ_NM_ENG\":\"Excluding Agricultural Products ＆ Oils\"},{\"C1_OBJ_NM\":\"농산물 및 석유류제외\",\"DT\":\"116.57\",\"C1\":\"QB\",\"PRD_SE\":\"M\",\"UNIT_NM_ENG\":\"2020＝100\",\"ITM_ID\":\"T\",\"TBL_ID\":\"DT_1J22007\",\"ITM_NM\":\"소비자물가지수\",\"TBL_NM\":\"농산물 및 석유류제외지수(2020＝100)\",\"PRD_DE\":\"202601\",\"LST_CHN_DE\":\"20260129\",\"C1_NM_ENG\":\"Excluding Agricultural products ＆ oils\",\"C1_NM\":\"농산물및석유류제외지수\",\"UNIT_NM\":\"2020＝100\",\"ITM_NM_ENG\":\"CPI\",\"ORG_ID\":\"101\",\"C1_OBJ_NM_ENG\":\"Excluding Agricultural Products ＆ Oils\"}]"
+              },
+              {
+                "sourceId": "1",
+                "groupId": "2",
+                "ok": true,
+                "data": {
+                  "StatisticSearch": {
+                    "list_total_count": 10,
+                    "row": [
+                      {
+                        "STAT_CODE": "901Y067",
+                        "STAT_NAME": "8.1.2. 경기종합지수",
+                        "ITEM_CODE1": "I16A",
+                        "ITEM_NAME1": "선행종합지수 1)",
+                        "ITEM_CODE2": null,
+                        "ITEM_NAME2": null,
+                        "ITEM_CODE3": null,
+                        "ITEM_NAME3": null,
+                        "ITEM_CODE4": null,
+                        "ITEM_NAME4": null,
+                        "UNIT_NAME": "2020=100",
+                        "WGT": null,
+                        "TIME": "202511",
+                        "DATA_VALUE": "123"
+                      },
+                      {
+                        "STAT_CODE": "901Y067",
+                        "STAT_NAME": "8.1.2. 경기종합지수",
+                        "ITEM_CODE1": "I16B",
+                        "ITEM_NAME1": "동행종합지수 2)",
+                        "ITEM_CODE2": null,
+                        "ITEM_NAME2": null,
+                        "ITEM_CODE3": null,
+                        "ITEM_NAME3": null,
+                        "ITEM_CODE4": null,
+                        "ITEM_NAME4": null,
+                        "UNIT_NAME": "2020=100",
+                        "WGT": null,
+                        "TIME": "202511",
+                        "DATA_VALUE": "113.6"
+                      },
+                      {
+                        "STAT_CODE": "901Y067",
+                        "STAT_NAME": "8.1.2. 경기종합지수",
+                        "ITEM_CODE1": "I16C",
+                        "ITEM_NAME1": "후행종합지수 3)",
+                        "ITEM_CODE2": null,
+                        "ITEM_NAME2": null,
+                        "ITEM_CODE3": null,
+                        "ITEM_NAME3": null,
+                        "ITEM_CODE4": null,
+                        "ITEM_NAME4": null,
+                        "UNIT_NAME": "2020=100",
+                        "WGT": null,
+                        "TIME": "202511",
+                        "DATA_VALUE": "119.9"
+                      },
+                      {
+                        "STAT_CODE": "901Y067",
+                        "STAT_NAME": "8.1.2. 경기종합지수",
+                        "ITEM_CODE1": "I16D",
+                        "ITEM_NAME1": "동행지수순환변동치",
+                        "ITEM_CODE2": null,
+                        "ITEM_NAME2": null,
+                        "ITEM_CODE3": null,
+                        "ITEM_NAME3": null,
+                        "ITEM_CODE4": null,
+                        "ITEM_NAME4": null,
+                        "UNIT_NAME": "2020=100",
+                        "WGT": null,
+                        "TIME": "202511",
+                        "DATA_VALUE": "98.7"
+                      },
+                      {
+                        "STAT_CODE": "901Y067",
+                        "STAT_NAME": "8.1.2. 경기종합지수",
+                        "ITEM_CODE1": "I16E",
+                        "ITEM_NAME1": "선행지수순환변동치",
+                        "ITEM_CODE2": null,
+                        "ITEM_NAME2": null,
+                        "ITEM_CODE3": null,
+                        "ITEM_NAME3": null,
+                        "ITEM_CODE4": null,
+                        "ITEM_NAME4": null,
+                        "UNIT_NAME": "2020=100",
+                        "WGT": null,
+                        "TIME": "202511",
+                        "DATA_VALUE": "102.5"
+                      },
+                      {
+                        "STAT_CODE": "901Y067",
+                        "STAT_NAME": "8.1.2. 경기종합지수",
+                        "ITEM_CODE1": "I16A",
+                        "ITEM_NAME1": "선행종합지수 1)",
+                        "ITEM_CODE2": null,
+                        "ITEM_NAME2": null,
+                        "ITEM_CODE3": null,
+                        "ITEM_NAME3": null,
+                        "ITEM_CODE4": null,
+                        "ITEM_NAME4": null,
+                        "UNIT_NAME": "2020=100",
+                        "WGT": null,
+                        "TIME": "202512",
+                        "DATA_VALUE": "124"
+                      },
+                      {
+                        "STAT_CODE": "901Y067",
+                        "STAT_NAME": "8.1.2. 경기종합지수",
+                        "ITEM_CODE1": "I16B",
+                        "ITEM_NAME1": "동행종합지수 2)",
+                        "ITEM_CODE2": null,
+                        "ITEM_NAME2": null,
+                        "ITEM_CODE3": null,
+                        "ITEM_NAME3": null,
+                        "ITEM_CODE4": null,
+                        "ITEM_NAME4": null,
+                        "UNIT_NAME": "2020=100",
+                        "WGT": null,
+                        "TIME": "202512",
+                        "DATA_VALUE": "113.6"
+                      },
+                      {
+                        "STAT_CODE": "901Y067",
+                        "STAT_NAME": "8.1.2. 경기종합지수",
+                        "ITEM_CODE1": "I16C",
+                        "ITEM_NAME1": "후행종합지수 3)",
+                        "ITEM_CODE2": null,
+                        "ITEM_NAME2": null,
+                        "ITEM_CODE3": null,
+                        "ITEM_NAME3": null,
+                        "ITEM_CODE4": null,
+                        "ITEM_NAME4": null,
+                        "UNIT_NAME": "2020=100",
+                        "WGT": null,
+                        "TIME": "202512",
+                        "DATA_VALUE": "120.2"
+                      },
+                      {
+                        "STAT_CODE": "901Y067",
+                        "STAT_NAME": "8.1.2. 경기종합지수",
+                        "ITEM_CODE1": "I16D",
+                        "ITEM_NAME1": "동행지수순환변동치",
+                        "ITEM_CODE2": null,
+                        "ITEM_NAME2": null,
+                        "ITEM_CODE3": null,
+                        "ITEM_NAME3": null,
+                        "ITEM_CODE4": null,
+                        "ITEM_NAME4": null,
+                        "UNIT_NAME": "2020=100",
+                        "WGT": null,
+                        "TIME": "202512",
+                        "DATA_VALUE": "98.5"
+                      },
+                      {
+                        "STAT_CODE": "901Y067",
+                        "STAT_NAME": "8.1.2. 경기종합지수",
+                        "ITEM_CODE1": "I16E",
+                        "ITEM_NAME1": "선행지수순환변동치",
+                        "ITEM_CODE2": null,
+                        "ITEM_NAME2": null,
+                        "ITEM_CODE3": null,
+                        "ITEM_NAME3": null,
+                        "ITEM_CODE4": null,
+                        "ITEM_NAME4": null,
+                        "UNIT_NAME": "2020=100",
+                        "WGT": null,
+                        "TIME": "202512",
+                        "DATA_VALUE": "103.1"
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "sourceId": "1",
+                "groupId": "1",
+                "ok": true,
+                "data": {
+                  "StatisticSearch": {
+                    "list_total_count": 6,
+                    "row": [
+                      {
+                        "STAT_CODE": "513Y001",
+                        "STAT_NAME": "6.3. 경제심리지수",
+                        "ITEM_CODE1": "E1000",
+                        "ITEM_NAME1": "경제심리지수(원계열)",
+                        "ITEM_CODE2": null,
+                        "ITEM_NAME2": null,
+                        "ITEM_CODE3": null,
+                        "ITEM_NAME3": null,
+                        "ITEM_CODE4": null,
+                        "ITEM_NAME4": null,
+                        "UNIT_NAME": null,
+                        "WGT": null,
+                        "TIME": "202511",
+                        "DATA_VALUE": "94.5"
+                      },
+                      {
+                        "STAT_CODE": "513Y001",
+                        "STAT_NAME": "6.3. 경제심리지수",
+                        "ITEM_CODE1": "E2000",
+                        "ITEM_NAME1": "경제심리지수(순환변동치)",
+                        "ITEM_CODE2": null,
+                        "ITEM_NAME2": null,
+                        "ITEM_CODE3": null,
+                        "ITEM_NAME3": null,
+                        "ITEM_CODE4": null,
+                        "ITEM_NAME4": null,
+                        "UNIT_NAME": null,
+                        "WGT": null,
+                        "TIME": "202511",
+                        "DATA_VALUE": "94.6"
+                      },
+                      {
+                        "STAT_CODE": "513Y001",
+                        "STAT_NAME": "6.3. 경제심리지수",
+                        "ITEM_CODE1": "E1000",
+                        "ITEM_NAME1": "경제심리지수(원계열)",
+                        "ITEM_CODE2": null,
+                        "ITEM_NAME2": null,
+                        "ITEM_CODE3": null,
+                        "ITEM_NAME3": null,
+                        "ITEM_CODE4": null,
+                        "ITEM_NAME4": null,
+                        "UNIT_NAME": null,
+                        "WGT": null,
+                        "TIME": "202512",
+                        "DATA_VALUE": "93.5"
+                      },
+                      {
+                        "STAT_CODE": "513Y001",
+                        "STAT_NAME": "6.3. 경제심리지수",
+                        "ITEM_CODE1": "E2000",
+                        "ITEM_NAME1": "경제심리지수(순환변동치)",
+                        "ITEM_CODE2": null,
+                        "ITEM_NAME2": null,
+                        "ITEM_CODE3": null,
+                        "ITEM_NAME3": null,
+                        "ITEM_CODE4": null,
+                        "ITEM_NAME4": null,
+                        "UNIT_NAME": null,
+                        "WGT": null,
+                        "TIME": "202512",
+                        "DATA_VALUE": "95.2"
+                      },
+                      {
+                        "STAT_CODE": "513Y001",
+                        "STAT_NAME": "6.3. 경제심리지수",
+                        "ITEM_CODE1": "E1000",
+                        "ITEM_NAME1": "경제심리지수(원계열)",
+                        "ITEM_CODE2": null,
+                        "ITEM_NAME2": null,
+                        "ITEM_CODE3": null,
+                        "ITEM_NAME3": null,
+                        "ITEM_CODE4": null,
+                        "ITEM_NAME4": null,
+                        "UNIT_NAME": null,
+                        "WGT": null,
+                        "TIME": "202601",
+                        "DATA_VALUE": "94"
+                      },
+                      {
+                        "STAT_CODE": "513Y001",
+                        "STAT_NAME": "6.3. 경제심리지수",
+                        "ITEM_CODE1": "E2000",
+                        "ITEM_NAME1": "경제심리지수(순환변동치)",
+                        "ITEM_CODE2": null,
+                        "ITEM_NAME2": null,
+                        "ITEM_CODE3": null,
+                        "ITEM_NAME3": null,
+                        "ITEM_CODE4": null,
+                        "ITEM_NAME4": null,
+                        "UNIT_NAME": null,
+                        "WGT": null,
+                        "TIME": "202601",
+                        "DATA_VALUE": "95.8"
+                      }
+                    ]
+                  }
+                }
+              }
+            ],
+            "lastRun": "2026-02-04T09:06:38.845Z"
+          },
+          "width": 64,
+          "height": 73,
+          "selected": false,
+          "dragging": false,
+          "positionAbsolute": {
+            "x": 591.8441429227416,
+            "y": 289.7114114321091
+          }
+        },
+        {
+          "id": "node-3",
+          "type": "dbSink",
+          "position": {
+            "x": 594.8500366210938,
+            "y": 185.5
+          },
+          "data": {
+            "label": "DB 설정",
+            "kind": "dbSink",
+            "status": "success",
+            "preview": "{\n  \"message\": \"DB 연결 성공\",\n  \"durationMs\": 70\n}",
+            "dbConfig": {
+              "url": "jdbc:postgresql://211.238.12.40:5432",
+              "database": "dbtest",
+              "user": "dp",
+              "password": "root123",
+              "dbType": "postgres"
+            },
+            "config": {
+              "endpoint": "",
+              "method": "GET",
+              "timeout": 5000,
+              "apiKey": "",
+              "apiKeyByProvider": {},
+              "apiProviderConfigs": {},
+              "apiKeyParam": "",
+              "queryParams": "",
+              "apiListMode": false,
+              "apiFormat": "json",
+              "apiLang": "kr",
+              "apiStatCode": "",
+              "apiPeriod": "M",
+              "apiStart": "",
+              "apiEnd": "",
+              "apiUserStatsId": "",
+              "apiPrdSe": "Y",
+              "apiStartPrdDe": "",
+              "apiEndPrdDe": "",
+              "apiStrtYymm": "",
+              "apiEndYymm": "",
+              "apiOrgCode": "",
+              "apiName": "",
+              "apiFunctionName": ""
+            },
+            "lastRun": "2026-02-04T09:06:38.038Z"
+          },
+          "width": 64,
+          "height": 73,
+          "selected": false,
+          "positionAbsolute": {
+            "x": 594.8500366210938,
+            "y": 185.5
+          },
+          "dragging": false
+        },
+        {
+          "id": "node-4",
+          "type": "dataStorage",
+          "position": {
+            "x": 810.2907717392313,
+            "y": 289.6875383880531
+          },
+          "data": {
+            "label": "DB 저장",
+            "kind": "dbSave",
+            "status": "success",
+            "preview": "{\n  \"successCount\": 4,\n  \"failureCount\": 0,\n  \"results\": [\n    {\n      \"groupId\": \"5\",\n      \"ok\": true,\n      \"table\": \"dp.datagokr_newtrade_lrd\"\n    },\n    {\n      \"groupId\": \"6\",\n      \"ok\": true,\n      \"table\": \"dp.kosis_dt_1j22007_lrd\"\n    },\n    {\n      \"groupId\": \"2\",\n      \"ok\": true,\n      \"table\": \"dp.ecos_901y067_lrd\"\n    },\n    {\n      \"groupId\": \"1\",\n      \"ok\": true,\n      \"table\": \"dp.ecos_513y001_lrd\"\n    }\n  ]\n}",
+            "storageOptions": {
+              "schema": "public",
+              "schemas": [
+                "dp",
+                "public"
+              ],
+              "schemasLoading": false,
+              "tableName": "",
+              "tables": [],
+              "tablesLoading": false,
+              "columns": [],
+              "columnsLoading": false,
+              "columnMappings": {},
+              "truncateBeforeInsert": true,
+              "apiListMode": true,
+              "groupTableMappings": {
+                "1": {
+                  "schema": "dp",
+                  "table": "ecos_513y001_lrd"
+                },
+                "2": {
+                  "schema": "dp",
+                  "table": "ecos_901y067_lrd"
+                },
+                "5": {
+                  "schema": "dp",
+                  "table": "datagokr_newtrade_lrd"
+                },
+                "6": {
+                  "schema": "dp",
+                  "table": "kosis_dt_1j22007_lrd"
+                }
+              },
+              "groupTableOptions": {
+                "1": {
+                  "tables": [
+                    "api_param",
+                    "api_param_group",
+                    "api_source",
+                    "datagokr_newtrade",
+                    "datagokr_newtrade_lrd",
+                    "ecos_513y001",
+                    "ecos_513y001_lrd",
+                    "ecos_901y067",
+                    "ecos_901y067_lrd",
+                    "kosis_dt_1j22007",
+                    "kosis_dt_1j22007_lrd",
+                    "new",
+                    "price",
+                    "stock_trade_signal",
+                    "test"
+                  ],
+                  "loading": false
+                },
+                "2": {
+                  "tables": [
+                    "api_param",
+                    "api_param_group",
+                    "api_source",
+                    "datagokr_newtrade",
+                    "datagokr_newtrade_lrd",
+                    "ecos_513y001",
+                    "ecos_513y001_lrd",
+                    "ecos_901y067",
+                    "ecos_901y067_lrd",
+                    "kosis_dt_1j22007",
+                    "kosis_dt_1j22007_lrd",
+                    "new",
+                    "price",
+                    "stock_trade_signal",
+                    "test"
+                  ],
+                  "loading": false
+                },
+                "5": {
+                  "tables": [
+                    "api_param",
+                    "api_param_group",
+                    "api_source",
+                    "datagokr_newtrade",
+                    "datagokr_newtrade_lrd",
+                    "ecos_513y001",
+                    "ecos_513y001_lrd",
+                    "ecos_901y067",
+                    "ecos_901y067_lrd",
+                    "kosis_dt_1j22007",
+                    "kosis_dt_1j22007_lrd",
+                    "new",
+                    "price",
+                    "stock_trade_signal",
+                    "test"
+                  ],
+                  "loading": false
+                },
+                "6": {
+                  "tables": [
+                    "api_param",
+                    "api_param_group",
+                    "api_source",
+                    "datagokr_newtrade",
+                    "datagokr_newtrade_lrd",
+                    "ecos_513y001",
+                    "ecos_513y001_lrd",
+                    "ecos_901y067",
+                    "ecos_901y067_lrd",
+                    "kosis_dt_1j22007",
+                    "kosis_dt_1j22007_lrd",
+                    "new",
+                    "price",
+                    "stock_trade_signal",
+                    "test"
+                  ],
+                  "loading": false
+                }
+              }
+            },
+            "config": {
+              "endpoint": "",
+              "method": "GET",
+              "timeout": 5000,
+              "apiKey": "",
+              "apiKeyByProvider": {},
+              "apiProviderConfigs": {},
+              "apiKeyParam": "",
+              "queryParams": "",
+              "apiListMode": false,
+              "apiFormat": "json",
+              "apiLang": "kr",
+              "apiStatCode": "",
+              "apiPeriod": "M",
+              "apiStart": "",
+              "apiEnd": "",
+              "apiUserStatsId": "",
+              "apiPrdSe": "Y",
+              "apiStartPrdDe": "",
+              "apiEndPrdDe": "",
+              "apiStrtYymm": "",
+              "apiEndYymm": "",
+              "apiOrgCode": "",
+              "apiName": "",
+              "apiFunctionName": ""
+            },
+            "lastRun": "2026-02-04T09:07:28.169Z"
+          },
+          "width": 64,
+          "height": 73,
+          "selected": true,
+          "dragging": false,
+          "positionAbsolute": {
+            "x": 810.2907717392313,
+            "y": 289.6875383880531
+          }
+        }
+      ],
+      "edges": [
+        {
+          "source": "node-3",
+          "sourceHandle": null,
+          "target": "node-4",
+          "targetHandle": null,
+          "id": "reactflow__edge-node-3-node-4"
+        },
+        {
+          "source": "node-2",
+          "sourceHandle": null,
+          "target": "node-4",
+          "targetHandle": null,
+          "id": "reactflow__edge-node-2-node-4"
+        }
+      ]
+    },
+    "schedule": {
+      "enabled": true,
+      "mode": "cron",
+      "intervalMinutes": 60,
+      "cron": "20 08 * * *"
+    },
+    "createdAt": "2026-02-04T09:10:10.791Z",
+    "updatedAt": "2026-04-13T23:20:00.329Z",
+    "lastRunAt": "2026-04-13T23:20:00.202Z",
+    "lastStatus": "failure",
+    "lastError": "API endpoint가 비어 있습니다.",
+    "history": [
+      {
+        "ranAt": "2026-04-13T23:20:00.202Z",
+        "status": "failure",
+        "error": "API endpoint가 비어 있습니다."
+      },
+      {
+        "ranAt": "2026-04-12T23:20:01.374Z",
+        "status": "failure",
+        "error": "API endpoint가 비어 있습니다."
+      },
+      {
+        "ranAt": "2026-04-11T23:20:01.193Z",
+        "status": "failure",
+        "error": "API endpoint가 비어 있습니다."
+      },
+      {
+        "ranAt": "2026-04-10T23:20:01.744Z",
+        "status": "failure",
+        "error": "API endpoint가 비어 있습니다."
+      },
+      {
+        "ranAt": "2026-04-09T23:20:00.236Z",
+        "status": "failure",
+        "error": "API endpoint가 비어 있습니다."
+      },
+      {
+        "ranAt": "2026-04-08T23:20:00.245Z",
+        "status": "failure",
+        "error": "API endpoint가 비어 있습니다."
+      },
+      {
+        "ranAt": "2026-04-07T23:20:00.217Z",
+        "status": "failure",
+        "error": "API endpoint가 비어 있습니다."
+      },
+      {
+        "ranAt": "2026-04-06T23:20:00.255Z",
+        "status": "failure",
+        "error": "API endpoint가 비어 있습니다."
+      },
+      {
+        "ranAt": "2026-04-05T23:20:00.240Z",
+        "status": "failure",
+        "error": "API endpoint가 비어 있습니다."
+      },
+      {
+        "ranAt": "2026-04-04T23:20:00.213Z",
+        "status": "failure",
+        "error": "API endpoint가 비어 있습니다."
+      },
+      {
+        "ranAt": "2026-04-03T23:20:00.234Z",
+        "status": "failure",
+        "error": "API endpoint가 비어 있습니다."
+      },
+      {
+        "ranAt": "2026-04-02T23:20:00.239Z",
+        "status": "failure",
+        "error": "API endpoint가 비어 있습니다."
+      },
+      {
+        "ranAt": "2026-04-01T23:20:00.260Z",
+        "status": "failure",
+        "error": "API endpoint가 비어 있습니다."
+      },
+      {
+        "ranAt": "2026-03-31T23:20:00.248Z",
+        "status": "failure",
+        "error": "API endpoint가 비어 있습니다."
+      },
+      {
+        "ranAt": "2026-03-04T23:20:00.084Z",
+        "status": "failure",
+        "error": "API endpoint가 비어 있습니다."
+      }
+    ]
+  },
+  {
+    "id": "wf-1769668177626",
+    "name": "test",
+    "workflow": {
+      "nodes": [
+        {
+          "id": "node-2",
+          "type": "dbSink",
+          "position": {
+            "x": 511.9000244140625,
+            "y": 212
+          },
+          "data": {
+            "label": "DB 설정",
+            "kind": "dbSink",
+            "status": "success",
+            "preview": "{\n  \"message\": \"DB 연결 성공\",\n  \"durationMs\": 62\n}",
+            "dbConfig": {
+              "url": "jdbc:postgresql://211.238.12.40:5432",
+              "database": "dbtest",
+              "user": "dp",
+              "password": "root123",
+              "dbType": "postgres"
+            },
+            "config": {
+              "endpoint": "https://jsonplaceholder.typicode.com/todos/1",
+              "method": "GET",
+              "timeout": 5000,
+              "apiKey": "",
+              "apiKeyByProvider": {},
+              "apiProviderConfigs": {},
+              "apiKeyParam": "",
+              "queryParams": "",
+              "apiFormat": "json",
+              "apiLang": "kr",
+              "apiStatCode": "",
+              "apiPeriod": "M",
+              "apiStart": "",
+              "apiEnd": "",
+              "apiUserStatsId": "",
+              "apiPrdSe": "Y",
+              "apiStartPrdDe": "",
+              "apiEndPrdDe": "",
+              "apiStrtYymm": "",
+              "apiEndYymm": "",
+              "apiOrgCode": "",
+              "apiName": "",
+              "apiFunctionName": "",
+              "apiStartParamName": "",
+              "apiEndParamName": ""
+            },
+            "lastRun": "2026-01-29T06:31:43.106Z"
+          },
+          "width": 64,
+          "height": 73,
+          "selected": false,
+          "positionAbsolute": {
+            "x": 511.9000244140625,
+            "y": 212
+          },
+          "dragging": false
+        },
+        {
+          "id": "node-3",
+          "type": "dataStorage",
+          "position": {
+            "x": 714.8500366210938,
+            "y": 241.74214171674487
+          },
+          "data": {
+            "label": "DB 저장",
+            "kind": "dbSave",
+            "status": "success",
+            "preview": "{\n  \"message\": \"데이터 저장 완료\",\n  \"inserted\": 12\n}",
+            "storageOptions": {
+              "schema": "dp",
+              "schemas": [
+                "dp",
+                "public"
+              ],
+              "schemasLoading": false,
+              "tableName": "price",
+              "tables": [
+                "new",
+                "price",
+                "stock_trade_signal",
+                "test"
+              ],
+              "tablesLoading": false,
+              "columns": [
+                {
+                  "name": "tbl_id",
+                  "dataType": "character varying"
+                },
+                {
+                  "name": "tbl_nm",
+                  "dataType": "character varying"
+                },
+                {
+                  "name": "c1",
+                  "dataType": "character varying"
+                },
+                {
+                  "name": "c1_obj_nm",
+                  "dataType": "character varying"
+                },
+                {
+                  "name": "c1_obj_nm_eng",
+                  "dataType": "character varying"
+                },
+                {
+                  "name": "c1_nm",
+                  "dataType": "character varying"
+                },
+                {
+                  "name": "c1_nm_eng",
+                  "dataType": "character varying"
+                },
+                {
+                  "name": "org_id",
+                  "dataType": "character varying"
+                },
+                {
+                  "name": "itm_id",
+                  "dataType": "character varying"
+                },
+                {
+                  "name": "itm_nm",
+                  "dataType": "character varying"
+                },
+                {
+                  "name": "itm_nm_eng",
+                  "dataType": "character varying"
+                },
+                {
+                  "name": "unit_id",
+                  "dataType": "character varying"
+                },
+                {
+                  "name": "unit_nm",
+                  "dataType": "character varying"
+                },
+                {
+                  "name": "unit_nm_eng",
+                  "dataType": "character varying"
+                },
+                {
+                  "name": "prd_se",
+                  "dataType": "character varying"
+                },
+                {
+                  "name": "prd_de",
+                  "dataType": "character varying"
+                },
+                {
+                  "name": "dt",
+                  "dataType": "character varying"
+                }
+              ],
+              "columnsLoading": false,
+              "columnMappings": {
+                "tbl_id": "TBL_ID",
+                "tbl_nm": "TBL_NM",
+                "c1": "C1",
+                "c1_obj_nm": "C1_OBJ_NM",
+                "c1_obj_nm_eng": "C1_OBJ_NM_ENG",
+                "c1_nm": "C1_NM",
+                "c1_nm_eng": "C1_NM_ENG",
+                "org_id": "ORG_ID",
+                "itm_id": "ITM_ID",
+                "itm_nm": "ITM_NM",
+                "itm_nm_eng": "ITM_NM_ENG",
+                "unit_id": "ITM_ID",
+                "unit_nm": "UNIT_NM",
+                "unit_nm_eng": "UNIT_NM_ENG",
+                "prd_se": "PRD_SE",
+                "prd_de": "PRD_DE",
+                "dt": "DT"
+              },
+              "truncateBeforeInsert": true
+            },
+            "config": {
+              "endpoint": "https://jsonplaceholder.typicode.com/todos/1",
+              "method": "GET",
+              "timeout": 5000,
+              "apiKey": "",
+              "apiKeyByProvider": {},
+              "apiProviderConfigs": {},
+              "apiKeyParam": "",
+              "queryParams": "",
+              "apiFormat": "json",
+              "apiLang": "kr",
+              "apiStatCode": "",
+              "apiPeriod": "M",
+              "apiStart": "",
+              "apiEnd": "",
+              "apiUserStatsId": "",
+              "apiPrdSe": "Y",
+              "apiStartPrdDe": "",
+              "apiEndPrdDe": "",
+              "apiStrtYymm": "",
+              "apiEndYymm": "",
+              "apiOrgCode": "",
+              "apiName": "",
+              "apiFunctionName": "",
+              "apiStartParamName": "",
+              "apiEndParamName": ""
+            },
+            "lastRun": "2026-01-29T06:31:43.481Z"
+          },
+          "width": 64,
+          "height": 73,
+          "selected": true,
+          "positionAbsolute": {
+            "x": 714.8500366210938,
+            "y": 241.74214171674487
+          },
+          "dragging": false
+        },
+        {
+          "id": "node-4",
+          "type": "dataCollector",
+          "position": {
+            "x": 513.8500366210938,
+            "y": 339
+          },
+          "data": {
+            "label": "API 수집",
+            "kind": "api",
+            "status": "success",
+            "preview": "\"[{\\\"C1_OBJ_NM\\\":\\\"농산물 및 석유류제외\\\",\\\"DT\\\":\\\"113.98\\\",\\\"C1\\\":\\\"QB\\\",\\\"PRD_SE\\\":\\\"M\\\",\\\"UNIT_NM_ENG\\\":\\\"2020＝100\\\",\\\"ITM_ID\\\":\\\"T\\\",\\\"TBL_ID\\\":\\\"DT_1J22007\\\",\\\"ITM_NM\\\":\\\"소비자물가지수\\\",\\\"TBL_NM\\\":\\\"농산물 및 석유류제외지수(2020＝100)\\\",\\\"PRD_DE\\\":\\\"202501\\\",\\\"LST_CHN_DE\\\":\\\"20250124\\\",\\\"C1_NM_ENG\\\":\\\"Excluding Agricult...",
+            "config": {
+              "endpoint": "https://jsonplaceholder.typicode.com/todos/1",
+              "method": "GET",
+              "timeout": 5000,
+              "apiKey": "NjNlNzI3NGMyNDBlMzRhYWJmZGNlZTNhZmUwOTU4Zjg=",
+              "apiKeyByProvider": {},
+              "apiProviderConfigs": {},
+              "apiKeyParam": "",
+              "queryParams": "",
+              "apiFormat": "json",
+              "apiLang": "kr",
+              "apiStatCode": "",
+              "apiPeriod": "M",
+              "apiStart": "",
+              "apiEnd": "",
+              "apiUserStatsId": "bjlee3075/101/DT_1J22007/2/1/20231220095249",
+              "apiPrdSe": "M",
+              "apiStartPrdDe": "202501",
+              "apiEndPrdDe": "202601",
+              "apiStrtYymm": "",
+              "apiEndYymm": "",
+              "apiOrgCode": "",
+              "apiName": "",
+              "apiFunctionName": "",
+              "apiStartParamName": "",
+              "apiEndParamName": "",
+              "apiProvider": "kosis"
+            },
+            "apiResult": "[{\"C1_OBJ_NM\":\"농산물 및 석유류제외\",\"DT\":\"113.98\",\"C1\":\"QB\",\"PRD_SE\":\"M\",\"UNIT_NM_ENG\":\"2020＝100\",\"ITM_ID\":\"T\",\"TBL_ID\":\"DT_1J22007\",\"ITM_NM\":\"소비자물가지수\",\"TBL_NM\":\"농산물 및 석유류제외지수(2020＝100)\",\"PRD_DE\":\"202501\",\"LST_CHN_DE\":\"20250124\",\"C1_NM_ENG\":\"Excluding Agricultural products ＆ oils\",\"C1_NM\":\"농산물및석유류제외지수\",\"UNIT_NM\":\"2020＝100\",\"ITM_NM_ENG\":\"CPI\",\"ORG_ID\":\"101\",\"C1_OBJ_NM_ENG\":\"Excluding Agricultural Products ＆ Oils\"},{\"C1_OBJ_NM\":\"농산물 및 석유류제외\",\"DT\":\"114.12\",\"C1\":\"QB\",\"PRD_SE\":\"M\",\"UNIT_NM_ENG\":\"2020＝100\",\"ITM_ID\":\"T\",\"TBL_ID\":\"DT_1J22007\",\"ITM_NM\":\"소비자물가지수\",\"TBL_NM\":\"농산물 및 석유류제외지수(2020＝100)\",\"PRD_DE\":\"202502\",\"LST_CHN_DE\":\"20250304\",\"C1_NM_ENG\":\"Excluding Agricultural products ＆ oils\",\"C1_NM\":\"농산물및석유류제외지수\",\"UNIT_NM\":\"2020＝100\",\"ITM_NM_ENG\":\"CPI\",\"ORG_ID\":\"101\",\"C1_OBJ_NM_ENG\":\"Excluding Agricultural Products ＆ Oils\"},{\"C1_OBJ_NM\":\"농산물 및 석유류제외\",\"DT\":\"114.37\",\"C1\":\"QB\",\"PRD_SE\":\"M\",\"UNIT_NM_ENG\":\"2020＝100\",\"ITM_ID\":\"T\",\"TBL_ID\":\"DT_1J22007\",\"ITM_NM\":\"소비자물가지수\",\"TBL_NM\":\"농산물 및 석유류제외지수(2020＝100)\",\"PRD_DE\":\"202503\",\"LST_CHN_DE\":\"20250331\",\"C1_NM_ENG\":\"Excluding Agricultural products ＆ oils\",\"C1_NM\":\"농산물및석유류제외지수\",\"UNIT_NM\":\"2020＝100\",\"ITM_NM_ENG\":\"CPI\",\"ORG_ID\":\"101\",\"C1_OBJ_NM_ENG\":\"Excluding Agricultural Products ＆ Oils\"},{\"C1_OBJ_NM\":\"농산물 및 석유류제외\",\"DT\":\"114.86\",\"C1\":\"QB\",\"PRD_SE\":\"M\",\"UNIT_NM_ENG\":\"2020＝100\",\"ITM_ID\":\"T\",\"TBL_ID\":\"DT_1J22007\",\"ITM_NM\":\"소비자물가지수\",\"TBL_NM\":\"농산물 및 석유류제외지수(2020＝100)\",\"PRD_DE\":\"202504\",\"LST_CHN_DE\":\"20250430\",\"C1_NM_ENG\":\"Excluding Agricultural products ＆ oils\",\"C1_NM\":\"농산물및석유류제외지수\",\"UNIT_NM\":\"2020＝100\",\"ITM_NM_ENG\":\"CPI\",\"ORG_ID\":\"101\",\"C1_OBJ_NM_ENG\":\"Excluding Agricultural Products ＆ Oils\"},{\"C1_OBJ_NM\":\"농산물 및 석유류제외\",\"DT\":\"115.06\",\"C1\":\"QB\",\"PRD_SE\":\"M\",\"UNIT_NM_ENG\":\"2020＝100\",\"ITM_ID\":\"T\",\"TBL_ID\":\"DT_1J22007\",\"ITM_NM\":\"소비자물가지수\",\"TBL_NM\":\"농산물 및 석유류제외지수(2020＝100)\",\"PRD_DE\":\"202505\",\"LST_CHN_DE\":\"20250530\",\"C1_NM_ENG\":\"Excluding Agricultural products ＆ oils\",\"C1_NM\":\"농산물및석유류제외지수\",\"UNIT_NM\":\"2020＝100\",\"ITM_NM_ENG\":\"CPI\",\"ORG_ID\":\"101\",\"C1_OBJ_NM_ENG\":\"Excluding Agricultural Products ＆ Oils\"},{\"C1_OBJ_NM\":\"농산물 및 석유류제외\",\"DT\":\"115.25\",\"C1\":\"QB\",\"PRD_SE\":\"M\",\"UNIT_NM_ENG\":\"2020＝100\",\"ITM_ID\":\"T\",\"TBL_ID\":\"DT_1J22007\",\"ITM_NM\":\"소비자물가지수\",\"TBL_NM\":\"농산물 및 석유류제외지수(2020＝100)\",\"PRD_DE\":\"202506\",\"LST_CHN_DE\":\"20250630\",\"C1_NM_ENG\":\"Excluding Agricultural products ＆ oils\",\"C1_NM\":\"농산물및석유류제외지수\",\"UNIT_NM\":\"2020＝100\",\"ITM_NM_ENG\":\"CPI\",\"ORG_ID\":\"101\",\"C1_OBJ_NM_ENG\":\"Excluding Agricultural Products ＆ Oils\"},{\"C1_OBJ_NM\":\"농산물 및 석유류제외\",\"DT\":\"115.29\",\"C1\":\"QB\",\"PRD_SE\":\"M\",\"UNIT_NM_ENG\":\"2020＝100\",\"ITM_ID\":\"T\",\"TBL_ID\":\"DT_1J22007\",\"ITM_NM\":\"소비자물가지수\",\"TBL_NM\":\"농산물 및 석유류제외지수(2020＝100)\",\"PRD_DE\":\"202507\",\"LST_CHN_DE\":\"20250801\",\"C1_NM_ENG\":\"Excluding Agricultural products ＆ oils\",\"C1_NM\":\"농산물및석유류제외지수\",\"UNIT_NM\":\"2020＝100\",\"ITM_NM_ENG\":\"CPI\",\"ORG_ID\":\"101\",\"C1_OBJ_NM_ENG\":\"Excluding Agricultural Products ＆ Oils\"},{\"C1_OBJ_NM\":\"농산물 및 석유류제외\",\"DT\":\"114.84\",\"C1\":\"QB\",\"PRD_SE\":\"M\",\"UNIT_NM_ENG\":\"2020＝100\",\"ITM_ID\":\"T\",\"TBL_ID\":\"DT_1J22007\",\"ITM_NM\":\"소비자물가지수\",\"TBL_NM\":\"농산물 및 석유류제외지수(2020＝100)\",\"PRD_DE\":\"202508\",\"LST_CHN_DE\":\"20250829\",\"C1_NM_ENG\":\"Excluding Agricultural products ＆ oils\",\"C1_NM\":\"농산물및석유류제외지수\",\"UNIT_NM\":\"2020＝100\",\"ITM_NM_ENG\":\"CPI\",\"ORG_ID\":\"101\",\"C1_OBJ_NM_ENG\":\"Excluding Agricultural Products ＆ Oils\"},{\"C1_OBJ_NM\":\"농산물 및 석유류제외\",\"DT\":\"115.56\",\"C1\":\"QB\",\"PRD_SE\":\"M\",\"UNIT_NM_ENG\":\"2020＝100\",\"ITM_ID\":\"T\",\"TBL_ID\":\"DT_1J22007\",\"ITM_NM\":\"소비자물가지수\",\"TBL_NM\":\"농산물 및 석유류제외지수(2020＝100)\",\"PRD_DE\":\"202509\",\"LST_CHN_DE\":\"20251029\",\"C1_NM_ENG\":\"Excluding Agricultural products ＆ oils\",\"C1_NM\":\"농산물및석유류제외지수\",\"UNIT_NM\":\"2020＝100\",\"ITM_NM_ENG\":\"CPI\",\"ORG_ID\":\"101\",\"C1_OBJ_NM_ENG\":\"Excluding Agricultural Products ＆ Oils\"},{\"C1_OBJ_NM\":\"농산물 및 석유류제외\",\"DT\":\"116\",\"C1\":\"QB\",\"PRD_SE\":\"M\",\"UNIT_NM_ENG\":\"2020＝100\",\"ITM_ID\":\"T\",\"TBL_ID\":\"DT_1J22007\",\"ITM_NM\":\"소비자물가지수\",\"TBL_NM\":\"농산물 및 석유류제외지수(2020＝100)\",\"PRD_DE\":\"202510\",\"LST_CHN_DE\":\"20251030\",\"C1_NM_ENG\":\"Excluding Agricultural products ＆ oils\",\"C1_NM\":\"농산물및석유류제외지수\",\"UNIT_NM\":\"2020＝100\",\"ITM_NM_ENG\":\"CPI\",\"ORG_ID\":\"101\",\"C1_OBJ_NM_ENG\":\"Excluding Agricultural Products ＆ Oils\"},{\"C1_OBJ_NM\":\"농산물 및 석유류제외\",\"DT\":\"115.82\",\"C1\":\"QB\",\"PRD_SE\":\"M\",\"UNIT_NM_ENG\":\"2020＝100\",\"ITM_ID\":\"T\",\"TBL_ID\":\"DT_1J22007\",\"ITM_NM\":\"소비자물가지수\",\"TBL_NM\":\"농산물 및 석유류제외지수(2020＝100)\",\"PRD_DE\":\"202511\",\"LST_CHN_DE\":\"20251128\",\"C1_NM_ENG\":\"Excluding Agricultural products ＆ oils\",\"C1_NM\":\"농산물및석유류제외지수\",\"UNIT_NM\":\"2020＝100\",\"ITM_NM_ENG\":\"CPI\",\"ORG_ID\":\"101\",\"C1_OBJ_NM_ENG\":\"Excluding Agricultural Products ＆ Oils\"},{\"C1_OBJ_NM\":\"농산물 및 석유류제외\",\"DT\":\"116.02\",\"C1\":\"QB\",\"PRD_SE\":\"M\",\"UNIT_NM_ENG\":\"2020＝100\",\"ITM_ID\":\"T\",\"TBL_ID\":\"DT_1J22007\",\"ITM_NM\":\"소비자물가지수\",\"TBL_NM\":\"농산물 및 석유류제외지수(2020＝100)\",\"PRD_DE\":\"202512\",\"LST_CHN_DE\":\"20251226\",\"C1_NM_ENG\":\"Excluding Agricultural products ＆ oils\",\"C1_NM\":\"농산물및석유류제외지수\",\"UNIT_NM\":\"2020＝100\",\"ITM_NM_ENG\":\"CPI\",\"ORG_ID\":\"101\",\"C1_OBJ_NM_ENG\":\"Excluding Agricultural Products ＆ Oils\"}]",
+            "lastRun": "2026-01-29T06:31:43.289Z"
+          },
+          "width": 64,
+          "height": 73,
+          "selected": false,
+          "positionAbsolute": {
+            "x": 513.8500366210938,
+            "y": 339
+          },
+          "dragging": false
+        }
+      ],
+      "edges": [
+        {
+          "source": "node-2",
+          "sourceHandle": null,
+          "target": "node-3",
+          "targetHandle": null,
+          "id": "reactflow__edge-node-2-node-3"
+        },
+        {
+          "source": "node-4",
+          "sourceHandle": null,
+          "target": "node-3",
+          "targetHandle": null,
+          "id": "reactflow__edge-node-4-node-3"
+        }
+      ]
+    },
+    "schedule": {
+      "enabled": true,
+      "mode": "cron",
+      "intervalMinutes": 60,
+      "cron": "35 16 * * *"
+    },
+    "createdAt": "2026-01-29T07:21:47.856Z",
+    "updatedAt": "2026-04-14T07:35:00.900Z",
+    "lastRunAt": "2026-04-14T07:35:00.374Z",
+    "lastStatus": "failure",
+    "lastError": "relation \"dp.price\" does not exist",
+    "history": [
+      {
+        "ranAt": "2026-04-14T07:35:00.374Z",
+        "status": "failure",
+        "error": "relation \"dp.price\" does not exist"
+      },
+      {
+        "ranAt": "2026-04-13T07:35:01.557Z",
+        "status": "failure",
+        "error": "relation \"dp.price\" does not exist"
+      },
+      {
+        "ranAt": "2026-04-12T07:35:01.539Z",
+        "status": "failure",
+        "error": "relation \"dp.price\" does not exist"
+      },
+      {
+        "ranAt": "2026-04-11T07:35:01.485Z",
+        "status": "failure",
+        "error": "relation \"dp.price\" does not exist"
+      },
+      {
+        "ranAt": "2026-04-10T07:35:00.589Z",
+        "status": "failure",
+        "error": "relation \"dp.price\" does not exist"
+      },
+      {
+        "ranAt": "2026-04-09T07:35:00.450Z",
+        "status": "failure",
+        "error": "relation \"dp.price\" does not exist"
+      },
+      {
+        "ranAt": "2026-04-08T07:35:00.236Z",
+        "status": "failure",
+        "error": "relation \"dp.price\" does not exist"
+      },
+      {
+        "ranAt": "2026-04-07T07:35:00.257Z",
+        "status": "failure",
+        "error": "relation \"dp.price\" does not exist"
+      },
+      {
+        "ranAt": "2026-04-06T07:35:00.245Z",
+        "status": "failure",
+        "error": "relation \"dp.price\" does not exist"
+      },
+      {
+        "ranAt": "2026-04-05T07:35:00.222Z",
+        "status": "failure",
+        "error": "relation \"dp.price\" does not exist"
+      },
+      {
+        "ranAt": "2026-04-04T07:35:00.241Z",
+        "status": "failure",
+        "error": "relation \"dp.price\" does not exist"
+      },
+      {
+        "ranAt": "2026-04-03T07:35:00.455Z",
+        "status": "failure",
+        "error": "relation \"dp.price\" does not exist"
+      },
+      {
+        "ranAt": "2026-04-02T07:35:00.464Z",
+        "status": "failure",
+        "error": "fetch failed"
+      },
+      {
+        "ranAt": "2026-04-01T07:35:00.429Z",
+        "status": "failure",
+        "error": "fetch failed"
+      },
+      {
+        "ranAt": "2026-03-31T07:35:00.231Z",
+        "status": "failure",
+        "error": "fetch failed"
+      },
+      {
+        "ranAt": "2026-03-05T07:35:00.233Z",
+        "status": "success"
+      },
+      {
+        "ranAt": "2026-03-04T07:35:00.022Z",
+        "status": "success"
+      },
+      {
+        "ranAt": "2026-01-29T07:35:00.126Z",
+        "status": "success"
+      }
+    ]
+  }
+]

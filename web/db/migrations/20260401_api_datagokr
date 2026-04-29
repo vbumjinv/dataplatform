@@ -1,0 +1,157 @@
+truncate table dp.api_stat_list_datagokr;
+
+with base as (
+    select
+        list_id,
+        list_nm,
+        org_cd,
+        org_nm,
+        trim(split_part(category_nm, '-', 1)) as cat1,
+        trim(split_part(category_nm, '-', 2)) as cat2,
+        list_url
+    from dp.datagokr_category
+    where list_type = 'API'
+      and api_type = 'REST'
+),
+orgs as (
+    select
+        org_nm,
+        org_cd,
+        row_number() over (order by org_nm collate "ko-x-icu", org_cd) as org_no
+    from (
+        select distinct
+            trim(org_nm) as org_nm,
+            org_cd
+        from base
+    ) x
+),
+cat1s as (
+    select
+        b.org_nm,
+        b.org_cd,
+        b.cat1,
+        o.org_no,
+        row_number() over (
+            partition by b.org_nm
+            order by b.cat1
+        ) as cat1_no
+    from (
+        select distinct org_nm, org_cd, cat1
+        from base
+    ) b
+    join orgs o
+      on b.org_nm = o.org_nm
+     and b.org_cd = o.org_cd
+),
+cat2s as (
+    select
+        b.org_nm,
+        b.org_cd,
+        b.cat1,
+        b.cat2,
+        o.org_no,
+        c1.cat1_no,
+        row_number() over (
+            partition by b.org_nm, b.cat1
+            order by b.cat2
+        ) as cat2_no
+    from (
+        select distinct org_nm, org_cd, cat1, cat2
+        from base
+        where coalesce(cat2, '') <> ''
+    ) b
+    join orgs o
+      on b.org_nm = o.org_nm
+     and b.org_cd = o.org_cd
+    join cat1s c1
+      on b.org_nm = c1.org_nm
+     and b.org_cd = c1.org_cd
+     and b.cat1 = c1.cat1
+),
+apis as (
+    select
+        b.*,
+        o.org_no,
+        c1.cat1_no,
+        c2.cat2_no,
+        row_number() over (
+            partition by b.org_nm, b.cat1, b.cat2
+            order by b.list_nm
+        ) as api_no
+    from base b
+    join orgs o
+      on b.org_nm = o.org_nm
+     and b.org_cd = o.org_cd
+    join cat1s c1
+      on b.org_nm = c1.org_nm
+     and b.org_cd = c1.org_cd
+     and b.cat1 = c1.cat1
+    left join cat2s c2
+      on b.org_nm = c2.org_nm
+     and b.org_cd = c2.org_cd
+     and b.cat1 = c2.cat1
+     and b.cat2 = c2.cat2
+)
+insert into dp.api_stat_list_datagokr (
+    p_stat_code,
+    stat_code,
+    stat_name,
+    srch_yn,
+    org_cd,
+    org_name,
+    list_url
+)
+
+-- 1레벨: 기관
+select
+    null as p_stat_code,
+    lpad(cast(org_no as text), 10, '0') as stat_code,
+    cast(org_no as text) || '. ' || org_nm as stat_name,
+    'N' as srch_yn,
+    org_cd,
+    org_nm as org_name,
+    null as list_url
+from orgs
+
+union all
+
+-- 2레벨: 대분류
+select
+    lpad(cast(org_no as text), 10, '0') as p_stat_code,
+    lpad(cast(org_no as text), 10, '0') || '_' || lpad(cast(cat1_no as text), 4, '0') as stat_code,
+    cast(org_no as text) || '.' || cast(cat1_no as text) || '. ' || cat1 as stat_name,
+    'N' as srch_yn,
+    org_cd,
+    org_nm as org_name,
+    null as list_url
+from cat1s
+
+union all
+
+-- 3레벨: 중분류
+select
+    lpad(cast(org_no as text), 10, '0') || '_' || lpad(cast(cat1_no as text), 4, '0') as p_stat_code,
+    lpad(cast(org_no as text), 10, '0') || '_' ||
+    lpad(cast(cat1_no as text), 4, '0') || '_' ||
+    lpad(cast(cat2_no as text), 4, '0') as stat_code,
+    cast(org_no as text) || '.' || cast(cat1_no as text) || '.' || cast(cat2_no as text) || '. ' || cat2 as stat_name,
+    'N' as srch_yn,
+    org_cd,
+    org_nm as org_name,
+    null as list_url
+from cat2s
+
+union all
+
+-- 4레벨: 실제 API
+select
+    lpad(cast(org_no as text), 10, '0') || '_' ||
+    lpad(cast(cat1_no as text), 4, '0') || '_' ||
+    lpad(cast(cat2_no as text), 4, '0') as p_stat_code,
+    cast(list_id as text) as stat_code,
+    cast(org_no as text) || '.' || cast(cat1_no as text) || '.' || cast(cat2_no as text) || '.' || cast(api_no as text) || '. ' || list_nm as stat_name,
+    'Y' as srch_yn,
+    org_cd,
+    org_nm as org_name,
+    list_url
+from apis;

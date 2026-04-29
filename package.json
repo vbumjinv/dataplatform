@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "reactflow": "^11.11.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.18",
+    "tailwindcss": "^4.1.18"
+  }
+}

@@ -1,0 +1,303 @@
+[
+  {
+    "id": "wf-1769668177626",
+    "name": "test",
+    "workflow": {
+      "nodes": [
+        {
+          "id": "node-2",
+          "type": "dbSink",
+          "position": {
+            "x": 511.9000244140625,
+            "y": 212
+          },
+          "data": {
+            "label": "DB 설정",
+            "kind": "dbSink",
+            "status": "success",
+            "preview": "{\n  \"message\": \"DB 연결 성공\",\n  \"durationMs\": 62\n}",
+            "dbConfig": {
+              "url": "jdbc:postgresql://211.238.12.40:5432",
+              "database": "dbtest",
+              "user": "dp",
+              "password": "root123",
+              "dbType": "postgres"
+            },
+            "config": {
+              "endpoint": "https://jsonplaceholder.typicode.com/todos/1",
+              "method": "GET",
+              "timeout": 5000,
+              "apiKey": "",
+              "apiKeyByProvider": {},
+              "apiProviderConfigs": {},
+              "apiKeyParam": "",
+              "queryParams": "",
+              "apiFormat": "json",
+              "apiLang": "kr",
+              "apiStatCode": "",
+              "apiPeriod": "M",
+              "apiStart": "",
+              "apiEnd": "",
+              "apiUserStatsId": "",
+              "apiPrdSe": "Y",
+              "apiStartPrdDe": "",
+              "apiEndPrdDe": "",
+              "apiStrtYymm": "",
+              "apiEndYymm": "",
+              "apiOrgCode": "",
+              "apiName": "",
+              "apiFunctionName": "",
+              "apiStartParamName": "",
+              "apiEndParamName": ""
+            },
+            "lastRun": "2026-01-29T06:31:43.106Z"
+          },
+          "width": 64,
+          "height": 73,
+          "selected": false,
+          "positionAbsolute": {
+            "x": 511.9000244140625,
+            "y": 212
+          },
+          "dragging": false
+        },
+        {
+          "id": "node-3",
+          "type": "dataStorage",
+          "position": {
+            "x": 714.8500366210938,
+            "y": 241.74214171674487
+          },
+          "data": {
+            "label": "DB 저장",
+            "kind": "dbSave",
+            "status": "success",
+            "preview": "{\n  \"message\": \"데이터 저장 완료\",\n  \"inserted\": 12\n}",
+            "storageOptions": {
+              "schema": "dp",
+              "schemas": [
+                "dp",
+                "public"
+              ],
+              "schemasLoading": false,
+              "tableName": "price",
+              "tables": [
+                "new",
+                "price",
+                "stock_trade_signal",
+                "test"
+              ],
+              "tablesLoading": false,
+              "columns": [
+                {
+                  "name": "tbl_id",
+                  "dataType": "character varying"
+                },
+                {
+                  "name": "tbl_nm",
+                  "dataType": "character varying"
+                },
+                {
+                  "name": "c1",
+                  "dataType": "character varying"
+                },
+                {
+                  "name": "c1_obj_nm",
+                  "dataType": "character varying"
+                },
+                {
+                  "name": "c1_obj_nm_eng",
+                  "dataType": "character varying"
+                },
+                {
+                  "name": "c1_nm",
+                  "dataType": "character varying"
+                },
+                {
+                  "name": "c1_nm_eng",
+                  "dataType": "character varying"
+                },
+                {
+                  "name": "org_id",
+                  "dataType": "character varying"
+                },
+                {
+                  "name": "itm_id",
+                  "dataType": "character varying"
+                },
+                {
+                  "name": "itm_nm",
+                  "dataType": "character varying"
+                },
+                {
+                  "name": "itm_nm_eng",
+                  "dataType": "character varying"
+                },
+                {
+                  "name": "unit_id",
+                  "dataType": "character varying"
+                },
+                {
+                  "name": "unit_nm",
+                  "dataType": "character varying"
+                },
+                {
+                  "name": "unit_nm_eng",
+                  "dataType": "character varying"
+                },
+                {
+                  "name": "prd_se",
+                  "dataType": "character varying"
+                },
+                {
+                  "name": "prd_de",
+                  "dataType": "character varying"
+                },
+                {
+                  "name": "dt",
+                  "dataType": "character varying"
+                }
+              ],
+              "columnsLoading": false,
+              "columnMappings": {
+                "tbl_id": "TBL_ID",
+                "tbl_nm": "TBL_NM",
+                "c1": "C1",
+                "c1_obj_nm": "C1_OBJ_NM",
+                "c1_obj_nm_eng": "C1_OBJ_NM_ENG",
+                "c1_nm": "C1_NM",
+                "c1_nm_eng": "C1_NM_ENG",
+                "org_id": "ORG_ID",
+                "itm_id": "ITM_ID",
+                "itm_nm": "ITM_NM",
+                "itm_nm_eng": "ITM_NM_ENG",
+                "unit_id": "ITM_ID",
+                "unit_nm": "UNIT_NM",
+                "unit_nm_eng": "UNIT_NM_ENG",
+                "prd_se": "PRD_SE",
+                "prd_de": "PRD_DE",
+                "dt": "DT"
+              },
+              "truncateBeforeInsert": true
+            },
+            "config": {
+              "endpoint": "https://jsonplaceholder.typicode.com/todos/1",
+              "method": "GET",
+              "timeout": 5000,
+              "apiKey": "",
+              "apiKeyByProvider": {},
+              "apiProviderConfigs": {},
+              "apiKeyParam": "",
+              "queryParams": "",
+              "apiFormat": "json",
+              "apiLang": "kr",
+              "apiStatCode": "",
+              "apiPeriod": "M",
+              "apiStart": "",
+              "apiEnd": "",
+              "apiUserStatsId": "",
+              "apiPrdSe": "Y",
+              "apiStartPrdDe": "",
+              "apiEndPrdDe": "",
+              "apiStrtYymm": "",
+              "apiEndYymm": "",
+              "apiOrgCode": "",
+              "apiName": "",
+              "apiFunctionName": "",
+              "apiStartParamName": "",
+              "apiEndParamName": ""
+            },
+            "lastRun": "2026-01-29T06:31:43.481Z"
+          },
+          "width": 64,
+          "height": 73,
+          "selected": true,
+          "positionAbsolute": {
+            "x": 714.8500366210938,
+            "y": 241.74214171674487
+          },
+          "dragging": false
+        },
+        {
+          "id": "node-4",
+          "type": "dataCollector",
+          "position": {
+            "x": 513.8500366210938,
+            "y": 339
+          },
+          "data": {
+            "label": "API 수집",
+            "kind": "api",
+            "status": "success",
+            "preview": "\"[{\\\"C1_OBJ_NM\\\":\\\"농산물 및 석유류제외\\\",\\\"DT\\\":\\\"113.98\\\",\\\"C1\\\":\\\"QB\\\",\\\"PRD_SE\\\":\\\"M\\\",\\\"UNIT_NM_ENG\\\":\\\"2020＝100\\\",\\\"ITM_ID\\\":\\\"T\\\",\\\"TBL_ID\\\":\\\"DT_1J22007\\\",\\\"ITM_NM\\\":\\\"소비자물가지수\\\",\\\"TBL_NM\\\":\\\"농산물 및 석유류제외지수(2020＝100)\\\",\\\"PRD_DE\\\":\\\"202501\\\",\\\"LST_CHN_DE\\\":\\\"20250124\\\",\\\"C1_NM_ENG\\\":\\\"Excluding Agricult...",
+            "config": {
+              "endpoint": "https://jsonplaceholder.typicode.com/todos/1",
+              "method": "GET",
+              "timeout": 5000,
+              "apiKey": "NjNlNzI3NGMyNDBlMzRhYWJmZGNlZTNhZmUwOTU4Zjg=",
+              "apiKeyByProvider": {},
+              "apiProviderConfigs": {},
+              "apiKeyParam": "",
+              "queryParams": "",
+              "apiFormat": "json",
+              "apiLang": "kr",
+              "apiStatCode": "",
+              "apiPeriod": "M",
+              "apiStart": "",
+              "apiEnd": "",
+              "apiUserStatsId": "bjlee3075/101/DT_1J22007/2/1/20231220095249",
+              "apiPrdSe": "M",
+              "apiStartPrdDe": "202501",
+              "apiEndPrdDe": "202601",
+              "apiStrtYymm": "",
+              "apiEndYymm": "",
+              "apiOrgCode": "",
+              "apiName": "",
+              "apiFunctionName": "",
+              "apiStartParamName": "",
+              "apiEndParamName": "",
+              "apiProvider": "kosis"
+            },
+            "apiResult": "[{\"C1_OBJ_NM\":\"농산물 및 석유류제외\",\"DT\":\"113.98\",\"C1\":\"QB\",\"PRD_SE\":\"M\",\"UNIT_NM_ENG\":\"2020＝100\",\"ITM_ID\":\"T\",\"TBL_ID\":\"DT_1J22007\",\"ITM_NM\":\"소비자물가지수\",\"TBL_NM\":\"농산물 및 석유류제외지수(2020＝100)\",\"PRD_DE\":\"202501\",\"LST_CHN_DE\":\"20250124\",\"C1_NM_ENG\":\"Excluding Agricultural products ＆ oils\",\"C1_NM\":\"농산물및석유류제외지수\",\"UNIT_NM\":\"2020＝100\",\"ITM_NM_ENG\":\"CPI\",\"ORG_ID\":\"101\",\"C1_OBJ_NM_ENG\":\"Excluding Agricultural Products ＆ Oils\"},{\"C1_OBJ_NM\":\"농산물 및 석유류제외\",\"DT\":\"114.12\",\"C1\":\"QB\",\"PRD_SE\":\"M\",\"UNIT_NM_ENG\":\"2020＝100\",\"ITM_ID\":\"T\",\"TBL_ID\":\"DT_1J22007\",\"ITM_NM\":\"소비자물가지수\",\"TBL_NM\":\"농산물 및 석유류제외지수(2020＝100)\",\"PRD_DE\":\"202502\",\"LST_CHN_DE\":\"20250304\",\"C1_NM_ENG\":\"Excluding Agricultural products ＆ oils\",\"C1_NM\":\"농산물및석유류제외지수\",\"UNIT_NM\":\"2020＝100\",\"ITM_NM_ENG\":\"CPI\",\"ORG_ID\":\"101\",\"C1_OBJ_NM_ENG\":\"Excluding Agricultural Products ＆ Oils\"},{\"C1_OBJ_NM\":\"농산물 및 석유류제외\",\"DT\":\"114.37\",\"C1\":\"QB\",\"PRD_SE\":\"M\",\"UNIT_NM_ENG\":\"2020＝100\",\"ITM_ID\":\"T\",\"TBL_ID\":\"DT_1J22007\",\"ITM_NM\":\"소비자물가지수\",\"TBL_NM\":\"농산물 및 석유류제외지수(2020＝100)\",\"PRD_DE\":\"202503\",\"LST_CHN_DE\":\"20250331\",\"C1_NM_ENG\":\"Excluding Agricultural products ＆ oils\",\"C1_NM\":\"농산물및석유류제외지수\",\"UNIT_NM\":\"2020＝100\",\"ITM_NM_ENG\":\"CPI\",\"ORG_ID\":\"101\",\"C1_OBJ_NM_ENG\":\"Excluding Agricultural Products ＆ Oils\"},{\"C1_OBJ_NM\":\"농산물 및 석유류제외\",\"DT\":\"114.86\",\"C1\":\"QB\",\"PRD_SE\":\"M\",\"UNIT_NM_ENG\":\"2020＝100\",\"ITM_ID\":\"T\",\"TBL_ID\":\"DT_1J22007\",\"ITM_NM\":\"소비자물가지수\",\"TBL_NM\":\"농산물 및 석유류제외지수(2020＝100)\",\"PRD_DE\":\"202504\",\"LST_CHN_DE\":\"20250430\",\"C1_NM_ENG\":\"Excluding Agricultural products ＆ oils\",\"C1_NM\":\"농산물및석유류제외지수\",\"UNIT_NM\":\"2020＝100\",\"ITM_NM_ENG\":\"CPI\",\"ORG_ID\":\"101\",\"C1_OBJ_NM_ENG\":\"Excluding Agricultural Products ＆ Oils\"},{\"C1_OBJ_NM\":\"농산물 및 석유류제외\",\"DT\":\"115.06\",\"C1\":\"QB\",\"PRD_SE\":\"M\",\"UNIT_NM_ENG\":\"2020＝100\",\"ITM_ID\":\"T\",\"TBL_ID\":\"DT_1J22007\",\"ITM_NM\":\"소비자물가지수\",\"TBL_NM\":\"농산물 및 석유류제외지수(2020＝100)\",\"PRD_DE\":\"202505\",\"LST_CHN_DE\":\"20250530\",\"C1_NM_ENG\":\"Excluding Agricultural products ＆ oils\",\"C1_NM\":\"농산물및석유류제외지수\",\"UNIT_NM\":\"2020＝100\",\"ITM_NM_ENG\":\"CPI\",\"ORG_ID\":\"101\",\"C1_OBJ_NM_ENG\":\"Excluding Agricultural Products ＆ Oils\"},{\"C1_OBJ_NM\":\"농산물 및 석유류제외\",\"DT\":\"115.25\",\"C1\":\"QB\",\"PRD_SE\":\"M\",\"UNIT_NM_ENG\":\"2020＝100\",\"ITM_ID\":\"T\",\"TBL_ID\":\"DT_1J22007\",\"ITM_NM\":\"소비자물가지수\",\"TBL_NM\":\"농산물 및 석유류제외지수(2020＝100)\",\"PRD_DE\":\"202506\",\"LST_CHN_DE\":\"20250630\",\"C1_NM_ENG\":\"Excluding Agricultural products ＆ oils\",\"C1_NM\":\"농산물및석유류제외지수\",\"UNIT_NM\":\"2020＝100\",\"ITM_NM_ENG\":\"CPI\",\"ORG_ID\":\"101\",\"C1_OBJ_NM_ENG\":\"Excluding Agricultural Products ＆ Oils\"},{\"C1_OBJ_NM\":\"농산물 및 석유류제외\",\"DT\":\"115.29\",\"C1\":\"QB\",\"PRD_SE\":\"M\",\"UNIT_NM_ENG\":\"2020＝100\",\"ITM_ID\":\"T\",\"TBL_ID\":\"DT_1J22007\",\"ITM_NM\":\"소비자물가지수\",\"TBL_NM\":\"농산물 및 석유류제외지수(2020＝100)\",\"PRD_DE\":\"202507\",\"LST_CHN_DE\":\"20250801\",\"C1_NM_ENG\":\"Excluding Agricultural products ＆ oils\",\"C1_NM\":\"농산물및석유류제외지수\",\"UNIT_NM\":\"2020＝100\",\"ITM_NM_ENG\":\"CPI\",\"ORG_ID\":\"101\",\"C1_OBJ_NM_ENG\":\"Excluding Agricultural Products ＆ Oils\"},{\"C1_OBJ_NM\":\"농산물 및 석유류제외\",\"DT\":\"114.84\",\"C1\":\"QB\",\"PRD_SE\":\"M\",\"UNIT_NM_ENG\":\"2020＝100\",\"ITM_ID\":\"T\",\"TBL_ID\":\"DT_1J22007\",\"ITM_NM\":\"소비자물가지수\",\"TBL_NM\":\"농산물 및 석유류제외지수(2020＝100)\",\"PRD_DE\":\"202508\",\"LST_CHN_DE\":\"20250829\",\"C1_NM_ENG\":\"Excluding Agricultural products ＆ oils\",\"C1_NM\":\"농산물및석유류제외지수\",\"UNIT_NM\":\"2020＝100\",\"ITM_NM_ENG\":\"CPI\",\"ORG_ID\":\"101\",\"C1_OBJ_NM_ENG\":\"Excluding Agricultural Products ＆ Oils\"},{\"C1_OBJ_NM\":\"농산물 및 석유류제외\",\"DT\":\"115.56\",\"C1\":\"QB\",\"PRD_SE\":\"M\",\"UNIT_NM_ENG\":\"2020＝100\",\"ITM_ID\":\"T\",\"TBL_ID\":\"DT_1J22007\",\"ITM_NM\":\"소비자물가지수\",\"TBL_NM\":\"농산물 및 석유류제외지수(2020＝100)\",\"PRD_DE\":\"202509\",\"LST_CHN_DE\":\"20251029\",\"C1_NM_ENG\":\"Excluding Agricultural products ＆ oils\",\"C1_NM\":\"농산물및석유류제외지수\",\"UNIT_NM\":\"2020＝100\",\"ITM_NM_ENG\":\"CPI\",\"ORG_ID\":\"101\",\"C1_OBJ_NM_ENG\":\"Excluding Agricultural Products ＆ Oils\"},{\"C1_OBJ_NM\":\"농산물 및 석유류제외\",\"DT\":\"116\",\"C1\":\"QB\",\"PRD_SE\":\"M\",\"UNIT_NM_ENG\":\"2020＝100\",\"ITM_ID\":\"T\",\"TBL_ID\":\"DT_1J22007\",\"ITM_NM\":\"소비자물가지수\",\"TBL_NM\":\"농산물 및 석유류제외지수(2020＝100)\",\"PRD_DE\":\"202510\",\"LST_CHN_DE\":\"20251030\",\"C1_NM_ENG\":\"Excluding Agricultural products ＆ oils\",\"C1_NM\":\"농산물및석유류제외지수\",\"UNIT_NM\":\"2020＝100\",\"ITM_NM_ENG\":\"CPI\",\"ORG_ID\":\"101\",\"C1_OBJ_NM_ENG\":\"Excluding Agricultural Products ＆ Oils\"},{\"C1_OBJ_NM\":\"농산물 및 석유류제외\",\"DT\":\"115.82\",\"C1\":\"QB\",\"PRD_SE\":\"M\",\"UNIT_NM_ENG\":\"2020＝100\",\"ITM_ID\":\"T\",\"TBL_ID\":\"DT_1J22007\",\"ITM_NM\":\"소비자물가지수\",\"TBL_NM\":\"농산물 및 석유류제외지수(2020＝100)\",\"PRD_DE\":\"202511\",\"LST_CHN_DE\":\"20251128\",\"C1_NM_ENG\":\"Excluding Agricultural products ＆ oils\",\"C1_NM\":\"농산물및석유류제외지수\",\"UNIT_NM\":\"2020＝100\",\"ITM_NM_ENG\":\"CPI\",\"ORG_ID\":\"101\",\"C1_OBJ_NM_ENG\":\"Excluding Agricultural Products ＆ Oils\"},{\"C1_OBJ_NM\":\"농산물 및 석유류제외\",\"DT\":\"116.02\",\"C1\":\"QB\",\"PRD_SE\":\"M\",\"UNIT_NM_ENG\":\"2020＝100\",\"ITM_ID\":\"T\",\"TBL_ID\":\"DT_1J22007\",\"ITM_NM\":\"소비자물가지수\",\"TBL_NM\":\"농산물 및 석유류제외지수(2020＝100)\",\"PRD_DE\":\"202512\",\"LST_CHN_DE\":\"20251226\",\"C1_NM_ENG\":\"Excluding Agricultural products ＆ oils\",\"C1_NM\":\"농산물및석유류제외지수\",\"UNIT_NM\":\"2020＝100\",\"ITM_NM_ENG\":\"CPI\",\"ORG_ID\":\"101\",\"C1_OBJ_NM_ENG\":\"Excluding Agricultural Products ＆ Oils\"}]",
+            "lastRun": "2026-01-29T06:31:43.289Z"
+          },
+          "width": 64,
+          "height": 73,
+          "selected": false,
+          "positionAbsolute": {
+            "x": 513.8500366210938,
+            "y": 339
+          },
+          "dragging": false
+        }
+      ],
+      "edges": [
+        {
+          "source": "node-2",
+          "sourceHandle": null,
+          "target": "node-3",
+          "targetHandle": null,
+          "id": "reactflow__edge-node-2-node-3"
+        },
+        {
+          "source": "node-4",
+          "sourceHandle": null,
+          "target": "node-3",
+          "targetHandle": null,
+          "id": "reactflow__edge-node-4-node-3"
+        }
+      ]
+    },
+    "schedule": {
+      "enabled": true,
+      "mode": "interval",
+      "intervalMinutes": 1,
+      "cron": "0 * * * *"
+    },
+    "createdAt": "2026-01-29T06:54:49.579Z",
+    "updatedAt": "2026-01-29T07:04:55.133Z",
+    "lastRunAt": "2026-01-29T07:04:54.926Z",
+    "lastStatus": "success",
+    "lastError": ""
+  }
+]

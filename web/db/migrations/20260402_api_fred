@@ -1,0 +1,173 @@
+truncate table dp.api_stat_list_fred;
+
+insert into dp.api_stat_list_fred (
+    node_id,
+    parent_node_id,
+    node_name,
+    node_type,
+    category_id,
+    stat_code,
+    cycle,
+    srch_yn,
+    lvl,
+    leaf_yn,
+    sort_ord,
+    org_name,
+    created_at,
+    updated_at
+)
+with recursive
+
+/* 1. 카테고리 형제 순번 */
+category_base as (
+    select
+        c.category_id,
+        c.parent_category_id,
+        c.category_name,
+        c.lvl,
+        c.leaf_yn,
+        row_number() over (
+            partition by c.parent_category_id
+            order by c.category_name, c.category_id
+        ) as sibling_ord
+    from dp.fred_stat_category c
+    where c.category_id <> 0
+),
+
+/* 2. 카테고리 번호 경로 생성 */
+category_tree as (
+    /* 최상위 카테고리: parent=0 또는 null */
+    select
+        cb.category_id,
+        cb.parent_category_id,
+        cb.category_name,
+        cb.lvl,
+        cb.leaf_yn,
+        cb.sibling_ord,
+        cb.sibling_ord::text as no_path
+    from category_base cb
+    where cb.parent_category_id is null
+       or cb.parent_category_id = 0
+
+    union all
+
+    select
+        ch.category_id,
+        ch.parent_category_id,
+        ch.category_name,
+        ch.lvl,
+        ch.leaf_yn,
+        ch.sibling_ord,
+        ct.no_path || '.' || ch.sibling_ord::text as no_path
+    from category_base ch
+    join category_tree ct
+      on ch.parent_category_id = ct.category_id
+),
+
+/* 3. 각 카테고리별 하위 카테고리 개수 */
+child_category_cnt as (
+    select
+        parent_category_id as category_id,
+        count(*) as child_cat_cnt
+    from dp.fred_stat_category
+    where category_id <> 0
+      and parent_category_id is not null
+    group by parent_category_id
+),
+
+/* 4. 시리즈 형제 순번
+      - 카테고리 뒤에 이어서 번호 붙이기 위해
+      - child_cat_cnt + row_number() 사용 */
+series_base as (
+    select
+        s.category_id,
+        s.stat_code,
+        s.stat_name,
+        s.cycle,
+        s.srch_yn,
+        s.org_name,
+        coalesce(cc.child_cat_cnt, 0) as child_cat_cnt,
+        row_number() over (
+            partition by s.category_id
+            order by s.stat_name, s.stat_code
+        ) as series_ord
+    from dp.fred_stat_list s
+    left join child_category_cnt cc
+      on s.category_id = cc.category_id
+),
+
+/* 5. 시리즈 번호 경로 */
+series_tree as (
+    select
+        sb.category_id,
+        sb.stat_code,
+        sb.stat_name,
+        sb.cycle,
+        sb.srch_yn,
+        sb.org_name,
+        ct.no_path || '.' || (sb.child_cat_cnt + sb.series_ord)::text as no_path,
+        sb.child_cat_cnt + sb.series_ord as sort_ord
+    from series_base sb
+    join category_tree ct
+      on sb.category_id = ct.category_id
+),
+
+/* 6. 카테고리 노드 */
+category_nodes as (
+    select
+        'C_' || ct.category_id::varchar as node_id,
+        case
+            when ct.parent_category_id is null or ct.parent_category_id = 0 then null
+            else 'C_' || ct.parent_category_id::varchar
+        end as parent_node_id,
+        ct.no_path || '. ' || ct.category_name as node_name,
+        'CATEGORY'::varchar(20) as node_type,
+        ct.category_id,
+        null::varchar(100) as stat_code,
+        null::varchar(20) as cycle,
+        'N'::char(1) as srch_yn,
+        ct.lvl,
+        ct.leaf_yn,
+        ct.sibling_ord as sort_ord,
+        'FRED'::varchar(200) as org_name
+    from category_tree ct
+),
+
+/* 7. 시리즈 노드 */
+series_nodes as (
+    select
+        'S_' || st.category_id::varchar || '_' || st.stat_code as node_id,
+        'C_' || st.category_id::varchar as parent_node_id,
+        st.no_path || '. ' || st.stat_name as node_name,
+        'SERIES'::varchar(20) as node_type,
+        st.category_id,
+        st.stat_code,
+        st.cycle,
+        st.srch_yn,
+        null::integer as lvl,
+        null::char(1) as leaf_yn,
+        st.sort_ord,
+        st.org_name
+    from series_tree st
+)
+
+select
+    x.node_id,
+    x.parent_node_id,
+    x.node_name,
+    x.node_type,
+    x.category_id,
+    x.stat_code,
+    x.cycle,
+    x.srch_yn,
+    x.lvl,
+    x.leaf_yn,
+    x.sort_ord,
+    x.org_name,
+    now(),
+    now()
+from (
+    select * from category_nodes
+    union all
+    select * from series_nodes
+) x;

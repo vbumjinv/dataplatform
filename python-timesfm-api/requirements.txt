@@ -1,0 +1,8 @@
+fastapi==0.116.1
+uvicorn==0.35.0
+numpy==1.26.4
+pandas==2.2.2
+pydantic==2.11.7
+torch
+accelerate>=0.33.0
+https://github.com/huggingface/transformers/archive/refs/heads/main.zip
