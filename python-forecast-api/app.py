@@ -212,9 +212,41 @@ def run_sarima(train_df: pd.DataFrame, test_df: pd.DataFrame, horizon_months: in
     return metrics, forecast_rows
 
 
+def chronos_pipeline_device_context():
+    """Chronos `BaseChronosPipeline.from_pretrained`에 넘기는 device_map/dtype과 동일."""
+    import torch  # type: ignore
+
+    device_map = "cuda" if torch.cuda.is_available() else "cpu"
+    dtype = torch.bfloat16 if device_map == "cuda" else torch.float32
+    return device_map, dtype, torch
+
+
+@app.get("/diagnostics/chronos-device")
+def diagnostics_chronos_device():
+    """Chronos 모델이 GPU(cuda) 경로를 탈지 여부를 이 프로세스 기준으로 확인한다."""
+    try:
+        device_map, _dtype, torch = chronos_pipeline_device_context()
+    except Exception as exc:
+        return {
+            "pipeline_device_map": None,
+            "pipeline_dtype": None,
+            "cuda_available": False,
+            "cuda_device_name": None,
+            "cuda_device_count": 0,
+            "error": str(exc),
+        }
+    cuda_ok = device_map == "cuda"
+    return {
+        "pipeline_device_map": device_map,
+        "pipeline_dtype": "bfloat16" if cuda_ok else "float32",
+        "cuda_available": cuda_ok,
+        "cuda_device_name": torch.cuda.get_device_name(0) if cuda_ok else None,
+        "cuda_device_count": torch.cuda.device_count() if cuda_ok else 0,
+    }
+
+
 def run_chronos_bolt_base(train_df: pd.DataFrame, test_df: pd.DataFrame, horizon_months: int):
     try:
-        import torch  # type: ignore
         from chronos import BaseChronosPipeline  # type: ignore
     except Exception as import_error:
         raise RuntimeError(
@@ -222,9 +254,8 @@ def run_chronos_bolt_base(train_df: pd.DataFrame, test_df: pd.DataFrame, horizon
             "(chronos-forecasting / transformers / accelerate)."
         ) from import_error
 
+    device_map, dtype, torch = chronos_pipeline_device_context()
     context = torch.tensor(train_df["y"].astype(float).values, dtype=torch.float32)
-    device_map = "cuda" if torch.cuda.is_available() else "cpu"
-    dtype = torch.bfloat16 if device_map == "cuda" else torch.float32
     try:
         pipeline = BaseChronosPipeline.from_pretrained(
             "amazon/chronos-bolt-base",
@@ -290,7 +321,6 @@ def run_chronos_bolt_base(train_df: pd.DataFrame, test_df: pd.DataFrame, horizon
 
 def run_chronos_2(train_df: pd.DataFrame, test_df: pd.DataFrame, horizon_months: int):
     try:
-        import torch  # type: ignore
         from chronos import BaseChronosPipeline  # type: ignore
     except Exception as import_error:
         raise RuntimeError(
@@ -298,11 +328,10 @@ def run_chronos_2(train_df: pd.DataFrame, test_df: pd.DataFrame, horizon_months:
             "(chronos-forecasting / transformers / accelerate)."
         ) from import_error
 
+    device_map, dtype, torch = chronos_pipeline_device_context()
     # Chronos-2는 (n_series, n_variates, history_length) 형태 입력을 사용한다.
     history_values = train_df["y"].astype(float).values
     context = torch.tensor(history_values, dtype=torch.float32).unsqueeze(0).unsqueeze(0)
-    device_map = "cuda" if torch.cuda.is_available() else "cpu"
-    dtype = torch.bfloat16 if device_map == "cuda" else torch.float32
     try:
         pipeline = BaseChronosPipeline.from_pretrained(
             "amazon/chronos-2",
