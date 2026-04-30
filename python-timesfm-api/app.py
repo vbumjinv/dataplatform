@@ -122,11 +122,11 @@ def get_timesfm_model():
             try:
                 model = TimesFm2_5ModelForPrediction.from_pretrained(
                     "google/timesfm-2.5-200m-transformers",
-                    device_map="auto",
                 )
                 model.eval()
+                model = model.to("cpu")
                 _TIMESFM_MODEL = model
-                _TIMESFM_DEVICE = next(model.parameters()).device
+                _TIMESFM_DEVICE = torch.device("cpu")
             except Exception as load_error:
                 raise RuntimeError(
                     f"TimesFM 2.5 모델 로딩에 실패했습니다: {str(load_error)}"
