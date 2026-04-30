@@ -61,6 +61,16 @@ const OLLAMA_TIMEOUT_MS = Math.max(
   10000,
   Number(process.env.OLLAMA_TIMEOUT_MS ?? 60000) || 60000,
 );
+/** 일반 Python 예측 API(8001 등) */
+const PYTHON_FORECAST_TIMEOUT_MS = Math.max(
+  5000,
+  Number(process.env.PYTHON_FORECAST_TIMEOUT_MS ?? 35000) || 35000,
+);
+/** TimesFM 전용 API: 첫 요청 시 모델 로딩으로 수 분 걸릴 수 있음 */
+const TIMESFM_FORECAST_TIMEOUT_MS = Math.max(
+  60000,
+  Number(process.env.TIMESFM_FORECAST_TIMEOUT_MS ?? 600000) || 600000,
+);
 const ALLOWED_MODEL_TYPES = new Set([
   "prophet",
   "arima",
@@ -326,6 +336,8 @@ export async function POST(request: Request) {
     let pythonError: string | null = null;
     const targetForecastApiUrl =
       modelType === "timesfm_2_5_200m" ? TIMESFM_FORECAST_API_URL : PYTHON_FORECAST_API_URL;
+    const forecastTimeoutMs =
+      modelType === "timesfm_2_5_200m" ? TIMESFM_FORECAST_TIMEOUT_MS : PYTHON_FORECAST_TIMEOUT_MS;
     for (let attempt = 0; attempt < 2; attempt += 1) {
       try {
         const response = await fetchWithTimeout(
@@ -340,7 +352,7 @@ export async function POST(request: Request) {
               data: points,
             }),
           },
-          35000,
+          forecastTimeoutMs,
         );
         const rawBody = await response.text();
         const parsed = parseJsonSafe(rawBody) as
@@ -362,7 +374,11 @@ export async function POST(request: Request) {
         pythonError = null;
         break;
       } catch (error) {
-        pythonError = error instanceof Error ? error.message : "Python API 호출 실패";
+        if (isAbortLikeError(error)) {
+          pythonError = `예측 API 응답 시간 초과(${Math.round(forecastTimeoutMs / 1000)}초). TimesFM은 첫 실행 시 모델 로딩으로 오래 걸릴 수 있어 TIMESFM_FORECAST_TIMEOUT_MS(기본 600초)를 늘리거나, python-timesfm-api가 기동된 뒤 다시 시도하세요.`;
+        } else {
+          pythonError = error instanceof Error ? error.message : "Python API 호출 실패";
+        }
       }
     }
     if (!pythonPayload) {
