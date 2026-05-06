@@ -41,6 +41,11 @@ const navItems = [
     href: "/ai-forecast-test-2",
     description: "Ollama 직접 예측 PoC",
   },
+  {
+    title: "AI 분석 테스트 3",
+    href: "/ai-forecast-test-3",
+    description: "자연어 질의 기반 자동 예측 PoC",
+  },
 ];
 
 export default function PlatformLayout({

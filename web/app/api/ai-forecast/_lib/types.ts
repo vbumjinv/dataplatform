@@ -23,5 +23,14 @@ export type ForecastPoint = {
 export type ForecastMetrics = {
   mae: number | null;
   rmse: number | null;
+  mape: number | null;
+};
+
+export type ForecastCompositeScore = {
+  value: number | null;
+  grade: "S" | "A" | "B" | "C" | "D" | null;
+  sampleCount: number;
+  directionAccuracy: number | null;
+  note: string | null;
 };
 

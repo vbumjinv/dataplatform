@@ -58,6 +58,13 @@ type RunResult = {
   llmSummary?: string | null;
   llmWarning?: string | null;
   metrics: { mae: number | null; rmse: number | null; mape: number | null };
+  compositeScore?: {
+    value: number | null;
+    grade: "S" | "A" | "B" | "C" | "D" | null;
+    sampleCount: number;
+    directionAccuracy: number | null;
+    note: string | null;
+  } | null;
   history: TimeSeriesPoint[];
   forecast: LlmForecastPoint[];
   llmPrompt: string | null;
@@ -104,6 +111,7 @@ export default function AiForecastTest2Page() {
   const [llmProvider, setLlmProvider] = useState<(typeof LLM_PROVIDERS)[number]>("ollama");
   const [ollamaModel, setOllamaModel] = useState<(typeof OLLAMA_MODELS)[number]>("qwen3:8b");
   const [openAiModel, setOpenAiModel] = useState("gpt-4o-mini");
+  const [temperatureInput, setTemperatureInput] = useState("");
   const [running, setRunning] = useState(false);
   const [runError, setRunError] = useState("");
   const [result, setResult] = useState<RunResult | null>(null);
@@ -224,6 +232,10 @@ export default function AiForecastTest2Page() {
           provider: llmProvider,
           ollamaModel,
           openaiModel: openAiModel,
+          temperature:
+            temperatureInput.trim().length > 0 && Number.isFinite(Number(temperatureInput))
+              ? Number(temperatureInput)
+              : undefined,
         }),
       });
       const payload = (await response.json()) as { ok?: boolean; error?: string } & RunResult;
@@ -357,8 +369,22 @@ export default function AiForecastTest2Page() {
               onChange={(e) => setHorizonMonths(Math.max(1, Math.min(24, Number(e.target.value) || 12)))}
               className="w-20 rounded-lg border border-slate-200 px-2 py-2 text-sm"
             />
+            <span className="text-xs text-slate-500">temperature</span>
+            <input
+              type="number"
+              step="0.1"
+              min={0}
+              max={2}
+              value={temperatureInput}
+              onChange={(e) => setTemperatureInput(e.target.value)}
+              placeholder="기본값"
+              className="w-24 rounded-lg border border-slate-200 px-2 py-2 text-sm"
+            />
           </div>
         </div>
+        <p className="mt-2 text-xs text-slate-500">
+          temperature를 비워두면 모델 기본값을 사용합니다. 일부 모델은 temperature 변경을 지원하지 않아 자동으로 기본값으로 재시도됩니다.
+        </p>
         {seriesError ? <p className="mt-3 text-sm text-rose-600">{seriesError}</p> : null}
 
         <div className="mt-4 max-h-64 overflow-auto rounded-xl border border-slate-200">
@@ -441,7 +467,8 @@ export default function AiForecastTest2Page() {
               모델: {result.model}
               {result.llmProvider ? ` [${result.llmProvider}]` : ""}
               {result.llmModel ? ` (${result.llmModel})` : ""} / MAE: {formatNum(result.metrics.mae)} / RMSE: {formatNum(result.metrics.rmse)} /
-              MAPE: {formatNum(result.metrics.mape)}
+              MAPE: {formatNum(result.metrics.mape)} / 종합점수: {formatNum(result.compositeScore?.value)}
+              {result.compositeScore?.grade ? ` (${result.compositeScore.grade})` : ""}
             </p>
             <p className="mb-2 text-xs text-slate-500">
               수행시간: 총 {formatMs(result.totalElapsedMs)} / 예측 LLM {formatMs(result.llmElapsedMs)}
@@ -459,6 +486,11 @@ export default function AiForecastTest2Page() {
               {formatNum(result.summaryTokenUsage?.completionTokens)} / total{" "}
               {formatNum(result.summaryTokenUsage?.totalTokens)} / 합계 total{" "}
               {formatNum(result.totalTokenUsage?.totalTokens)}
+            </p>
+            <p className="mb-2 text-xs text-slate-500">
+              방향정확도: {formatNum(result.compositeScore?.directionAccuracy)}% / 평가표본:{" "}
+              {formatNum(result.compositeScore?.sampleCount)} /{" "}
+              {result.compositeScore?.note ?? "종합점수는 MAE/RMSE/MAPE + 편향 + 방향정확도로 계산합니다."}
             </p>
             {chartSeries ? (
               <svg

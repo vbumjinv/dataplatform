@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { canUseDb, connectWithTimeout, createDbClient } from "../../ai-forecast/_lib/db";
+import { buildForecastCompositeScore } from "../../ai-forecast/_lib/forecast-score";
 import type { SeriesMeta, TimeSeriesPoint } from "../../ai-forecast/_lib/types";
 
 export const runtime = "nodejs";
@@ -10,6 +11,7 @@ type RunPayload = {
   provider?: "ollama" | "openai";
   ollamaModel?: string;
   openaiModel?: string;
+  temperature?: number | string;
 };
 
 type LlmForecastItem = {
@@ -64,7 +66,7 @@ const buildTokenUsage = (promptTokens: unknown, completionTokens: unknown): Toke
   return { promptTokens: prompt, completionTokens: completion, totalTokens: total };
 };
 
-const callOllama = async (model: string, prompt: string) => {
+const callOllama = async (model: string, prompt: string, temperature?: number | null) => {
   if (!OLLAMA_URL) {
     throw new Error("OLLAMA_URL 설정이 필요합니다.");
   }
@@ -78,9 +80,12 @@ const callOllama = async (model: string, prompt: string) => {
         prompt,
         stream: false,
         format: "json",
-        options: {
-          temperature: 0.1,
-        },
+        options:
+          temperature == null
+            ? undefined
+            : {
+                temperature,
+              },
       }),
     },
     120000,
@@ -100,7 +105,7 @@ const callOllama = async (model: string, prompt: string) => {
   };
 };
 
-const callOpenAi = async (model: string, prompt: string) => {
+const callOpenAi = async (model: string, prompt: string, temperature?: number | null) => {
   if (!OPENAI_API_KEY) {
     throw new Error("OPENAI_API_KEY 설정이 필요합니다.");
   }
@@ -115,7 +120,7 @@ const callOpenAi = async (model: string, prompt: string) => {
       },
       body: JSON.stringify({
         model,
-        temperature: 0.1,
+        ...(temperature != null ? { temperature } : {}),
         response_format: { type: "json_object" },
         messages: [
           {
@@ -165,6 +170,12 @@ const isAbortLikeError = (error: unknown): boolean => {
   if (!(error instanceof Error)) return false;
   return error.name === "AbortError" || /aborted|timeout/i.test(error.message);
 };
+
+const isTemperatureUnsupportedError = (message: string) =>
+  /temperature/i.test(message) &&
+  (/only the default/i.test(message) ||
+    /does not support/i.test(message) ||
+    /unsupported value/i.test(message));
 
 /** 요약용: JSON 강제 없이 plain text (테스트 1과 동일 패턴) */
 const callOllamaPlainText = async (model: string, prompt: string, timeoutMs: number) => {
@@ -536,6 +547,7 @@ export async function POST(request: Request) {
       : (OLLAMA_MODEL ?? "").trim(),
   );
   const selectedOpenAiModel = requestedOpenAiModel || (OPENAI_MODEL ?? "").trim();
+  const requestedTemperature = toFiniteNumber(payload?.temperature);
   if (!seriesId) {
     return NextResponse.json({ ok: false, error: "seriesId가 필요합니다." }, { status: 400 });
   }
@@ -629,10 +641,25 @@ export async function POST(request: Request) {
 
     const prompt = buildForecastPrompt(meta, train, targetDates);
     const llmStartedAt = Date.now();
-    const llmCallResult =
-      selectedProvider === "openai"
-        ? await callOpenAi(selectedOpenAiModel, prompt)
-        : await callOllama(selectedOllamaModel, prompt);
+    let forecastWarning: string | null = null;
+    let llmCallResult: Awaited<ReturnType<typeof callOllama>> | Awaited<ReturnType<typeof callOpenAi>>;
+    try {
+      llmCallResult =
+        selectedProvider === "openai"
+          ? await callOpenAi(selectedOpenAiModel, prompt, requestedTemperature)
+          : await callOllama(selectedOllamaModel, prompt, requestedTemperature);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "LLM 호출 실패";
+      if (requestedTemperature != null && isTemperatureUnsupportedError(message)) {
+        llmCallResult =
+          selectedProvider === "openai"
+            ? await callOpenAi(selectedOpenAiModel, prompt, null)
+            : await callOllama(selectedOllamaModel, prompt, null);
+        forecastWarning = `선택한 모델이 temperature=${requestedTemperature} 설정을 지원하지 않아 기본값으로 재시도했습니다.`;
+      } else {
+        throw error;
+      }
+    }
     const llmElapsedMs = Date.now() - llmStartedAt;
     const llmText = llmCallResult.text;
     let usedLinearFallback = false;
@@ -659,6 +686,7 @@ export async function POST(request: Request) {
       yhat: yhatList[idx],
       actual: actualList[idx],
     }));
+    const compositeScore = buildForecastCompositeScore(metrics, forecastRows);
 
     const predictionLabelForSummary = `${selectedProvider}:${llmCallResult.model}`;
 
@@ -707,6 +735,9 @@ export async function POST(request: Request) {
     } else {
       llmWarning = "OLLAMA_URL 또는 OLLAMA_MODEL 환경변수가 없어 요약을 생략했습니다.";
     }
+    if (forecastWarning) {
+      llmWarning = llmWarning ? `${forecastWarning} / ${llmWarning}` : forecastWarning;
+    }
 
     const forecastTokenUsage: TokenUsage = llmCallResult.tokenUsage;
     const totalPromptTokens =
@@ -743,6 +774,7 @@ export async function POST(request: Request) {
       llmSummary,
       llmWarning,
       metrics,
+      compositeScore,
       seriesId,
       horizonMonths,
       trainCount: train.length,

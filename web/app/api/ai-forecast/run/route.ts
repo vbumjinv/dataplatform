@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { canUseDb, connectWithTimeout, createDbClient } from "../_lib/db";
+import { buildForecastCompositeScore } from "../_lib/forecast-score";
 import type { ForecastMetrics, ForecastPoint, SeriesMeta, TimeSeriesPoint } from "../_lib/types";
 
 export const runtime = "nodejs";
@@ -388,6 +389,10 @@ export async function POST(request: Request) {
       );
     }
     const pythonElapsedMs = Date.now() - pythonStartedAt;
+    const compositeScore = buildForecastCompositeScore(
+      pythonPayload.metrics,
+      pythonPayload.forecast,
+    );
 
     let llmSummary: string | null = null;
     let llmWarning: string | null = null;
@@ -467,6 +472,7 @@ export async function POST(request: Request) {
       meta,
       model: pythonPayload.model,
       metrics: pythonPayload.metrics,
+      compositeScore,
       seriesId: pythonPayload.series_id,
       horizonMonths: pythonPayload.horizon_months,
       trainCount: pythonPayload.train_count,

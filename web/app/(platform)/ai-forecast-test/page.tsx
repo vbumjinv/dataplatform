@@ -37,6 +37,13 @@ type RunResult = {
   testEnd: string | null;
   model: string;
   metrics: { mae: number | null; rmse: number | null; mape: number | null };
+  compositeScore?: {
+    value: number | null;
+    grade: "S" | "A" | "B" | "C" | "D" | null;
+    sampleCount: number;
+    directionAccuracy: number | null;
+    note: string | null;
+  } | null;
   fallbackReason: string | null;
   history: TimeSeriesPoint[];
   forecast: ForecastPoint[];
@@ -469,7 +476,9 @@ export default function AiForecastTestPage() {
               <div className="flex items-center gap-2 text-xs text-slate-500">
                 <p>
                   모델: {result.model} / MAE: {formatNum(result.metrics.mae)} / RMSE:{" "}
-                  {formatNum(result.metrics.rmse)} / MAPE: {formatNum(result.metrics.mape)}
+                  {formatNum(result.metrics.rmse)} / MAPE: {formatNum(result.metrics.mape)} / 종합점수:{" "}
+                  {formatNum(result.compositeScore?.value)}
+                  {result.compositeScore?.grade ? ` (${result.compositeScore.grade})` : ""}
                 </p>
                 <span className="relative inline-flex items-center">
                   <span className="peer inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border border-slate-300 bg-white text-[10px] font-bold text-slate-600">
@@ -515,6 +524,11 @@ export default function AiForecastTestPage() {
                 {formatNum(result.summaryTokenUsage?.completionTokens)} / total{" "}
                 {formatNum(result.summaryTokenUsage?.totalTokens)}
               </p>
+              <p>
+                방향정확도: {formatNum(result.compositeScore?.directionAccuracy)}% / 평가표본:{" "}
+                {formatNum(result.compositeScore?.sampleCount)}
+              </p>
+              <p>{result.compositeScore?.note ?? "종합점수는 MAE/RMSE/MAPE + 편향 + 방향정확도로 계산합니다."}</p>
             </div>
             {chartSeries ? (
               <svg
