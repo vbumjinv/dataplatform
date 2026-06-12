@@ -122,12 +122,16 @@ type IngestionStatusFailure = {
   errorStage: string | null;
   errorMessage: string | null;
 };
+type DbSettingOption = {
+  id: number;
+  settingName: string;
+};
+const VISUALIZATION_DB_SETTING_STORAGE_KEY = "visualization-selected-db-setting-id";
 
 const topics: Array<{ key: TopicKey; label: string; ready: boolean }> = [
-  { key: "ingestionStatus", label: "1. 데이터 수집 현황", ready: true },
-  { key: "trendChart", label: "2. 데이터 추이 그래프", ready: true },
-  { key: "analysis", label: "3. 분석화면", ready: true },
-  { key: "report", label: "4. 레포트 화면", ready: false },
+  { key: "trendChart", label: "1. 데이터 추이 그래프", ready: true },
+  { key: "analysis", label: "2. 분석화면", ready: true },
+  { key: "report", label: "3. 레포트 화면", ready: false },
 ];
 
 const chartWidth = 980;
@@ -343,6 +347,9 @@ const calcPearson = (x: number[], y: number[]) => {
 
 export default function VisualizationPage() {
   const [activeTopic, setActiveTopic] = useState<TopicKey>("trendChart");
+  const [dbSettings, setDbSettings] = useState<DbSettingOption[]>([]);
+  const [selectedDbSettingId, setSelectedDbSettingId] = useState("");
+  const [dbSettingsError, setDbSettingsError] = useState("");
   const [ingestionLoading, setIngestionLoading] = useState(false);
   const [ingestionError, setIngestionError] = useState("");
   const [ingestionSummary, setIngestionSummary] = useState<IngestionStatusSummary | null>(null);
@@ -351,6 +358,7 @@ export default function VisualizationPage() {
   const [ingestionFailureRows, setIngestionFailureRows] = useState<IngestionStatusFailure[]>([]);
   const [analysisCharts, setAnalysisCharts] = useState<ChartListItem[]>([]);
   const [analysisLoading, setAnalysisLoading] = useState(false);
+  const [analysisLoaded, setAnalysisLoaded] = useState(false);
   const [analysisError, setAnalysisError] = useState("");
   const [analysisSelectedChartId, setAnalysisSelectedChartId] = useState<number | null>(null);
   const [analysisTitle, setAnalysisTitle] = useState("");
@@ -385,6 +393,7 @@ export default function VisualizationPage() {
   const [analysisCreateSeriesIds, setAnalysisCreateSeriesIds] = useState<string[]>([]);
   const [charts, setCharts] = useState<ChartListItem[]>([]);
   const [chartsLoading, setChartsLoading] = useState(false);
+  const [chartsLoaded, setChartsLoaded] = useState(false);
   const [chartsError, setChartsError] = useState("");
   const [selectedChartId, setSelectedChartId] = useState<number | null>(null);
   const [chartActionError, setChartActionError] = useState("");
@@ -450,6 +459,7 @@ export default function VisualizationPage() {
   const [detailDragStartIndex, setDetailDragStartIndex] = useState<number | null>(null);
   const [detailDragCurrentIndex, setDetailDragCurrentIndex] = useState<number | null>(null);
   const [hoveredDetailIndex, setHoveredDetailIndex] = useState<number | null>(null);
+  const chartsFetchRequestIdRef = useRef(0);
   const detailSvgRef = useRef<SVGSVGElement | null>(null);
   const detailChartWrapRef = useRef<HTMLDivElement | null>(null);
   const detailReferenceLineMenuRef = useRef<HTMLDivElement | null>(null);
@@ -457,11 +467,73 @@ export default function VisualizationPage() {
   const detailTooltipRef = useRef<HTMLDivElement | null>(null);
   const [detailTooltipWidth, setDetailTooltipWidth] = useState(0);
 
+  const withDbSettingQuery = useCallback(
+    (path: string) => {
+      if (!selectedDbSettingId) return path;
+      const separator = path.includes("?") ? "&" : "?";
+      return `${path}${separator}dbSettingId=${encodeURIComponent(selectedDbSettingId)}`;
+    },
+    [selectedDbSettingId],
+  );
+
+  const fetchDbSettings = useCallback(async () => {
+    setDbSettingsError("");
+    try {
+      const response = await fetch("/api/db/settings", { cache: "no-store" });
+      const payload = (await response.json()) as {
+        ok?: boolean;
+        settings?: Array<{ id: number; settingName: string }>;
+        error?: string;
+      };
+      if (!response.ok || !payload.ok) {
+        throw new Error(payload.error || "DB 연결 설정을 불러오지 못했습니다.");
+      }
+      const settings = (payload.settings ?? []).map((item) => ({
+        id: Number(item.id),
+        settingName: item.settingName,
+      }));
+      setDbSettings(settings);
+      const stored =
+        typeof window !== "undefined"
+          ? window.localStorage.getItem(VISUALIZATION_DB_SETTING_STORAGE_KEY)
+          : "";
+      const initialSelected =
+        settings.find((item) => String(item.id) === stored)?.id ?? settings[0]?.id ?? null;
+      setSelectedDbSettingId(initialSelected ? String(initialSelected) : "");
+    } catch (error) {
+      setDbSettingsError(
+        error instanceof Error ? error.message : "DB 연결 설정을 불러오지 못했습니다.",
+      );
+      setDbSettings([]);
+      setSelectedDbSettingId("");
+    }
+  }, []);
+
+  const handleDbSettingChange = useCallback((value: string) => {
+    setChartsLoaded(false);
+    setAnalysisLoaded(false);
+    setSelectedDbSettingId(value);
+  }, []);
+
+  useEffect(() => {
+    void fetchDbSettings();
+  }, [fetchDbSettings]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!selectedDbSettingId) return;
+    window.localStorage.setItem(
+      VISUALIZATION_DB_SETTING_STORAGE_KEY,
+      selectedDbSettingId,
+    );
+  }, [selectedDbSettingId]);
+
   const fetchCharts = useCallback(async () => {
+    const requestId = ++chartsFetchRequestIdRef.current;
     setChartsLoading(true);
     setChartsError("");
     try {
-      const response = await fetch("/api/visualization/charts");
+      const response = await fetch(withDbSettingQuery("/api/visualization/charts"));
       const payload = (await response.json()) as {
         ok?: boolean;
         charts?: ChartListItem[];
@@ -470,6 +542,7 @@ export default function VisualizationPage() {
       if (!response.ok || !payload.ok) {
         throw new Error(payload.error || "그래프 목록을 불러오지 못했습니다.");
       }
+      if (requestId !== chartsFetchRequestIdRef.current) return;
       const nextCharts = payload.charts ?? [];
       setCharts(nextCharts);
       setSelectedChartId((prev) => {
@@ -478,17 +551,22 @@ export default function VisualizationPage() {
         return nextCharts[0]?.chartId ?? null;
       });
     } catch (error) {
+      if (requestId !== chartsFetchRequestIdRef.current) return;
       setChartsError(error instanceof Error ? error.message : "그래프 목록을 불러오지 못했습니다.");
     } finally {
+      if (requestId !== chartsFetchRequestIdRef.current) return;
       setChartsLoading(false);
+      setChartsLoaded(true);
     }
-  }, []);
+  }, [withDbSettingQuery]);
 
   const fetchIngestionStatus = useCallback(async () => {
     setIngestionLoading(true);
     setIngestionError("");
     try {
-      const response = await fetch("/api/visualization/ingestion-status");
+      const response = await fetch(
+        withDbSettingQuery("/api/visualization/ingestion-status"),
+      );
       const payload = (await response.json()) as {
         ok?: boolean;
         summary?: IngestionStatusSummary;
@@ -509,13 +587,13 @@ export default function VisualizationPage() {
     } finally {
       setIngestionLoading(false);
     }
-  }, []);
+  }, [withDbSettingQuery]);
 
   const fetchAnalysisCharts = useCallback(async () => {
     setAnalysisLoading(true);
     setAnalysisError("");
     try {
-      const response = await fetch("/api/visualization/analysis");
+      const response = await fetch(withDbSettingQuery("/api/visualization/analysis"));
       const payload = (await response.json()) as {
         ok?: boolean;
         charts?: ChartListItem[];
@@ -535,13 +613,14 @@ export default function VisualizationPage() {
       setAnalysisError(error instanceof Error ? error.message : "분석 목록을 불러오지 못했습니다.");
     } finally {
       setAnalysisLoading(false);
+      setAnalysisLoaded(true);
     }
-  }, []);
+  }, [withDbSettingQuery]);
 
   const fetchAnalysisSeriesPool = useCallback(async () => {
     setAnalysisSeriesPoolLoading(true);
     try {
-      const response = await fetch("/api/visualization/series");
+      const response = await fetch(withDbSettingQuery("/api/visualization/series"));
       const payload = (await response.json()) as {
         ok?: boolean;
         series?: SeriesListItem[];
@@ -556,12 +635,14 @@ export default function VisualizationPage() {
     } finally {
       setAnalysisSeriesPoolLoading(false);
     }
-  }, []);
+  }, [withDbSettingQuery]);
 
   const fetchAnalysisDetail = useCallback(async (chartId: number) => {
     setAnalysisError("");
     try {
-      const response = await fetch(`/api/visualization/analysis/${chartId}`);
+      const response = await fetch(
+        withDbSettingQuery(`/api/visualization/analysis/${chartId}`),
+      );
       const payload = (await response.json()) as {
         ok?: boolean;
         chart?: { chartName: string; analysisLayout?: unknown; analysisConfig?: unknown };
@@ -625,7 +706,7 @@ export default function VisualizationPage() {
     setAnalysisCreateError("");
     try {
       const nextLayout = buildAnalysisLayout(analysisCreateTechniques);
-      const response = await fetch("/api/visualization/analysis", {
+      const response = await fetch(withDbSettingQuery("/api/visualization/analysis"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -691,7 +772,9 @@ export default function VisualizationPage() {
       setAnalysisEditError("");
       setAnalysisActionBusyId(chartId);
       try {
-        const response = await fetch(`/api/visualization/analysis/${chartId}`);
+        const response = await fetch(
+          withDbSettingQuery(`/api/visualization/analysis/${chartId}`),
+        );
         const payload = (await response.json()) as {
           ok?: boolean;
           chart?: { chartName: string; analysisConfig?: unknown };
@@ -742,7 +825,7 @@ export default function VisualizationPage() {
     setAnalysisEditError("");
     setAnalysisEditBusy(true);
     try {
-      const response = await fetch(`/api/visualization/analysis/${analysisEditChartId}`, {
+      const response = await fetch(withDbSettingQuery(`/api/visualization/analysis/${analysisEditChartId}`), {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -790,7 +873,7 @@ export default function VisualizationPage() {
       setAnalysisActionError("");
       setAnalysisActionBusyId(chart.chartId);
       try {
-        const response = await fetch(`/api/visualization/analysis/${chart.chartId}`, {
+        const response = await fetch(withDbSettingQuery(`/api/visualization/analysis/${chart.chartId}`), {
           method: "DELETE",
         });
         const payload = (await response.json()) as { ok?: boolean; error?: string };
@@ -817,7 +900,7 @@ export default function VisualizationPage() {
     setAnalysisSaveError("");
     setAnalysisSaveStatus("");
     try {
-      const response = await fetch(`/api/visualization/analysis/${analysisSelectedChartId}`, {
+      const response = await fetch(withDbSettingQuery(`/api/visualization/analysis/${analysisSelectedChartId}`), {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -843,7 +926,9 @@ export default function VisualizationPage() {
     setDetailLoading(true);
     setDetailError("");
     try {
-      const response = await fetch(`/api/visualization/charts/${chartId}`);
+      const response = await fetch(
+        withDbSettingQuery(`/api/visualization/charts/${chartId}`),
+      );
       const payload = (await response.json()) as {
         ok?: boolean;
         chart?: { chartName: string };
@@ -883,7 +968,7 @@ export default function VisualizationPage() {
     setSeriesLoading(true);
     setCreateError("");
     try {
-      const response = await fetch("/api/visualization/series");
+      const response = await fetch(withDbSettingQuery("/api/visualization/series"));
       const payload = (await response.json()) as {
         ok?: boolean;
         series?: SeriesListItem[];
@@ -898,7 +983,7 @@ export default function VisualizationPage() {
     } finally {
       setSeriesLoading(false);
     }
-  }, []);
+  }, [withDbSettingQuery]);
 
   const fetchPreview = useCallback(async (ids: string[]) => {
     if (!ids.length) {
@@ -907,7 +992,9 @@ export default function VisualizationPage() {
     }
     try {
       const response = await fetch(
-        `/api/visualization/series?withPoints=true&ids=${encodeURIComponent(ids.join(","))}`,
+        withDbSettingQuery(
+          `/api/visualization/series?withPoints=true&ids=${encodeURIComponent(ids.join(","))}`,
+        ),
       );
       const payload = (await response.json()) as {
         ok?: boolean;
@@ -943,7 +1030,9 @@ export default function VisualizationPage() {
     }
     try {
       const response = await fetch(
-        `/api/visualization/series?withPoints=true&ids=${encodeURIComponent(ids.join(","))}`,
+        withDbSettingQuery(
+          `/api/visualization/series?withPoints=true&ids=${encodeURIComponent(ids.join(","))}`,
+        ),
       );
       const payload = (await response.json()) as {
         ok?: boolean;
@@ -1009,10 +1098,10 @@ export default function VisualizationPage() {
   }, [selectedChartId, fetchChartDetail]);
 
   useEffect(() => {
-    if (!selectedChartId || detailLoading || !!detailError) {
+    if (!selectedChartId || (!!detailError && !detailSeries.length)) {
       setShowDetailFullscreen(false);
     }
-  }, [detailError, detailLoading, selectedChartId]);
+  }, [detailError, detailSeries.length, selectedChartId]);
 
   useEffect(() => {
     setHiddenDetailSeriesIds([]);
@@ -1938,7 +2027,7 @@ export default function VisualizationPage() {
     setDetailReferenceLineSaving(true);
     setDetailReferenceLineError("");
     try {
-      const response = await fetch(`/api/visualization/charts/${selectedChartId}`, {
+      const response = await fetch(withDbSettingQuery(`/api/visualization/charts/${selectedChartId}`), {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -1967,19 +2056,23 @@ export default function VisualizationPage() {
       setCreateError("그래프 이름을 입력하세요.");
       return;
     }
-    if (!selectedSeriesIds.length) {
+    const availableSeriesIdSet = new Set(seriesList.map((item) => item.seriesId));
+    const validSeriesIds = selectedSeriesIds.filter((seriesId) =>
+      availableSeriesIdSet.has(seriesId),
+    );
+    if (!validSeriesIds.length) {
       setCreateError("시리즈를 1개 이상 선택하세요.");
       return;
     }
     try {
-      const response = await fetch("/api/visualization/charts", {
+      const response = await fetch(withDbSettingQuery("/api/visualization/charts"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           chartName: createName.trim(),
           chartType: "line",
-          seriesIds: selectedSeriesIds,
-          seriesOptions: selectedSeriesIds.map((seriesId) => ({
+          seriesIds: validSeriesIds,
+          seriesOptions: validSeriesIds.map((seriesId) => ({
             seriesId,
             yAxisSide: createSeriesAxisMap[seriesId] ?? "left",
           })),
@@ -2026,8 +2119,8 @@ export default function VisualizationPage() {
     setSeriesLoading(true);
     try {
       const [seriesResponse, detailResponse] = await Promise.all([
-        fetch("/api/visualization/series"),
-        fetch(`/api/visualization/charts/${chart.chartId}`),
+        fetch(withDbSettingQuery("/api/visualization/series")),
+        fetch(withDbSettingQuery(`/api/visualization/charts/${chart.chartId}`)),
       ]);
       const seriesPayload = (await seriesResponse.json()) as {
         ok?: boolean;
@@ -2075,20 +2168,24 @@ export default function VisualizationPage() {
       setEditError("그래프 이름을 입력하세요.");
       return;
     }
-    if (!editSeriesIds.length) {
+    const availableSeriesIdSet = new Set(seriesList.map((item) => item.seriesId));
+    const validSeriesIds = editSeriesIds.filter((seriesId) =>
+      availableSeriesIdSet.has(seriesId),
+    );
+    if (!validSeriesIds.length) {
       setEditError("시리즈를 1개 이상 선택하세요.");
       return;
     }
     setEditError("");
     setChartActionBusyId(editChartId);
     try {
-      const response = await fetch(`/api/visualization/charts/${editChartId}`, {
+      const response = await fetch(withDbSettingQuery(`/api/visualization/charts/${editChartId}`), {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           chartName: nextName,
-          seriesIds: editSeriesIds,
-          seriesOptions: editSeriesIds.map((seriesId) => ({
+          seriesIds: validSeriesIds,
+          seriesOptions: validSeriesIds.map((seriesId) => ({
             seriesId,
             yAxisSide: editSeriesAxisMap[seriesId] ?? "left",
           })),
@@ -2127,7 +2224,7 @@ export default function VisualizationPage() {
     setDeriveError("");
     setDeriveLoading(true);
     try {
-      const response = await fetch("/api/visualization/series/derive", {
+      const response = await fetch(withDbSettingQuery("/api/visualization/series/derive"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -2206,7 +2303,7 @@ export default function VisualizationPage() {
     if (context === "analysisCreate") setAnalysisCreateError("");
     if (context === "analysisEdit") setAnalysisEditError("");
     try {
-      const response = await fetch(`/api/visualization/series/${encodeURIComponent(series.seriesId)}`, {
+      const response = await fetch(withDbSettingQuery(`/api/visualization/series/${encodeURIComponent(series.seriesId)}`), {
         method: "DELETE",
       });
       const payload = (await response.json()) as { ok?: boolean; error?: string };
@@ -2252,7 +2349,7 @@ export default function VisualizationPage() {
     setChartActionError("");
     setChartActionBusyId(chart.chartId);
     try {
-      const response = await fetch(`/api/visualization/charts/${chart.chartId}`, {
+      const response = await fetch(withDbSettingQuery(`/api/visualization/charts/${chart.chartId}`), {
         method: "DELETE",
       });
       const payload = (await response.json()) as { ok?: boolean; error?: string };
@@ -2599,18 +2696,20 @@ export default function VisualizationPage() {
             const shouldRender =
               index === 0 || index === detailLabelsInView.length - 1 || index % step === 0;
             if (!shouldRender) return null;
+            const labelText = typeof label === "string" ? label : "";
+            if (!labelText) return null;
             const textAnchor =
               index === 0 ? "start" : index === detailLabelsInView.length - 1 ? "end" : "middle";
             return (
               <text
-                key={label}
+                key={`${labelText}-${index}`}
                 x={x}
                 y={chartHeight - 10}
                 textAnchor={textAnchor}
                 fontSize="10"
                 fill="#64748b"
               >
-                {label.slice(2).replaceAll("-", ".")}
+                {labelText.slice(2).replaceAll("-", ".")}
               </text>
             );
           })}
@@ -2848,8 +2947,33 @@ export default function VisualizationPage() {
   return (
     <section className="space-y-6">
       <header className="rounded-3xl border border-slate-200 bg-white p-6">
-        <h2 className="text-xl font-semibold text-slate-900">데이터 시각화</h2>
-        <p className="mt-2 text-sm text-slate-600">그래프 목록/상세/추가를 관리합니다.</p>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="text-xl font-semibold text-slate-900">데이터 시각화</h2>
+            <p className="mt-2 text-sm text-slate-600">그래프 목록/상세/추가를 관리합니다.</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2">
+              <span className="text-xs font-semibold text-slate-600">DB 연결</span>
+              <select
+                value={selectedDbSettingId}
+                onChange={(event) => handleDbSettingChange(event.target.value)}
+                className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 outline-none"
+                disabled={dbSettings.length === 0}
+              >
+                {dbSettings.length === 0 ? <option value="">설정 없음</option> : null}
+                {dbSettings.map((item) => (
+                  <option key={item.id} value={String(item.id)}>
+                    {item.settingName}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+        {dbSettingsError ? (
+          <p className="mt-3 text-xs text-rose-600">{dbSettingsError}</p>
+        ) : null}
       </header>
 
       <div className="rounded-3xl border border-slate-200 bg-white p-4">
@@ -2883,9 +3007,11 @@ export default function VisualizationPage() {
                 새로고침
               </button>
             </div>
-            {ingestionLoading ? <p className="mt-3 text-sm text-slate-500">불러오는 중...</p> : null}
+            {ingestionLoading && !ingestionSummary ? (
+              <p className="mt-3 text-sm text-slate-500">불러오는 중...</p>
+            ) : null}
             {ingestionError ? <p className="mt-3 text-sm text-rose-600">{ingestionError}</p> : null}
-            {!ingestionLoading && !ingestionError && ingestionSummary ? (
+            {ingestionSummary ? (
               <div className="mt-4 grid gap-3 md:grid-cols-5">
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
                   <p className="text-[11px] text-slate-500">전체 실행</p>
@@ -2999,10 +3125,12 @@ export default function VisualizationPage() {
                 분석 추가
               </button>
             </div>
-            {analysisLoading ? <p className="text-xs text-slate-500">불러오는 중...</p> : null}
+            {analysisLoading && analysisCharts.length === 0 ? (
+              <p className="text-xs text-slate-500">불러오는 중...</p>
+            ) : null}
             {analysisError ? <p className="text-xs text-rose-600">{analysisError}</p> : null}
             {analysisActionError ? <p className="text-xs text-rose-600">{analysisActionError}</p> : null}
-            {!analysisLoading && analysisCharts.length === 0 ? (
+            {analysisLoaded && !analysisLoading && analysisCharts.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-slate-300 p-4 text-xs text-slate-500">
                 생성된 분석이 없습니다. `분석 추가`로 시작하세요.
               </div>
@@ -3380,24 +3508,22 @@ export default function VisualizationPage() {
               <h3 className="text-sm font-semibold text-slate-900">그래프 리스트</h3>
               <button
                 onClick={() => {
+                  setChartActionError("");
                   setShowCreate(true);
-                  setCreateError("");
-                  setCreateStatus("");
-                  setCreateSeriesQuery("");
-                  setCreateFreqTab("M");
-                  setCreateSeriesAxisMap({});
                 }}
                 className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
               >
-                그래프 추가
+                그래프 생성
               </button>
             </div>
-            {chartsLoading ? <p className="text-xs text-slate-500">불러오는 중...</p> : null}
+            {chartsLoading && charts.length === 0 ? (
+              <p className="text-xs text-slate-500">불러오는 중...</p>
+            ) : null}
             {chartsError ? <p className="text-xs text-rose-600">{chartsError}</p> : null}
             {chartActionError ? <p className="text-xs text-rose-600">{chartActionError}</p> : null}
-            {!chartsLoading && charts.length === 0 ? (
+            {chartsLoaded && !chartsLoading && charts.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-slate-300 p-4 text-xs text-slate-500">
-                생성된 그래프가 없습니다. `그래프 추가`로 시작하세요.
+                생성된 그래프가 없습니다. `그래프 생성`으로 시작하세요.
               </div>
             ) : null}
             {charts.map((chart) => (
@@ -3451,9 +3577,7 @@ export default function VisualizationPage() {
           <div className="space-y-3 rounded-3xl border border-slate-200 bg-white p-5">
             {!selectedChartId ? (
               <p className="text-sm text-slate-500">좌측에서 그래프를 선택하세요.</p>
-            ) : detailLoading ? (
-              <p className="text-sm text-slate-500">그래프를 불러오는 중...</p>
-            ) : detailError ? (
+            ) : detailError && !detailSeries.length ? (
               <p className="text-sm text-rose-600">{detailError}</p>
             ) : (
               <>
@@ -3469,6 +3593,9 @@ export default function VisualizationPage() {
                 <span className="text-xs text-slate-500">
                   표시 중 {detailChartRows.length}/{detailSeries.length}개 시리즈
                 </span>
+                {detailLoading ? (
+                  <p className="text-xs text-slate-500">그래프 갱신 중...</p>
+                ) : null}
                 {renderDetailLegend()}
                 {showDetailFullscreen ? (
                   <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-xs text-slate-500">
@@ -3792,9 +3919,11 @@ export default function VisualizationPage() {
                           const shouldRender =
                             index === 0 || index === editPreviewLabels.length - 1 || index % step === 0;
                           if (!shouldRender) return null;
+                          const labelText = typeof label === "string" ? label : "";
+                          if (!labelText) return null;
                           return (
-                            <text key={label} x={x} y={chartHeight - 10} textAnchor="middle" fontSize="10" fill="#64748b">
-                              {label.slice(2).replaceAll("-", ".")}
+                            <text key={`${labelText}-${index}`} x={x} y={chartHeight - 10} textAnchor="middle" fontSize="10" fill="#64748b">
+                              {labelText.slice(2).replaceAll("-", ".")}
                             </text>
                           );
                         })

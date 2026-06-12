@@ -1,17 +1,30 @@
 import { Client } from "pg";
+import { resolveDbConfig } from "../db/_lib/connection";
 
 const CONNECT_TIMEOUT_MS = 5000;
 const MAX_BIND_PARAMS_PER_QUERY = 30000;
-const API_FETCH_TIMEOUT_MS = 15000;
-const API_FETCH_MAX_ATTEMPTS = 3;
-const END_LATEST_TOKEN = "__TODAY__";
-const DB_CONFIG = {
-  url: process.env.DP_DB_URL,
-  database: process.env.DP_DB_NAME,
-  user: process.env.DP_DB_USER,
-  password: process.env.DP_DB_PASSWORD,
+const parsePositiveInt = (raw: string | undefined, fallback: number) => {
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed)) return fallback;
+  const normalized = Math.trunc(parsed);
+  if (normalized <= 0) return fallback;
+  return normalized;
 };
-
+const API_FETCH_TIMEOUT_MS = parsePositiveInt(
+  process.env.INGESTION_API_FETCH_TIMEOUT_MS,
+  60000,
+);
+const API_FETCH_MAX_ATTEMPTS = parsePositiveInt(
+  process.env.INGESTION_API_FETCH_MAX_ATTEMPTS,
+  3,
+);
+const BOK_PAGE_MAX_ROWS = parsePositiveInt(process.env.INGESTION_BOK_PAGE_SIZE, 100000);
+const BOK_MAX_PAGES = parsePositiveInt(process.env.INGESTION_BOK_MAX_PAGES, 50);
+const KRX_GOLD_MAX_DAYS = parsePositiveInt(process.env.INGESTION_KRX_GOLD_MAX_DAYS, 10000);
+const KRX_GOLD_REQUEST_DELAY_MS = parsePositiveInt(process.env.INGESTION_KRX_GOLD_REQUEST_DELAY_MS, 350);
+const END_LATEST_TOKEN = "__TODAY__";
+const START_RELATIVE_TOKEN_REGEX = /^__TODAY_MINUS_(\d+)(D|M|Q|A|Y)__$/i;
+const START_RELATIVE_KO_REGEX = /^(\d+)\s*(일|개월|분기|년)\s*전$/;
 const sleep = (ms: number) =>
   new Promise<void>((resolve) => {
     setTimeout(resolve, ms);
@@ -26,9 +39,33 @@ const formatErrorWithCause = (error: unknown) => {
   if (cause?.syscall) parts.push(`cause.syscall=${cause.syscall}`);
   return parts.join(" | ");
 };
+const makeLoadAbortError = () => {
+  const error = new Error("적재가 취소되었습니다.");
+  error.name = "AbortError";
+  return error;
+};
+const isLoadAbortError = (error: unknown) =>
+  error instanceof Error &&
+  (error.name === "AbortError" || error.message.includes("적재가 취소되었습니다."));
+const throwIfLoadAborted = (signal?: AbortSignal | null) => {
+  if (signal?.aborted) {
+    throw makeLoadAbortError();
+  }
+};
 
 const isRetryableStatus = (status: number) =>
   status === 408 || status === 425 || status === 429 || (status >= 500 && status <= 599);
+const parseRetryAfterMs = (value: string | null) => {
+  if (!value) return null;
+  const seconds = Number(value);
+  if (Number.isFinite(seconds) && seconds > 0) {
+    return Math.trunc(seconds * 1000);
+  }
+  const targetTime = Date.parse(value);
+  if (Number.isNaN(targetTime)) return null;
+  const ms = targetTime - Date.now();
+  return ms > 0 ? ms : null;
+};
 
 const isNonEmpty = (value: unknown): value is string =>
   typeof value === "string" && value.trim().length > 0;
@@ -71,7 +108,13 @@ const castForColumn = (dataType: string, colRef: string): string => {
     t === "real" ||
     t === "double precision"
   ) {
-    return `${colRef}::numeric`;
+    return `case
+      when ${colRef} is null then null
+      when nullif(regexp_replace((${colRef})::text, ',', '', 'g'), '') is null then null
+      when nullif(regexp_replace((${colRef})::text, ',', '', 'g'), '') ~ '^[-+]?\\d+(\\.\\d+)?$'
+        then (nullif(regexp_replace((${colRef})::text, ',', '', 'g'), ''))::numeric
+      else null
+    end`;
   }
   if (
     t === "smallint" ||
@@ -80,9 +123,46 @@ const castForColumn = (dataType: string, colRef: string): string => {
     t === "serial" ||
     t === "bigserial"
   ) {
-    return `${colRef}::bigint`;
+    return `case
+      when ${colRef} is null then null
+      when nullif(regexp_replace((${colRef})::text, ',', '', 'g'), '') is null then null
+      when nullif(regexp_replace((${colRef})::text, ',', '', 'g'), '') ~ '^[-+]?\\d+$'
+        then (nullif(regexp_replace((${colRef})::text, ',', '', 'g'), ''))::bigint
+      else null
+    end`;
   }
   return colRef;
+};
+const normalizeCellByType = (value: unknown, dataType: string) => {
+  if (value == null) return null;
+  const t = dataType?.toLowerCase() ?? "text";
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    if (
+      t === "numeric" ||
+      t === "decimal" ||
+      t === "real" ||
+      t === "double precision"
+    ) {
+      const cleaned = trimmed.replaceAll(",", "");
+      if (!cleaned) return null;
+      return /^[-+]?\d+(\.\d+)?$/.test(cleaned) ? cleaned : null;
+    }
+    if (
+      t === "smallint" ||
+      t === "integer" ||
+      t === "bigint" ||
+      t === "serial" ||
+      t === "bigserial"
+    ) {
+      const cleaned = trimmed.replaceAll(",", "");
+      if (!cleaned) return null;
+      return /^[-+]?\d+$/.test(cleaned) ? cleaned : null;
+    }
+    return trimmed;
+  }
+  return value;
 };
 const decodeSafe = (value: string) => {
   try {
@@ -148,6 +228,174 @@ const toPeriodValue = (date: Date, period: string) => {
   if (period === "Q") return `${year}Q${Math.floor((month - 1) / 3) + 1}`;
   if (period === "A" || period === "Y") return `${year}`;
   return "";
+};
+const toIsoDateValue = (date: Date) => {
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+};
+const shouldUseIsoDateParamFormat = (paramKey: string) => {
+  const normalized = paramKey.trim().toLowerCase();
+  return normalized === "observation_start" || normalized === "observation_end";
+};
+const shouldUseDailyCompactParamFormat = (paramKey: string) =>
+  paramKey.trim().toLowerCase() === "basdd";
+const toParamDateValue = (date: Date, period: string, paramKey: string) => {
+  if (shouldUseIsoDateParamFormat(paramKey)) {
+    return toIsoDateValue(date);
+  }
+  if (shouldUseDailyCompactParamFormat(paramKey)) {
+    return toPeriodValue(date, "D");
+  }
+  return toPeriodValue(date, period);
+};
+const shiftDateByUnit = (base: Date, offset: number, unit: "D" | "M" | "Q" | "A" | "Y") => {
+  const next = new Date(base);
+  if (unit === "D") {
+    next.setDate(next.getDate() - offset);
+    return next;
+  }
+  if (unit === "M") {
+    next.setMonth(next.getMonth() - offset);
+    return next;
+  }
+  if (unit === "Q") {
+    next.setMonth(next.getMonth() - offset * 3);
+    return next;
+  }
+  next.setFullYear(next.getFullYear() - offset);
+  return next;
+};
+const resolveRelativeStartValue = (raw: string, period: string, paramKey: string) => {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  const tokenMatch = START_RELATIVE_TOKEN_REGEX.exec(trimmed);
+  if (tokenMatch) {
+    const offset = Number(tokenMatch[1]);
+    const unit = tokenMatch[2].toUpperCase() as "D" | "M" | "Q" | "A" | "Y";
+    if (!Number.isFinite(offset) || offset < 0) return null;
+    const shifted = shiftDateByUnit(new Date(), offset, unit);
+    return toParamDateValue(shifted, period, paramKey);
+  }
+  const koMatch = START_RELATIVE_KO_REGEX.exec(trimmed);
+  if (koMatch) {
+    const offset = Number(koMatch[1]);
+    if (!Number.isFinite(offset) || offset < 0) return null;
+    const unitText = koMatch[2];
+    const unit =
+      unitText === "일"
+        ? "D"
+        : unitText === "개월"
+          ? "M"
+          : unitText === "분기"
+            ? "Q"
+            : "Y";
+    const shifted = shiftDateByUnit(new Date(), offset, unit);
+    return toParamDateValue(shifted, period, paramKey);
+  }
+  return null;
+};
+const parseDateText = (value: string) => {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  if (/^\d{8}$/.test(trimmed)) {
+    const normalized = `${trimmed.slice(0, 4)}-${trimmed.slice(4, 6)}-${trimmed.slice(6, 8)}`;
+    const parsed = new Date(`${normalized}T00:00:00`);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    const parsed = new Date(`${trimmed}T00:00:00`);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+  const parsed = new Date(`${trimmed}T00:00:00`);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+const formatAsYmdCompact = (date: Date) =>
+  `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, "0")}${String(
+    date.getDate(),
+  ).padStart(2, "0")}`;
+const parsePeriodDate = (value: string, period: string) => {
+  const text = (value ?? "").trim();
+  if (!text) return null;
+  if (period === "D") {
+    if (!/^\d{8}$/.test(text)) return null;
+    const parsed = new Date(`${text.slice(0, 4)}-${text.slice(4, 6)}-${text.slice(6, 8)}T00:00:00`);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+  if (period === "M") {
+    if (!/^\d{6}$/.test(text)) return null;
+    const parsed = new Date(`${text.slice(0, 4)}-${text.slice(4, 6)}-01T00:00:00`);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+  if (period === "Q") {
+    const match = /^(\d{4})Q([1-4])$/i.exec(text);
+    if (!match) return null;
+    const year = Number(match[1]);
+    const quarter = Number(match[2]);
+    const month = (quarter - 1) * 3 + 1;
+    const parsed = new Date(`${year}-${String(month).padStart(2, "0")}-01T00:00:00`);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+  if (period === "A" || period === "Y") {
+    if (!/^\d{4}$/.test(text)) return null;
+    const parsed = new Date(`${text}-01-01T00:00:00`);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+  return null;
+};
+const addPeriodUnits = (base: Date, period: string, units: number) => {
+  const next = new Date(base);
+  if (period === "D") {
+    next.setDate(next.getDate() + units);
+    return next;
+  }
+  if (period === "M") {
+    next.setMonth(next.getMonth() + units);
+    return next;
+  }
+  if (period === "Q") {
+    next.setMonth(next.getMonth() + units * 3);
+    return next;
+  }
+  next.setFullYear(next.getFullYear() + units);
+  return next;
+};
+const splitDateRangeByYearLimit = (start: Date, end: Date, period: string) => {
+  const maxUnitsPerRequest =
+    period === "D" ? 365 : period === "M" ? 12 : period === "Q" ? 4 : 1;
+  const windows: Array<{ startDate: Date; endDate: Date }> = [];
+  let cursor = new Date(start);
+  while (cursor <= end) {
+    let windowEnd = addPeriodUnits(cursor, period, maxUnitsPerRequest - 1);
+    if (windowEnd > end) {
+      windowEnd = new Date(end);
+    }
+    windows.push({
+      startDate: new Date(cursor),
+      endDate: new Date(windowEnd),
+    });
+    cursor = addPeriodUnits(windowEnd, period, 1);
+  }
+  return windows;
+};
+const normalizeKrxEndpointUrl = (rawUrl: string) => {
+  const trimmed = (rawUrl ?? "").trim();
+  if (!trimmed) return trimmed;
+  try {
+    const url = new URL(trimmed);
+    url.pathname = url.pathname.replace(/\/+$/, "") || "/";
+    return url.toString();
+  } catch {
+    return trimmed;
+  }
+};
+const stripUrlSearch = (rawUrl: string) => {
+  try {
+    const url = new URL(rawUrl);
+    url.search = "";
+    return url.toString();
+  } catch {
+    return rawUrl;
+  }
 };
 const buildUrlFromSourceParams = (
   sourceItem: {
@@ -246,6 +494,10 @@ const normalizeApiPayload = (payload: unknown): unknown => {
   }
   if (typeof payload === "object") {
     const record = payload as Record<string, unknown>;
+    if (Array.isArray(record.OutBlock_1)) return record.OutBlock_1;
+    if (Array.isArray(record.OUTBLOCK_1)) return record.OUTBLOCK_1;
+    if (Array.isArray(record.observations)) return record.observations;
+    if (Array.isArray(record.observation)) return record.observation;
     if (Array.isArray(record.data)) return record.data;
     if (Array.isArray(record.rows)) return record.rows;
     if (Array.isArray(record.row)) return record.row;
@@ -299,7 +551,18 @@ const buildTabularFromApi = (payload: unknown) => {
   if (rows.length === 0) return { header: [] as string[], dataRows: [] as unknown[][] };
   const first = rows[0];
   if (first && typeof first === "object" && !Array.isArray(first)) {
-    const header = Object.keys(first as Record<string, unknown>);
+    // NOTE:
+    // Some KRX payloads omit null/empty fields on specific rows.
+    // If we only use the first row keys, downstream column mapping loses fields and inserts NULL.
+    // Build header from the union of all row keys to keep schema stable.
+    const headerSet = new Set<string>();
+    rows.forEach((row) => {
+      if (!row || typeof row !== "object" || Array.isArray(row)) return;
+      Object.keys(row as Record<string, unknown>).forEach((key) => {
+        if (!headerSet.has(key)) headerSet.add(key);
+      });
+    });
+    const header = Array.from(headerSet);
     const dataRows = rows.map((row) =>
       header.map((key) => (row as Record<string, unknown>)[key] ?? null),
     );
@@ -310,22 +573,124 @@ const buildTabularFromApi = (payload: unknown) => {
     dataRows: rows.map((row) => [row]),
   };
 };
+const parseApiBodyToRows = (body: unknown) => {
+  let { header, dataRows } = buildTabularFromApi(body);
+  if (
+    typeof body === "string" &&
+    header.length === 1 &&
+    header[0] === "value"
+  ) {
+    const reparsedXmlRows = parseXmlRows(body);
+    if (reparsedXmlRows?.length) {
+      header = Object.keys(reparsedXmlRows[0] ?? {});
+      dataRows = reparsedXmlRows.map((row) =>
+        header.map((key) => row[key] ?? null),
+      );
+    }
+  }
+  return { header, dataRows };
+};
+const fetchApiBodyWithRetry = async (
+  url: string,
+  abortSignal?: AbortSignal | null,
+  init?: RequestInit,
+) => {
+  throwIfLoadAborted(abortSignal);
+  let body: unknown = null;
+  let response: Response | null = null;
+  let lastFetchError: unknown = null;
+  for (let attempt = 1; attempt <= API_FETCH_MAX_ATTEMPTS; attempt += 1) {
+    throwIfLoadAborted(abortSignal);
+    const controller = new AbortController();
+    const onAbort = () => controller.abort();
+    if (abortSignal) {
+      abortSignal.addEventListener("abort", onAbort, { once: true });
+    }
+    const abortTimer = setTimeout(() => {
+      controller.abort();
+    }, API_FETCH_TIMEOUT_MS);
+    try {
+      response = await fetch(url, { ...init, signal: controller.signal });
+      const contentType = response.headers.get("content-type") ?? "";
+      body = contentType.includes("application/json")
+        ? await response.json()
+        : await response.text();
+      if (response.ok) {
+        lastFetchError = null;
+        break;
+      }
+      const message =
+        typeof body === "string"
+          ? body
+          : ((body as { error?: string }).error ?? `API 응답 오류(${response.status})`);
+      if (isRetryableStatus(response.status) && attempt < API_FETCH_MAX_ATTEMPTS) {
+        const retryAfterMs = parseRetryAfterMs(response.headers.get("retry-after"));
+        const defaultBackoffMs =
+          response.status === 429 ? 1200 * attempt : 400 * attempt;
+        const waitMs = retryAfterMs ? Math.max(retryAfterMs, defaultBackoffMs) : defaultBackoffMs;
+        lastFetchError = new Error(
+          `API 응답 재시도(${attempt}/${API_FETCH_MAX_ATTEMPTS}): ${message}`,
+        );
+        await sleep(waitMs);
+        continue;
+      }
+      throw new Error(message);
+    } catch (error) {
+      const isAbortError =
+        error instanceof Error &&
+        (error.name === "AbortError" || error.message.toLowerCase().includes("aborted"));
+      const isNetworkFetchError =
+        error instanceof Error &&
+        (error.name === "TypeError" ||
+          error.message.toLowerCase().includes("fetch failed") ||
+          error.message.toLowerCase().includes("network"));
+      if (isAbortError) {
+        if (abortSignal?.aborted) {
+          throw makeLoadAbortError();
+        }
+        lastFetchError = new Error(
+          `API 호출 시간 초과(${API_FETCH_TIMEOUT_MS}ms) 시도 ${attempt}/${API_FETCH_MAX_ATTEMPTS}`,
+        );
+      } else {
+        lastFetchError = error;
+      }
+      if (!(isAbortError || isNetworkFetchError)) {
+        throw error;
+      }
+      if (attempt < API_FETCH_MAX_ATTEMPTS) {
+        await sleep(400 * attempt);
+        continue;
+      }
+    } finally {
+      if (abortSignal) {
+        abortSignal.removeEventListener("abort", onAbort);
+      }
+      clearTimeout(abortTimer);
+    }
+  }
+  if (!response || lastFetchError) {
+    throw new Error(`API 호출 실패: ${formatErrorWithCause(lastFetchError)}`);
+  }
+  return { response, body };
+};
 
 export const executeApiGroupLoad = async (payload: {
   sourceId: number;
   groupId: number;
   truncate?: boolean;
   triggerType?: "manual" | "schedule";
+  dbSettingId?: number;
+},
+options?: {
+  abortSignal?: AbortSignal | null;
+  onDbBackendPid?: (pid: number) => void;
 }) => {
-  if (
-    !isNonEmpty(DB_CONFIG.url) ||
-    !isNonEmpty(DB_CONFIG.database) ||
-    !isNonEmpty(DB_CONFIG.user) ||
-    !isNonEmpty(DB_CONFIG.password)
-  ) {
-    throw new Error("DB 환경변수 설정이 필요합니다.");
+  throwIfLoadAborted(options?.abortSignal);
+  const resolvedDb = await resolveDbConfig({ settingId: payload.dbSettingId ?? null });
+  if (!resolvedDb) {
+    throw new Error("DB 연결 설정을 찾을 수 없습니다.");
   }
-  const connectionString = buildConnectionString(DB_CONFIG);
+  const connectionString = buildConnectionString(resolvedDb);
   if (!connectionString) {
     throw new Error("DB 접속 URL 형식이 올바르지 않습니다.");
   }
@@ -349,11 +714,22 @@ export const executeApiGroupLoad = async (payload: {
         }, CONNECT_TIMEOUT_MS);
       }),
     ]);
+    throwIfLoadAborted(options?.abortSignal);
+    try {
+      const pidResult = await client.query<{ pid: number }>("select pg_backend_pid()::int as pid");
+      const pid = Number(pidResult.rows[0]?.pid ?? 0);
+      if (Number.isFinite(pid) && pid > 0) {
+        options?.onDbBackendPid?.(pid);
+      }
+    } catch {
+      // ignore backend pid lookup errors
+    }
 
     const rows = await client.query(
       `
         select
           s.base_url,
+          s.provider,
           s.api_key,
           s.api_key_param_key,
           s.api_key_location,
@@ -405,25 +781,62 @@ export const executeApiGroupLoad = async (payload: {
     const paramValueByKey = new Map<string, string>(
       resolvedParamRows.map((param) => [param.key, param.value]),
     );
+    const paramValueByKeyLower = new Map<string, string>(
+      resolvedParamRows.map((param) => [param.key.trim().toLowerCase(), param.value]),
+    );
     const periodTypeKey =
       roleKeyMap.get("period_type") ??
-      (["period", "prdSe", "periodType"].find((key) => paramValueByKey.has(key)) ?? null);
+      (["period", "prdse", "periodtype", "frequency", "freq"].find((key) =>
+        paramValueByKeyLower.has(key),
+      ) ?? null);
     const endKey =
       roleKeyMap.get("end") ??
-      (["apiEnd", "endPrdDe", "endYymm"].find((key) => paramValueByKey.has(key)) ?? null);
-    const periodTypeValue = periodTypeKey ? paramValueByKey.get(periodTypeKey) ?? "M" : "M";
+      (["apiend", "endprdde", "endyymm", "observation_end", "basdd"].find((key) =>
+        paramValueByKeyLower.has(key),
+      ) ?? null);
+    const startKey =
+      roleKeyMap.get("start") ??
+      (["apistart", "startprdde", "strtyymm", "observation_start"].find((key) =>
+        paramValueByKeyLower.has(key),
+      ) ?? null);
+    const periodTypeValueRaw = periodTypeKey ? paramValueByKeyLower.get(periodTypeKey) ?? "M" : "M";
+    const periodTypeValue = periodTypeValueRaw.trim().toUpperCase();
     const effectivePeriod =
       periodTypeValue && ["D", "M", "Q", "A", "Y"].includes(periodTypeValue)
         ? periodTypeValue
         : "M";
-    const todayEndValue = toPeriodValue(new Date(), effectivePeriod);
     const requestParams = resolvedParamRows.map((param) => {
-      const isEndParamByKey = ["apiEnd", "endPrdDe", "endYymm"].includes(param.key);
+      const paramKey = param.key.trim().toLowerCase();
+      const isEndParamByKey = ["apiend", "endprdde", "endyymm", "observation_end", "basdd"].includes(
+        paramKey,
+      );
+      const isStartParamByKey = ["apistart", "startprdde", "strtyymm", "observation_start"].includes(
+        paramKey,
+      );
       const shouldResolveLatest =
         param.value === END_LATEST_TOKEN &&
-        ((endKey && param.key === endKey) || (!endKey && isEndParamByKey));
+        (paramKey === "basdd" || (endKey && paramKey === endKey) || (!endKey && isEndParamByKey));
       if (shouldResolveLatest) {
-        return { ...param, value: todayEndValue };
+        return {
+          ...param,
+          value: toParamDateValue(new Date(), effectivePeriod, param.key),
+        };
+      }
+      const shouldResolveStartRelative =
+        (startKey && paramKey === startKey) || (!startKey && isStartParamByKey);
+      const shouldResolveEndRelative =
+        (endKey && paramKey === endKey) || (!endKey && isEndParamByKey);
+      if (shouldResolveStartRelative) {
+        const startValue = resolveRelativeStartValue(param.value, effectivePeriod, param.key);
+        if (startValue) {
+          return { ...param, value: startValue };
+        }
+      }
+      if (shouldResolveEndRelative) {
+        const endValue = resolveRelativeStartValue(param.value, effectivePeriod, param.key);
+        if (endValue) {
+          return { ...param, value: endValue };
+        }
       }
       return param;
     });
@@ -469,81 +882,226 @@ export const executeApiGroupLoad = async (payload: {
     } catch {
       // ignore log insert errors to not block ingestion
     }
+    throwIfLoadAborted(options?.abortSignal);
 
     errorStage = "api_fetch";
-    let body: unknown = null;
-    let response: Response | null = null;
-    let lastFetchError: unknown = null;
-    for (let attempt = 1; attempt <= API_FETCH_MAX_ATTEMPTS; attempt += 1) {
-      const controller = new AbortController();
-      const abortTimer = setTimeout(() => {
-        controller.abort();
-      }, API_FETCH_TIMEOUT_MS);
+    const sourceProvider = String(first.provider ?? "").trim().toLowerCase();
+    const sourceInfo = {
+      baseUrl:
+        sourceProvider === "krx"
+          ? normalizeKrxEndpointUrl(String(first.base_url ?? ""))
+          : String(first.base_url ?? ""),
+      apiKey: (first.api_key as string | null) ?? "",
+      apiKeyParamKey: (first.api_key_param_key as string | null) ?? "",
+      apiKeyLocation: (first.api_key_location as string | null) ?? "query",
+      apiKeyOrder: Number.isFinite(first.api_key_order)
+        ? Number(first.api_key_order)
+        : 0,
+      apiKeyEncodeMode: (first.api_key_encode_mode as string | null) ?? "encode",
+    };
+    const startParam = requestParams.find((param) => param.key === "start");
+    const endParam = requestParams.find((param) => param.key === "end");
+    const initialStart = Number(startParam?.value ?? "");
+    const initialEnd = Number(endParam?.value ?? "");
+    const configuredPageSize = initialEnd - initialStart + 1;
+    const pageSize = Math.max(
+      1,
+      Number.isFinite(configuredPageSize) && configuredPageSize > 0
+        ? configuredPageSize
+        : BOK_PAGE_MAX_ROWS,
+    );
+    const shouldPaginateBok =
+      sourceProvider === "bok" &&
+      Boolean(startParam) &&
+      Boolean(endParam) &&
+      Number.isFinite(initialStart) &&
+      Number.isFinite(initialEnd) &&
+      initialStart > 0 &&
+      initialEnd >= initialStart;
+
+    let header: string[] = [];
+    let dataRows: unknown[][] = [];
+    if (sourceProvider === "krx") {
+      const krxParamValueMapRaw = new Map(requestParams.map((param) => [param.key, param.value]));
+      const resolvedStartText = startKey ? krxParamValueMapRaw.get(startKey) ?? "" : "";
+      const resolvedEndText = endKey ? krxParamValueMapRaw.get(endKey) ?? "" : "";
+      const basDdKey =
+        requestParams.find((param) => param.key.toLowerCase() === "basdd")?.key ?? "basDd";
+      const startDate = parseDateText(resolvedStartText);
+      const endDate = parseDateText(resolvedEndText);
+      const singleDate = parseDateText(krxParamValueMapRaw.get(basDdKey) ?? "");
+      const runDates: string[] = [];
+      if (startDate && endDate && startDate <= endDate) {
+        const cursor = new Date(startDate);
+        let guard = 0;
+        while (cursor <= endDate) {
+          runDates.push(formatAsYmdCompact(cursor));
+          cursor.setDate(cursor.getDate() + 1);
+          guard += 1;
+          if (guard > KRX_GOLD_MAX_DAYS) {
+            throw new Error(
+              `KRX 조회 기간 제한(${KRX_GOLD_MAX_DAYS}일)을 초과했습니다. INGESTION_KRX_GOLD_MAX_DAYS 값을 늘려주세요.`,
+            );
+          }
+        }
+      } else if (singleDate) {
+        runDates.push(formatAsYmdCompact(singleDate));
+      } else if (endDate) {
+        runDates.push(formatAsYmdCompact(endDate));
+      } else {
+        runDates.push(formatAsYmdCompact(new Date()));
+      }
+      const krxEndpointUrl = stripUrlSearch(sourceInfo.baseUrl);
+      let parsedKrxUrl: URL;
       try {
-        response = await fetch(url, { signal: controller.signal });
-        const contentType = response.headers.get("content-type") ?? "";
-        body = contentType.includes("application/json")
-          ? await response.json()
-          : await response.text();
-        if (response.ok) {
-          lastFetchError = null;
+        parsedKrxUrl = new URL(krxEndpointUrl);
+      } catch {
+        throw new Error(`KRX base_url 형식이 올바르지 않습니다: ${krxEndpointUrl}`);
+      }
+      const krxPath = parsedKrxUrl.pathname.replace(/\/+$/, "");
+      const krxParamValueMapLower = new Map(
+        requestParams.map((param) => [param.key.trim().toLowerCase(), param.value.trim()]),
+      );
+      const pathInBaseUrl =
+        krxPath.includes("/svc/apis/") && krxPath.split("/").length >= 5;
+      const apiPathParam =
+        krxParamValueMapLower.get("apipath") ??
+        krxParamValueMapLower.get("api_path") ??
+        krxParamValueMapLower.get("krxapipath") ??
+        "";
+      const apiIdParam =
+        krxParamValueMapLower.get("apiid") ??
+        krxParamValueMapLower.get("api_id") ??
+        krxParamValueMapLower.get("krxapiid") ??
+        "";
+      const normalizedApiPath = apiPathParam.replace(/^\/+|\/+$/g, "");
+      const normalizedApiId = apiIdParam.replace(/^\/+|\/+$/g, "");
+      const effectiveKrxEndpoint = pathInBaseUrl
+        ? `${parsedKrxUrl.origin}${krxPath}`
+        : normalizedApiPath && normalizedApiId
+          ? `${parsedKrxUrl.origin}/svc/apis/${normalizedApiPath}/${normalizedApiId}`
+          : "";
+      if (!effectiveKrxEndpoint) {
+        throw new Error(
+          "KRX 엔드포인트를 구성하지 못했습니다. base_url은 도메인만 사용 가능하며, 그룹 파라미터에 apiPath/apiId(path)가 필요합니다.",
+        );
+      }
+      for (const basDd of runDates) {
+        throwIfLoadAborted(options?.abortSignal);
+        const bodyPayload: Record<string, string> = {
+          [basDdKey]: basDd,
+        };
+        const authKey = (sourceInfo.apiKey ?? "").trim();
+        const headers: Record<string, string> = {
+          "Content-Type": "application/json",
+        };
+        if (authKey) {
+          headers.AUTH_KEY = authKey;
+        }
+        const { body } = await fetchApiBodyWithRetry(
+          effectiveKrxEndpoint,
+          options?.abortSignal,
+          {
+            method: "POST",
+            headers,
+            body: JSON.stringify(bodyPayload),
+          },
+        );
+        const parsed = parseApiBodyToRows(body);
+        if (!parsed.header.length || !parsed.dataRows.length) {
+          if (KRX_GOLD_REQUEST_DELAY_MS > 0) {
+            await sleep(KRX_GOLD_REQUEST_DELAY_MS);
+          }
+          continue;
+        }
+        if (!header.length) {
+          header = parsed.header;
+        }
+        dataRows.push(...parsed.dataRows);
+        if (KRX_GOLD_REQUEST_DELAY_MS > 0) {
+          await sleep(KRX_GOLD_REQUEST_DELAY_MS);
+        }
+      }
+      if (!dataRows.length) {
+        throw new Error("적재할 데이터가 없습니다.");
+      }
+    } else if (sourceProvider === "datagokr" && startKey && endKey) {
+      const valueByKey = new Map(requestParams.map((param) => [param.key, param.value]));
+      const startValue = valueByKey.get(startKey) ?? "";
+      const endValue = valueByKey.get(endKey) ?? "";
+      const parsedStart = parsePeriodDate(startValue, effectivePeriod);
+      const parsedEnd = parsePeriodDate(endValue, effectivePeriod);
+      if (!parsedStart || !parsedEnd) {
+        const { body } = await fetchApiBodyWithRetry(url, options?.abortSignal);
+        const parsed = parseApiBodyToRows(body);
+        header = parsed.header;
+        dataRows = parsed.dataRows;
+      } else {
+        const rangeStart = parsedStart <= parsedEnd ? parsedStart : parsedEnd;
+        const rangeEnd = parsedStart <= parsedEnd ? parsedEnd : parsedStart;
+        const windows = splitDateRangeByYearLimit(rangeStart, rangeEnd, effectivePeriod);
+        for (const window of windows) {
+          throwIfLoadAborted(options?.abortSignal);
+          const windowStart = toPeriodValue(window.startDate, effectivePeriod);
+          const windowEnd = toPeriodValue(window.endDate, effectivePeriod);
+          const windowParams = requestParams.map((param) => {
+            if (param.key === startKey) return { ...param, value: windowStart };
+            if (param.key === endKey) return { ...param, value: windowEnd };
+            return param;
+          });
+          const windowUrl = buildUrlFromSourceParams(sourceInfo, windowParams);
+          const { body } = await fetchApiBodyWithRetry(windowUrl, options?.abortSignal);
+          const parsed = parseApiBodyToRows(body);
+          if (!parsed.header.length || !parsed.dataRows.length) {
+            continue;
+          }
+          if (!header.length) {
+            header = parsed.header;
+          }
+          dataRows.push(...parsed.dataRows);
+        }
+      }
+    } else if (!shouldPaginateBok) {
+      const { body } = await fetchApiBodyWithRetry(url, options?.abortSignal);
+      const parsed = parseApiBodyToRows(body);
+      header = parsed.header;
+      dataRows = parsed.dataRows;
+    } else {
+      let pageStart = initialStart;
+      let pageEnd = initialEnd;
+      let reachedPageLimit = true;
+      for (let page = 1; page <= BOK_MAX_PAGES; page += 1) {
+        throwIfLoadAborted(options?.abortSignal);
+        const pageParams = requestParams.map((param) => {
+          if (param.key === "start") return { ...param, value: String(pageStart) };
+          if (param.key === "end") return { ...param, value: String(pageEnd) };
+          return param;
+        });
+        const pageUrl = buildUrlFromSourceParams(sourceInfo, pageParams);
+        const { body } = await fetchApiBodyWithRetry(pageUrl, options?.abortSignal);
+        const parsed = parseApiBodyToRows(body);
+        if (!parsed.header.length || !parsed.dataRows.length) {
+          reachedPageLimit = false;
           break;
         }
-        const message =
-          typeof body === "string"
-            ? body
-            : ((body as { error?: string }).error ?? `API 응답 오류(${response.status})`);
-        if (isRetryableStatus(response.status) && attempt < API_FETCH_MAX_ATTEMPTS) {
-          lastFetchError = new Error(
-            `API 응답 재시도(${attempt}/${API_FETCH_MAX_ATTEMPTS}): ${message}`,
-          );
-          await sleep(400 * attempt);
-          continue;
+        if (!header.length) {
+          header = parsed.header;
         }
-        throw new Error(message);
-      } catch (error) {
-        const isAbortError =
-          error instanceof Error &&
-          (error.name === "AbortError" || error.message.toLowerCase().includes("aborted"));
-        const isNetworkFetchError =
-          error instanceof Error &&
-          (error.name === "TypeError" ||
-            error.message.toLowerCase().includes("fetch failed") ||
-            error.message.toLowerCase().includes("network"));
-        if (isAbortError) {
-          lastFetchError = new Error(
-            `API 호출 시간 초과(${API_FETCH_TIMEOUT_MS}ms) 시도 ${attempt}/${API_FETCH_MAX_ATTEMPTS}`,
-          );
-        } else {
-          lastFetchError = error;
+        dataRows.push(...parsed.dataRows);
+        if (parsed.dataRows.length < pageSize) {
+          reachedPageLimit = false;
+          break;
         }
-        if (!(isAbortError || isNetworkFetchError)) {
-          throw error;
-        }
-        if (attempt < API_FETCH_MAX_ATTEMPTS) {
-          await sleep(400 * attempt);
-          continue;
-        }
-      } finally {
-        clearTimeout(abortTimer);
+        pageStart += pageSize;
+        pageEnd += pageSize;
       }
-    }
-    if (!response || lastFetchError) {
-      throw new Error(`API 호출 실패: ${formatErrorWithCause(lastFetchError)}`);
-    }
-
-    let { header, dataRows } = buildTabularFromApi(body);
-    if (
-      typeof body === "string" &&
-      header.length === 1 &&
-      header[0] === "value"
-    ) {
-      const reparsedXmlRows = parseXmlRows(body);
-      if (reparsedXmlRows?.length) {
-        header = Object.keys(reparsedXmlRows[0] ?? {});
-        dataRows = reparsedXmlRows.map((row) =>
-          header.map((key) => row[key] ?? null),
+      if (reachedPageLimit) {
+        throw new Error(
+          `BOK 페이지 제한(${BOK_MAX_PAGES})에 도달했습니다. INGESTION_BOK_MAX_PAGES 값을 늘려주세요.`,
         );
+      }
+      if (!dataRows.length) {
+        throw new Error("적재할 데이터가 없습니다.");
       }
     }
     if (!header.length || !dataRows.length) {
@@ -594,7 +1152,9 @@ export const executeApiGroupLoad = async (payload: {
       .map((row) =>
         columnsToInsert.map((column) => {
           const index = headerIndex.get(normalizeColumnKey(column));
-          return index == null ? null : (row[index] ?? null);
+          const rawValue = index == null ? null : (row[index] ?? null);
+          const dt = columnTypes.get(column.toLowerCase()) ?? "text";
+          return normalizeCellByType(rawValue, dt);
         }),
       )
       .filter((row) => row.some((value) => value !== null && value !== ""));
@@ -654,6 +1214,7 @@ export const executeApiGroupLoad = async (payload: {
       .join(" and ");
 
     for (let start = 0; start < insertRows.length; start += maxRowsPerBatch) {
+      throwIfLoadAborted(options?.abortSignal);
       const batchRows = insertRows.slice(start, start + maxRowsPerBatch);
       const values: unknown[] = [];
       const placeholders = batchRows
@@ -693,6 +1254,7 @@ export const executeApiGroupLoad = async (payload: {
     }
     if (targetMergeSql) {
       errorStage = "merge_sql";
+      throwIfLoadAborted(options?.abortSignal);
       await client.query(targetMergeSql);
     }
     await client.query("commit");
@@ -735,7 +1297,7 @@ export const executeApiGroupLoad = async (payload: {
       }
     }
     if (loadLogId) {
-      const message = formatErrorWithCause(error);
+      const message = isLoadAbortError(error) ? "적재가 취소되었습니다." : formatErrorWithCause(error);
       const stage =
         errorStage === "setup" ||
         errorStage === "api_fetch" ||

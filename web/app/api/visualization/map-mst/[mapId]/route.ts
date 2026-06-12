@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { canUseDb, connectWithTimeout, createDbClient, isNonEmpty } from "../../_lib/db";
+import { canUseDb, connectWithTimeout, createDbClientFromRequest, isNonEmpty } from "../../_lib/db";
+import { refreshMapSchedule, removeMapSchedule } from "../scheduler";
 
 export const runtime = "nodejs";
 
@@ -50,7 +51,7 @@ export async function PATCH(
       { status: 400 },
     );
   }
-  const client = createDbClient();
+  const client = await createDbClientFromRequest(request);
   if (!client) {
     return NextResponse.json(
       { ok: false, error: "DB 접속 URL 형식이 올바르지 않습니다." },
@@ -116,10 +117,77 @@ export async function PATCH(
         { status: 404 },
       );
     }
+    await refreshMapSchedule(mapId);
     return NextResponse.json({ ok: true, mapId });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "매핑 수정에 실패했습니다.";
+    return NextResponse.json({ ok: false, error: message }, { status: 500 });
+  } finally {
+    try {
+      await client.end();
+    } catch {
+      // ignore cleanup errors
+    }
+  }
+}
+
+export async function DELETE(
+  request: Request,
+  context: { params: Promise<{ mapId: string }> },
+) {
+  const params = await context.params;
+  const mapId = Number(params.mapId);
+  if (!Number.isFinite(mapId) || mapId <= 0) {
+    return NextResponse.json(
+      { ok: false, error: "mapId가 올바르지 않습니다." },
+      { status: 400 },
+    );
+  }
+  if (!canUseDb()) {
+    return NextResponse.json(
+      { ok: false, error: "DB 환경변수 설정이 필요합니다." },
+      { status: 400 },
+    );
+  }
+  const client = await createDbClientFromRequest(request);
+  if (!client) {
+    return NextResponse.json(
+      { ok: false, error: "DB 접속 URL 형식이 올바르지 않습니다." },
+      { status: 400 },
+    );
+  }
+
+  try {
+    await connectWithTimeout(client);
+    await client.query("begin");
+    await client.query(`delete from dp.viz_map_data where map_id = $1`, [mapId]);
+    const result = await client.query(
+      `
+        delete from dp.viz_map_mst
+        where map_id = $1
+        returning map_id
+      `,
+      [mapId],
+    );
+    if (!result.rowCount) {
+      await client.query("rollback");
+      return NextResponse.json(
+        { ok: false, error: "삭제할 매핑을 찾을 수 없습니다." },
+        { status: 404 },
+      );
+    }
+    await client.query("commit");
+    removeMapSchedule(mapId);
+    return NextResponse.json({ ok: true, mapId });
+  } catch (error) {
+    try {
+      await client.query("rollback");
+    } catch {
+      // ignore rollback errors
+    }
+    const message =
+      error instanceof Error ? error.message : "매핑 삭제에 실패했습니다.";
     return NextResponse.json({ ok: false, error: message }, { status: 500 });
   } finally {
     try {

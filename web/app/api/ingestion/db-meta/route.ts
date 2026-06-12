@@ -1,24 +1,17 @@
 import { NextResponse } from "next/server";
 import { Client } from "pg";
+import { resolveDbConfig } from "../../db/_lib/connection";
 
 export const runtime = "nodejs";
 
 const CONNECT_TIMEOUT_MS = 5000;
-const DB_CONFIG = {
-  url: process.env.DP_DB_URL,
-  database: process.env.DP_DB_NAME,
-  user: process.env.DP_DB_USER,
-  password: process.env.DP_DB_PASSWORD,
-};
 
 type MetaRequest = {
   action?: "schemas" | "tables" | "columns";
   schema?: string;
   table?: string;
+  dbSettingId?: number | string;
 };
-
-const isNonEmpty = (value: unknown): value is string =>
-  typeof value === "string" && value.trim().length > 0;
 
 const normalizeJdbcUrl = (raw: string) => {
   if (raw.startsWith("jdbc:")) {
@@ -61,18 +54,23 @@ export async function POST(request: Request) {
     );
   }
 
-  if (
-    !isNonEmpty(DB_CONFIG.url) ||
-    !isNonEmpty(DB_CONFIG.database) ||
-    !isNonEmpty(DB_CONFIG.user) ||
-    !isNonEmpty(DB_CONFIG.password)
-  ) {
+  const selectedSettingId =
+    typeof payload?.dbSettingId === "string"
+      ? Number(payload.dbSettingId)
+      : payload?.dbSettingId;
+  const resolvedDb = await resolveDbConfig({
+    settingId:
+      typeof selectedSettingId === "number" && Number.isFinite(selectedSettingId)
+        ? selectedSettingId
+        : null,
+  });
+  if (!resolvedDb) {
     return NextResponse.json(
-      { ok: false, error: "DB 환경변수 설정이 필요합니다." },
+      { ok: false, error: "DB 연결 설정을 찾을 수 없습니다." },
       { status: 400 },
     );
   }
-  const connectionString = buildConnectionString(DB_CONFIG);
+  const connectionString = buildConnectionString(resolvedDb);
   if (!connectionString) {
     return NextResponse.json(
       { ok: false, error: "DB 접속 URL 형식이 올바르지 않습니다." },

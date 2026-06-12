@@ -219,6 +219,7 @@ type BuildMapDataOptions = {
 
 type BuildMapDataResult = {
   affectedCount: number;
+  cleanedLegacyFreqCount: number;
   startDate: string | null;
   endDate: string | null;
   generatedAt: string;
@@ -234,7 +235,7 @@ export const buildMapDataForMapping = async (
     throw new Error(`where_clause가 안전하지 않습니다: map_id=${mapping.mapId}`);
   }
 
-  const freq = (mapping.freq ?? "M").trim() || "M";
+  const freq = ((mapping.freq ?? "M").trim() || "M").toUpperCase();
   const rawDateExpr = `${quoteIdent(mapping.dateColumn)}::text`;
   const rawValueExpr = `${quoteIdent(mapping.valueColumn)}::text`;
   const obsDateExpr = `
@@ -269,8 +270,19 @@ export const buildMapDataForMapping = async (
 
   await client.query("begin");
   try {
+    let cleanedLegacyFreqCount = 0;
     if (options.replaceExisting) {
       await client.query(`delete from dp.viz_map_data where map_id = $1`, [mapping.mapId]);
+    } else {
+      const cleaned = await client.query(
+        `
+          delete from dp.viz_map_data
+          where map_id = $1
+            and upper(freq) <> $2
+        `,
+        [mapping.mapId, freq],
+      );
+      cleanedLegacyFreqCount = cleaned.rowCount ?? 0;
     }
 
     const upsertResult = await client.query(
@@ -304,6 +316,7 @@ export const buildMapDataForMapping = async (
             now()
           from src
           where src.obs_date is not null
+            and src.obs_value is not null
           on conflict (map_id, obs_date, freq) do update
           set
             obs_value = excluded.obs_value,
@@ -335,6 +348,7 @@ export const buildMapDataForMapping = async (
       | undefined;
     return {
       affectedCount: Number(row?.affected_count ?? 0),
+      cleanedLegacyFreqCount,
       startDate: row?.start_date ? String(row.start_date) : null,
       endDate: row?.end_date ? String(row.end_date) : null,
       generatedAt: new Date().toISOString(),
@@ -347,5 +361,38 @@ export const buildMapDataForMapping = async (
     }
     throw error;
   }
+};
+
+// 특정 원천 테이블(source_table)에 연결된 활성 데이터 매핑을 모두 생성 실행한다.
+// 수집 스케줄(적재) 직후 매핑까지 이어서 수행하기 위한 헬퍼.
+export const runMappingsForSourceTable = async (
+  client: Client,
+  sourceTable: string,
+): Promise<{ ranMapIds: number[]; errors: Array<{ mapId: number; error: string }> }> => {
+  const idsResult = await client.query<{ map_id: number }>(
+    `select map_id
+     from dp.viz_map_mst
+     where is_active = true
+       and lower(source_table) = lower($1)`,
+    [sourceTable],
+  );
+  const ids = idsResult.rows.map((row) => Number(row.map_id)).filter(Number.isFinite);
+  if (ids.length === 0) return { ranMapIds: [], errors: [] };
+
+  const mappings = await fetchMappings(client, ids, true);
+  const ranMapIds: number[] = [];
+  const errors: Array<{ mapId: number; error: string }> = [];
+  for (const mapping of mappings) {
+    try {
+      await buildMapDataForMapping(client, mapping, { replaceExisting: false });
+      ranMapIds.push(mapping.mapId);
+    } catch (error) {
+      errors.push({
+        mapId: mapping.mapId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+  return { ranMapIds, errors };
 };
 

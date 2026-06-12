@@ -49,6 +49,7 @@ type RunResult = {
   forecast: ForecastPoint[];
   llmSummary: string | null;
   llmWarning: string | null;
+  llmSummaryEnabled?: boolean;
   totalElapsedMs?: number | null;
   pythonElapsedMs?: number | null;
   summaryElapsedMs?: number | null;
@@ -126,6 +127,7 @@ export default function AiForecastTestPage() {
   const [selectedSeriesId, setSelectedSeriesId] = useState("");
   const [horizonMonths, setHorizonMonths] = useState(12);
   const [modelType, setModelType] = useState<ModelType>("prophet");
+  const [enableLlmSummary, setEnableLlmSummary] = useState(false);
   const [running, setRunning] = useState(false);
   const [runError, setRunError] = useState("");
   const [result, setResult] = useState<RunResult | null>(null);
@@ -262,6 +264,7 @@ export default function AiForecastTestPage() {
           seriesId: selectedSeriesId,
           horizonMonths,
           modelType,
+          enableLlmSummary,
         }),
       });
       const payload = (await response.json()) as {
@@ -316,7 +319,7 @@ export default function AiForecastTestPage() {
       <header className="rounded-3xl border border-slate-200 bg-white p-6">
         <h2 className="text-xl font-semibold text-slate-900">AI 분석 테스트</h2>
         <p className="mt-2 text-sm text-slate-600">
-          시계열을 선택하고 Prophet/ARIMA/SARIMA/Linear Trend/Chronos-Bolt/Chronos-2/TimesFM 2.5 중 기법을 골라 예측과 Ollama 요약을 확인하는 PoC 화면입니다.
+          시계열을 선택하고 Prophet/ARIMA/SARIMA/Linear Trend/Chronos-Bolt/Chronos-2/TimesFM 2.5 중 기법을 골라 예측 결과를 확인하는 PoC 화면입니다. LLM 요약은 옵션 활성화 시에만 수행됩니다.
         </p>
       </header>
 
@@ -370,6 +373,14 @@ export default function AiForecastTestPage() {
               onChange={(e) => setHorizonMonths(Math.max(1, Math.min(24, Number(e.target.value) || 6)))}
               className="w-20 rounded-lg border border-slate-200 px-2 py-2 text-sm"
             />
+            <label className="inline-flex items-center gap-2 text-xs text-slate-700">
+              <input
+                type="checkbox"
+                checked={enableLlmSummary}
+                onChange={(e) => setEnableLlmSummary(e.target.checked)}
+              />
+              LLM 요약 사용
+            </label>
           </div>
         </div>
 
@@ -517,12 +528,13 @@ export default function AiForecastTestPage() {
               </p>
               <p>
                 수행시간: 총 {formatMs(result.totalElapsedMs)} / 예측 API {formatMs(result.pythonElapsedMs)} / 요약 LLM{" "}
-                {formatMs(result.summaryElapsedMs)}
+                {result.llmSummaryEnabled ? formatMs(result.summaryElapsedMs) : "비활성"}
               </p>
               <p>
-                토큰(요약): prompt {formatNum(result.summaryTokenUsage?.promptTokens)} / completion{" "}
-                {formatNum(result.summaryTokenUsage?.completionTokens)} / total{" "}
-                {formatNum(result.summaryTokenUsage?.totalTokens)}
+                토큰(요약):{" "}
+                {result.llmSummaryEnabled
+                  ? `prompt ${formatNum(result.summaryTokenUsage?.promptTokens)} / completion ${formatNum(result.summaryTokenUsage?.completionTokens)} / total ${formatNum(result.summaryTokenUsage?.totalTokens)}`
+                  : "비활성"}
               </p>
               <p>
                 방향정확도: {formatNum(result.compositeScore?.directionAccuracy)}% / 평가표본:{" "}
@@ -680,10 +692,18 @@ export default function AiForecastTestPage() {
 
           <div className="rounded-3xl border border-slate-200 bg-white p-6">
             <h3 className="mb-3 text-base font-semibold text-slate-900">LLM 요약 (qwen3:8b)</h3>
-            {result.llmWarning ? <p className="mb-2 text-sm text-amber-600">{result.llmWarning}</p> : null}
-            <pre className="whitespace-pre-wrap rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-800">
-              {result.llmSummary ?? "요약 결과가 없습니다."}
-            </pre>
+            {result.llmSummaryEnabled ? (
+              <>
+                {result.llmWarning ? <p className="mb-2 text-sm text-amber-600">{result.llmWarning}</p> : null}
+                <pre className="whitespace-pre-wrap rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-800">
+                  {result.llmSummary ?? "요약 결과가 없습니다."}
+                </pre>
+              </>
+            ) : (
+              <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                LLM 요약 옵션이 비활성화되어 요약을 실행하지 않았습니다.
+              </p>
+            )}
           </div>
         </div>
       ) : null}

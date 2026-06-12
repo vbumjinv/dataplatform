@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { canUseDb, connectWithTimeout, createDbClient, isNonEmpty } from "../_lib/db";
+import { canUseDb, connectWithTimeout, createDbClientFromRequest, isNonEmpty } from "../_lib/db";
+import { initializeMapScheduler } from "./scheduler";
 
 export const runtime = "nodejs";
 
@@ -18,6 +19,24 @@ type MapPayload = {
   isActive?: boolean;
 };
 
+const hasScheduleColumns = async (client: { query: (text: string) => Promise<{ rows: Array<{ column_name: string }> }> }) => {
+  const result = await client.query<{ column_name: string }>(
+    `
+      select c.column_name
+      from information_schema.columns c
+      where c.table_schema = 'dp'
+        and c.table_name = 'viz_map_mst'
+        and c.column_name in (
+          'schedule_enabled',
+          'schedule_type',
+          'schedule_interval_minutes',
+          'schedule_cron_expr'
+        )
+    `,
+  );
+  return result.rows.length === 4;
+};
+
 const normalizeProvider = (provider?: string | null) => {
   const value = (provider ?? "").trim().toLowerCase();
   if (value === "data-go-kr" || value === "data_go_kr") return "datagokr";
@@ -32,14 +51,15 @@ const validatePayload = (payload: MapPayload) => {
   return null;
 };
 
-export async function GET() {
+export async function GET(request: Request) {
+  await initializeMapScheduler();
   if (!canUseDb()) {
     return NextResponse.json(
       { ok: false, error: "DB 환경변수 설정이 필요합니다." },
       { status: 400 },
     );
   }
-  const client = createDbClient();
+  const client = await createDbClientFromRequest(request);
   if (!client) {
     return NextResponse.json(
       { ok: false, error: "DB 접속 URL 형식이 올바르지 않습니다." },
@@ -49,39 +69,81 @@ export async function GET() {
 
   try {
     await connectWithTimeout(client);
+    const scheduleColumnsReady = await hasScheduleColumns(client);
     const result = await client.query(
-      `
-        select
-          m.map_id,
-          m.source_org,
-          m.api_name,
-          m.source_table,
-          m.series_name,
-          m.series_key,
-          m.date_column,
-          m.date_format,
-          m.value_column,
-          m.where_clause,
-          m.unit_name,
-          m.freq,
-          m.is_active,
-          coalesce(d.data_count, 0)::int as data_count,
-          d.start_date::text as data_start_date,
-          d.end_date::text as data_end_date,
-          d.last_generated_at
-        from dp.viz_map_mst m
-        left join (
-          select
-            map_id,
-            count(*) as data_count,
-            min(obs_date) as start_date,
-            max(obs_date) as end_date,
-            max(updated_at) as last_generated_at
-          from dp.viz_map_data
-          group by map_id
-        ) d on d.map_id = m.map_id
-        order by m.updated_at desc, m.map_id desc
-      `,
+      scheduleColumnsReady
+        ? `
+            select
+              m.map_id,
+              m.source_org,
+              m.api_name,
+              m.source_table,
+              m.series_name,
+              m.series_key,
+              m.date_column,
+              m.date_format,
+              m.value_column,
+              m.where_clause,
+              m.unit_name,
+              m.freq,
+              m.is_active,
+              m.schedule_enabled,
+              m.schedule_type,
+              m.schedule_interval_minutes,
+              m.schedule_cron_expr,
+              coalesce(d.data_count, 0)::int as data_count,
+              d.start_date::text as data_start_date,
+              d.end_date::text as data_end_date,
+              d.last_generated_at
+            from dp.viz_map_mst m
+            left join (
+              select
+                map_id,
+                count(*) as data_count,
+                min(obs_date) as start_date,
+                max(obs_date) as end_date,
+                max(updated_at) as last_generated_at
+              from dp.viz_map_data
+              group by map_id
+            ) d on d.map_id = m.map_id
+            order by m.updated_at desc, m.map_id desc
+          `
+        : `
+            select
+              m.map_id,
+              m.source_org,
+              m.api_name,
+              m.source_table,
+              m.series_name,
+              m.series_key,
+              m.date_column,
+              m.date_format,
+              m.value_column,
+              m.where_clause,
+              m.unit_name,
+              m.freq,
+              m.is_active,
+              false as schedule_enabled,
+              'interval'::text as schedule_type,
+              null::int as schedule_interval_minutes,
+              null::text as schedule_cron_expr,
+              coalesce(d.data_count, 0)::int as data_count,
+              d.start_date::text as data_start_date,
+              d.end_date::text as data_end_date,
+              d.last_generated_at
+            from dp.viz_map_mst m
+            left join (
+              select
+                map_id,
+                count(*) as data_count,
+                min(obs_date) as start_date,
+                max(obs_date) as end_date,
+                max(updated_at) as last_generated_at
+              from dp.viz_map_data
+              group by map_id
+            ) d on d.map_id = m.map_id
+            order by m.updated_at desc, m.map_id desc
+          `,
     );
     return NextResponse.json({
       ok: true,
@@ -99,6 +161,13 @@ export async function GET() {
         unitName: (row.unit_name as string | null) ?? null,
         freq: (row.freq as string | null) ?? null,
         isActive: Boolean(row.is_active),
+        scheduleEnabled: Boolean(row.schedule_enabled),
+        scheduleType:
+          (row.schedule_type as "interval" | "cron" | null) === "cron" ? "cron" : "interval",
+        scheduleIntervalMinutes: Number.isFinite(row.schedule_interval_minutes)
+          ? Number(row.schedule_interval_minutes)
+          : null,
+        scheduleCronExpr: (row.schedule_cron_expr as string | null) ?? null,
         dataCount: Number(row.data_count ?? 0),
         dataStartDate: (row.data_start_date as string | null) ?? null,
         dataEndDate: (row.data_end_date as string | null) ?? null,
@@ -128,7 +197,7 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   }
-  const client = createDbClient();
+  const client = await createDbClientFromRequest(request);
   if (!client) {
     return NextResponse.json(
       { ok: false, error: "DB 접속 URL 형식이 올바르지 않습니다." },

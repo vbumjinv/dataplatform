@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { Client } from "pg";
+import { resolveDbConfig } from "../../db/_lib/connection";
 import {
   initializeIngestionScheduler,
   refreshIngestionSchedule,
@@ -9,6 +10,7 @@ import {
 export const runtime = "nodejs";
 
 type Payload = {
+  dbSettingId?: number | string;
   source?: {
     name?: string;
     provider?: string;
@@ -55,12 +57,6 @@ type UpdatePayload = Payload & {
 };
 
 const CONNECT_TIMEOUT_MS = 5000;
-const DB_CONFIG = {
-  url: process.env.DP_DB_URL,
-  database: process.env.DP_DB_NAME,
-  user: process.env.DP_DB_USER,
-  password: process.env.DP_DB_PASSWORD,
-};
 
 const isNonEmpty = (value: unknown): value is string =>
   typeof value === "string" && value.trim().length > 0;
@@ -195,6 +191,26 @@ const buildConnectionString = (payload: {
   if (payload.database) parsed.pathname = `/${payload.database}`;
   return parsed.toString();
 };
+const resolveRequestConnectionString = async (dbSettingId?: unknown) => {
+  const selectedSettingId = toValidId(dbSettingId);
+  const resolvedDb = await resolveDbConfig({ settingId: selectedSettingId });
+  if (!resolvedDb) {
+    return {
+      ok: false as const,
+      error: "DB 연결 설정을 찾을 수 없습니다.",
+      connectionString: null,
+    };
+  }
+  const connectionString = buildConnectionString(resolvedDb);
+  if (!connectionString) {
+    return {
+      ok: false as const,
+      error: "DB 접속 URL 형식이 올바르지 않습니다.",
+      connectionString: null,
+    };
+  }
+  return { ok: true as const, error: null, connectionString };
+};
 
 export async function POST(request: Request) {
   let payload: Payload | null = null;
@@ -219,25 +235,14 @@ export async function POST(request: Request) {
     );
   }
 
-  if (
-    !isNonEmpty(DB_CONFIG.url) ||
-    !isNonEmpty(DB_CONFIG.database) ||
-    !isNonEmpty(DB_CONFIG.user) ||
-    !isNonEmpty(DB_CONFIG.password)
-  ) {
+  const dbConnection = await resolveRequestConnectionString(payload.dbSettingId);
+  if (!dbConnection.ok) {
     return NextResponse.json(
-      { ok: false, error: "DB 환경변수 설정이 필요합니다." },
+      { ok: false, error: dbConnection.error },
       { status: 400 },
     );
   }
-
-  const connectionString = buildConnectionString(DB_CONFIG);
-  if (!connectionString) {
-    return NextResponse.json(
-      { ok: false, error: "DB 접속 URL 형식이 올바르지 않습니다." },
-      { status: 400 },
-    );
-  }
+  const connectionString = dbConnection.connectionString;
 
   const client = new Client({
     connectionString,
@@ -516,25 +521,14 @@ export async function PATCH(request: Request) {
     }
   }
 
-  if (
-    !isNonEmpty(DB_CONFIG.url) ||
-    !isNonEmpty(DB_CONFIG.database) ||
-    !isNonEmpty(DB_CONFIG.user) ||
-    !isNonEmpty(DB_CONFIG.password)
-  ) {
+  const dbConnection = await resolveRequestConnectionString(payload.dbSettingId);
+  if (!dbConnection.ok) {
     return NextResponse.json(
-      { ok: false, error: "DB 환경변수 설정이 필요합니다." },
+      { ok: false, error: dbConnection.error },
       { status: 400 },
     );
   }
-
-  const connectionString = buildConnectionString(DB_CONFIG);
-  if (!connectionString) {
-    return NextResponse.json(
-      { ok: false, error: "DB 접속 URL 형식이 올바르지 않습니다." },
-      { status: 400 },
-    );
-  }
+  const connectionString = dbConnection.connectionString;
 
   const client = new Client({
     connectionString,
@@ -979,24 +973,14 @@ export async function DELETE(request: Request) {
     );
   }
 
-  if (
-    !isNonEmpty(DB_CONFIG.url) ||
-    !isNonEmpty(DB_CONFIG.database) ||
-    !isNonEmpty(DB_CONFIG.user) ||
-    !isNonEmpty(DB_CONFIG.password)
-  ) {
+  const dbConnection = await resolveRequestConnectionString(payload.dbSettingId);
+  if (!dbConnection.ok) {
     return NextResponse.json(
-      { ok: false, error: "DB 환경변수 설정이 필요합니다." },
+      { ok: false, error: dbConnection.error },
       { status: 400 },
     );
   }
-  const connectionString = buildConnectionString(DB_CONFIG);
-  if (!connectionString) {
-    return NextResponse.json(
-      { ok: false, error: "DB 접속 URL 형식이 올바르지 않습니다." },
-      { status: 400 },
-    );
-  }
+  const connectionString = dbConnection.connectionString;
 
   const client = new Client({
     connectionString,
@@ -1077,24 +1061,17 @@ export async function DELETE(request: Request) {
 
 export async function GET(request: Request) {
   await initializeIngestionScheduler();
-  if (
-    !isNonEmpty(DB_CONFIG.url) ||
-    !isNonEmpty(DB_CONFIG.database) ||
-    !isNonEmpty(DB_CONFIG.user) ||
-    !isNonEmpty(DB_CONFIG.password)
-  ) {
+  const reqUrl = new URL(request.url);
+  const dbConnection = await resolveRequestConnectionString(
+    reqUrl.searchParams.get("dbSettingId"),
+  );
+  if (!dbConnection.ok) {
     return NextResponse.json(
-      { ok: false, error: "DB 환경변수 설정이 필요합니다." },
+      { ok: false, error: dbConnection.error },
       { status: 400 },
     );
   }
-  const connectionString = buildConnectionString(DB_CONFIG);
-  if (!connectionString) {
-    return NextResponse.json(
-      { ok: false, error: "DB 접속 URL 형식이 올바르지 않습니다." },
-      { status: 400 },
-    );
-  }
+  const connectionString = dbConnection.connectionString;
 
   const client = new Client({
     connectionString,
@@ -1112,8 +1089,7 @@ export async function GET(request: Request) {
       }),
     ]);
 
-    const url = new URL(request.url);
-    const isTemplate = url.searchParams.get("template") === "true";
+    const isTemplate = reqUrl.searchParams.get("template") === "true";
     const sourceRows = await client.query(
       `
         select

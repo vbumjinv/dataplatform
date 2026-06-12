@@ -128,3 +128,32 @@ CROSS JOIN (VALUES
 ) AS v(param_key, param_value, param_location, param_order, encode_mode, param_role)
 WHERE s.name = 'FRED_템플릿'
 ON CONFLICT (group_id, param_key) DO NOTHING;
+
+-- KRX
+INSERT INTO dp.api_source
+  (name, provider, base_url, api_key, enabled, api_key_param_key, api_key_location, api_key_order, api_key_encode_mode, is_template)
+VALUES
+  ('KRX_템플릿', 'krx', 'https://data-dbg.krx.co.kr/svc/apis/gen', '', true, NULL, 'query', 0, 'encode', true)
+ON CONFLICT (name) DO NOTHING;
+
+INSERT INTO dp.api_param_group (source_id, name, is_template)
+SELECT s.id, 'KRX', true
+FROM dp.api_source s
+WHERE s.name = 'KRX_템플릿'
+  AND NOT EXISTS (
+    SELECT 1 FROM dp.api_param_group g
+    WHERE g.source_id = s.id AND g.name = 'KRX' AND g.is_template = true
+  );
+
+INSERT INTO dp.api_param (group_id, param_key, param_value, param_location, param_order, encode_mode, param_role)
+SELECT g.id, v.param_key, v.param_value, v.param_location, v.param_order, v.encode_mode, v.param_role
+FROM dp.api_source s
+JOIN dp.api_param_group g ON g.source_id = s.id AND g.is_template = true
+CROSS JOIN (VALUES
+  ('period','D','query',1,'encode','period_type'),
+  ('apiStart','', 'query',2,'encode','start'),
+  ('apiEnd','__TODAY__', 'query',3,'encode','end'),
+  ('basDd','', 'query',4,'encode',NULL)
+) AS v(param_key, param_value, param_location, param_order, encode_mode, param_role)
+WHERE s.name = 'KRX_템플릿'
+ON CONFLICT (group_id, param_key) DO NOTHING;

@@ -1,4 +1,5 @@
 import { Client } from "pg";
+import { resolveDbConfig } from "../../db/_lib/connection";
 
 const CONNECT_TIMEOUT_MS = 5000;
 const DB_CONFIG = {
@@ -36,8 +37,48 @@ export const buildConnectionString = () => {
   return parsed.toString();
 };
 
+const buildConnectionStringFromPayload = (payload: {
+  url?: string;
+  database?: string;
+  user?: string;
+  password?: string;
+}) => {
+  if (!payload.url) return null;
+  const normalized = normalizeJdbcUrl(payload.url);
+  let parsed: URL;
+  try {
+    parsed = new URL(normalized);
+  } catch {
+    return null;
+  }
+  if (!["postgres:", "postgresql:"].includes(parsed.protocol)) return null;
+  if (payload.user) parsed.username = payload.user;
+  if (payload.password) parsed.password = payload.password;
+  if (payload.database) parsed.pathname = `/${payload.database}`;
+  return parsed.toString();
+};
+
 export const createDbClient = () => {
   const connectionString = buildConnectionString();
+  if (!connectionString) return null;
+  return new Client({
+    connectionString,
+    connectionTimeoutMillis: CONNECT_TIMEOUT_MS,
+  });
+};
+
+export const parseDbSettingIdFromRequest = (request: Request) => {
+  const selectedSettingId = new URL(request.url).searchParams.get("dbSettingId");
+  if (!selectedSettingId) return null;
+  const numericId = Number(selectedSettingId);
+  return Number.isFinite(numericId) ? numericId : null;
+};
+
+export const createDbClientFromRequest = async (request: Request) => {
+  const settingId = parseDbSettingIdFromRequest(request);
+  const resolvedDb = await resolveDbConfig({ settingId });
+  if (!resolvedDb) return null;
+  const connectionString = buildConnectionStringFromPayload(resolvedDb);
   if (!connectionString) return null;
   return new Client({
     connectionString,

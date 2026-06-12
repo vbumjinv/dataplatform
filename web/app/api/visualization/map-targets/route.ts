@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   canUseDb,
-  createDbClient,
+  createDbClientFromRequest,
   connectWithTimeout,
 } from "../_lib/db";
 
@@ -13,14 +13,14 @@ const normalizeProvider = (provider?: string | null) => {
   return value || "custom";
 };
 
-export async function GET() {
+export async function GET(request: Request) {
   if (!canUseDb()) {
     return NextResponse.json(
       { ok: false, error: "DB 환경변수 설정이 필요합니다." },
       { status: 400 },
     );
   }
-  const client = createDbClient();
+  const client = await createDbClientFromRequest(request);
   if (!client) {
     return NextResponse.json(
       { ok: false, error: "DB 접속 URL 형식이 올바르지 않습니다." },

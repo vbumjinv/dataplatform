@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { canUseDb, connectWithTimeout, createDbClient } from "../../../_lib/db";
+import { canUseDb, connectWithTimeout, createDbClientFromRequest } from "../../../_lib/db";
 import { buildMapDataForMapping, fetchMappings } from "../../../_lib/mapping-query";
+import { markMapRunLogError, markMapRunLogSuccess, startMapRunLog } from "../../../_lib/map-run-log";
 
 export const runtime = "nodejs";
 
@@ -26,7 +27,7 @@ export async function POST(
       { status: 400 },
     );
   }
-  const client = createDbClient();
+  const client = await createDbClientFromRequest(request);
   if (!client) {
     return NextResponse.json(
       { ok: false, error: "DB 접속 URL 형식이 올바르지 않습니다." },
@@ -41,6 +42,7 @@ export async function POST(
     payload = {};
   }
   const mode = payload.mode === "regenerate" ? "regenerate" : "generate";
+  let runLogId: number | null = null;
 
   try {
     await connectWithTimeout(client);
@@ -52,8 +54,19 @@ export async function POST(
         { status: 404 },
       );
     }
+    runLogId = await startMapRunLog(client, {
+      mapId,
+      seriesName: mapping.seriesName,
+      triggerType: "manual",
+      runMode: mode,
+    });
     const result = await buildMapDataForMapping(client, mapping, {
       replaceExisting: mode === "regenerate",
+    });
+    await markMapRunLogSuccess(client, runLogId, {
+      affectedCount: result.affectedCount,
+      startDate: result.startDate,
+      endDate: result.endDate,
     });
     return NextResponse.json({
       ok: true,
@@ -64,6 +77,7 @@ export async function POST(
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "데이터 생성에 실패했습니다.";
+    await markMapRunLogError(client, runLogId, message);
     return NextResponse.json({ ok: false, error: message }, { status: 500 });
   } finally {
     try {

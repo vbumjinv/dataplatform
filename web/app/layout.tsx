@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Data Platform",
+  title: "FinJump",
   description: "데이터 수집, 품질, 시각화를 위한 데이터 플랫폼",
 };
 

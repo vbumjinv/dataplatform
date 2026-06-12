@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { canUseDb, createDbClient, connectWithTimeout, isNonEmpty } from "../_lib/db";
+import { canUseDb, createDbClientFromRequest, connectWithTimeout, isNonEmpty } from "../_lib/db";
 
 export const runtime = "nodejs";
 
@@ -10,7 +10,7 @@ export async function GET(request: Request) {
       { status: 400 },
     );
   }
-  const client = createDbClient();
+  const client = await createDbClientFromRequest(request);
   if (!client) {
     return NextResponse.json(
       { ok: false, error: "DB 접속 URL 형식이 올바르지 않습니다." },

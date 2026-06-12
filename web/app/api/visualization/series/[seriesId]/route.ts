@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { canUseDb, connectWithTimeout, createDbClient } from "../../_lib/db";
+import { canUseDb, connectWithTimeout, createDbClientFromRequest } from "../../_lib/db";
 import { parseMapIdFromSeriesId, toSeriesIdFromMapId } from "../../_lib/mapping-query";
 
 export const runtime = "nodejs";
 
 export async function DELETE(
-  _request: Request,
+  request: Request,
   context: { params: Promise<{ seriesId: string }> },
 ) {
   const params = await context.params;
@@ -23,7 +23,7 @@ export async function DELETE(
       { status: 400 },
     );
   }
-  const client = createDbClient();
+  const client = await createDbClientFromRequest(request);
   if (!client) {
     return NextResponse.json(
       { ok: false, error: "DB 접속 URL 형식이 올바르지 않습니다." },

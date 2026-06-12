@@ -102,6 +102,17 @@ type FredStatItem = {
   sort_ord?: number | null;
   org_name?: string | null;
 };
+type KrxApiItem = {
+  p_api_id: string;
+  api_id: string;
+  api_name: string;
+  api_path: string;
+  category_name: string;
+  cycle: string;
+  srch_yn: string;
+  category_sort: number;
+  api_sort: number;
+};
 type DatagokrTreeNode = DatagokrStatItem & {
   children: DatagokrTreeNode[];
   selectable: boolean;
@@ -140,6 +151,11 @@ const ORG_CATALOG = [
     name: "FRED",
     description: "미국 세인트루이스 연준 경제시계열을 연동합니다.",
   },
+  {
+    provider: "krx",
+    name: "KRX",
+    description: "한국거래소 API 데이터를 수집합니다.",
+  },
 ];
 
 const DEFAULT_STEP_LABELS: Array<{ key: Step; label: string }> = [
@@ -174,6 +190,15 @@ const normalizeProvider = (provider?: string | null) => {
   if (value === "data-go-kr" || value === "data_go_kr") return "datagokr";
   return value;
 };
+const KRX_API_BASE_PATH = "https://data-dbg.krx.co.kr/svc/apis";
+const END_LATEST_TOKEN = "__TODAY__";
+const START_RELATIVE_TOKEN_REGEX = /^__TODAY_MINUS_(\d+)(D|M|Q|A|Y)__$/i;
+const START_RELATIVE_KO_REGEX = /^(\d+)\s*(일|개월|분기|년)\s*전$/;
+const buildKrxEndpointUrl = (apiPath: string, apiId: string) => {
+  const normalizedPath = (apiPath.trim() || "gen").replace(/^\/+|\/+$/g, "");
+  const normalizedApiId = apiId.trim().replace(/^\/+/, "");
+  return `${KRX_API_BASE_PATH}/${normalizedPath}/${normalizedApiId}`;
+};
 
 const pad = (value: number) => String(value).padStart(2, "0");
 
@@ -186,6 +211,69 @@ const formatForPeriod = (dateText: string, period: string) => {
   if (period === "Q") return `${year}Q${Math.floor((month - 1) / 3) + 1}`;
   if (period === "A" || period === "Y") return `${year}`;
   return `${year}${pad(month)}`;
+};
+const formatDateForPeriod = (date: Date, period: string) => {
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+  if (period === "D") return `${year}${pad(month)}${pad(date.getDate())}`;
+  if (period === "Q") return `${year}Q${Math.floor((month - 1) / 3) + 1}`;
+  if (period === "A" || period === "Y") return `${year}`;
+  return `${year}${pad(month)}`;
+};
+const formatIsoDate = (date: Date) =>
+  `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+const shouldUseIsoDateParamFormat = (paramKey: string) => {
+  const normalized = paramKey.trim().toLowerCase();
+  return normalized === "observation_start" || normalized === "observation_end";
+};
+const formatParamDateValue = (date: Date, period: string, paramKey: string) => {
+  if (shouldUseIsoDateParamFormat(paramKey)) {
+    return formatIsoDate(date);
+  }
+  return formatDateForPeriod(date, period);
+};
+const shiftDateByUnit = (base: Date, offset: number, unit: "D" | "M" | "Q" | "A" | "Y") => {
+  const next = new Date(base);
+  if (unit === "D") {
+    next.setDate(next.getDate() - offset);
+    return next;
+  }
+  if (unit === "M") {
+    next.setMonth(next.getMonth() - offset);
+    return next;
+  }
+  if (unit === "Q") {
+    next.setMonth(next.getMonth() - offset * 3);
+    return next;
+  }
+  next.setFullYear(next.getFullYear() - offset);
+  return next;
+};
+const resolveRelativeStartValue = (raw: string, period: string, paramKey: string) => {
+  const value = raw.trim();
+  if (!value) return null;
+  const tokenMatch = START_RELATIVE_TOKEN_REGEX.exec(value);
+  if (tokenMatch) {
+    const offset = Number(tokenMatch[1]);
+    const unit = tokenMatch[2].toUpperCase() as "D" | "M" | "Q" | "A" | "Y";
+    if (!Number.isFinite(offset) || offset < 0) return null;
+    return formatParamDateValue(shiftDateByUnit(new Date(), offset, unit), period, paramKey);
+  }
+  const koMatch = START_RELATIVE_KO_REGEX.exec(value);
+  if (koMatch) {
+    const offset = Number(koMatch[1]);
+    if (!Number.isFinite(offset) || offset < 0) return null;
+    const unit =
+      koMatch[2] === "일"
+        ? "D"
+        : koMatch[2] === "개월"
+          ? "M"
+          : koMatch[2] === "분기"
+            ? "Q"
+            : "Y";
+    return formatParamDateValue(shiftDateByUnit(new Date(), offset, unit), period, paramKey);
+  }
+  return null;
 };
 const normalizePeriodType = (value?: string | null) => {
   const period = (value ?? "").trim().toUpperCase();
@@ -249,6 +337,18 @@ const compareByNumberedPrefix = (a: string, b: string) => {
   if (bParts) return 1;
   return a.localeCompare(b, "ko");
 };
+const formatKrxOrderLabel = (item: Pick<KrxApiItem, "category_sort" | "api_sort">) => {
+  const category = Number.isFinite(item.category_sort) ? item.category_sort : 0;
+  const api = Number.isFinite(item.api_sort) ? item.api_sort : 0;
+  return `${category}.${api}`;
+};
+const formatKrxCategoryLabel = (
+  item: Pick<KrxApiItem, "category_sort" | "category_name"> | undefined,
+) => {
+  if (!item) return "";
+  const category = Number.isFinite(item.category_sort) ? item.category_sort : 0;
+  return `${category}. ${item.category_name}`;
+};
 
 export default function UserApiRegistrationModal({
   open,
@@ -268,6 +368,12 @@ export default function UserApiRegistrationModal({
   const [bokError, setBokError] = useState("");
   const [bokExpanded, setBokExpanded] = useState<Set<string>>(new Set());
   const [bokSelectedStatCode, setBokSelectedStatCode] = useState<string | null>(null);
+  const [krxStats, setKrxStats] = useState<KrxApiItem[]>([]);
+  const [krxLoading, setKrxLoading] = useState(false);
+  const [krxError, setKrxError] = useState("");
+  const [krxAppliedQuery, setKrxAppliedQuery] = useState("");
+  const [krxExpandedCategories, setKrxExpandedCategories] = useState<Set<string>>(new Set());
+  const [krxSelectedApiId, setKrxSelectedApiId] = useState<string | null>(null);
   const [kosisStats, setKosisStats] = useState<KosisStatItem[]>([]);
   const [kosisLoading, setKosisLoading] = useState(false);
   const [kosisLoadingParentKeys, setKosisLoadingParentKeys] = useState<Set<string>>(new Set());
@@ -417,6 +523,14 @@ export default function UserApiRegistrationModal({
     if (!source || !group) return null;
     return { source, group };
   }, [templates]);
+  const krxTemplateTarget = useMemo(() => {
+    const source = templates.find(
+      (item) => normalizeProvider(item.provider) === "krx" && (item.groups ?? []).length > 0,
+    );
+    const group = source?.groups?.[0];
+    if (!source || !group) return null;
+    return { source, group };
+  }, [templates]);
 
   const bokTreeRoots = useMemo(() => {
     if (!bokStats.length) return [] as BokTreeNode[];
@@ -494,6 +608,38 @@ export default function UserApiRegistrationModal({
   const selectedBokStat = useMemo(
     () => bokStats.find((item) => item.stat_code === bokSelectedStatCode) ?? null,
     [bokSelectedStatCode, bokStats],
+  );
+  const krxSortedStats = useMemo(() => {
+    return krxStats
+      .filter((item) => item.srch_yn.trim().toUpperCase() === "Y")
+      .sort((a, b) => {
+        const categoryOrder = a.category_sort - b.category_sort;
+        if (categoryOrder !== 0) return categoryOrder;
+        const apiOrder = a.api_sort - b.api_sort;
+        if (apiOrder !== 0) return apiOrder;
+        return a.api_id.localeCompare(b.api_id, "ko");
+      });
+  }, [krxStats]);
+  const krxCategoryGroups = useMemo(() => {
+    const map = new Map<string, KrxApiItem[]>();
+    krxSortedStats.forEach((item) => {
+      const key = item.category_name || "기타";
+      const bucket = map.get(key);
+      if (bucket) bucket.push(item);
+      else map.set(key, [item]);
+    });
+    return Array.from(map.entries());
+  }, [krxSortedStats]);
+  const krxSearchResults = useMemo(() => {
+    const query = krxAppliedQuery.trim().toLowerCase();
+    if (!query) return [] as KrxApiItem[];
+    return krxSortedStats.filter((item) =>
+      [item.category_name, item.api_name, item.api_id].join(" ").toLowerCase().includes(query),
+    );
+  }, [krxAppliedQuery, krxSortedStats]);
+  const selectedKrxStat = useMemo(
+    () => krxStats.find((item) => item.api_id === krxSelectedApiId) ?? null,
+    [krxSelectedApiId, krxStats],
   );
   const datagokrTreeRoots = useMemo(() => {
     if (!datagokrStats.length) return [] as DatagokrTreeNode[];
@@ -579,6 +725,12 @@ export default function UserApiRegistrationModal({
     );
     return withKey ?? candidates.find((item) => item.enabled) ?? candidates[0] ?? null;
   }, [sources]);
+  const krxRegisteredSource = useMemo(() => {
+    const candidates = sources.filter(
+      (item) => normalizeProvider(item.provider) === "krx" && !item.is_template,
+    );
+    return candidates.find((item) => item.enabled) ?? candidates[0] ?? null;
+  }, [sources]);
 
   const resolvedSelectedTarget = useMemo(() => {
     if (selectedProvider === "bok") {
@@ -641,6 +793,29 @@ export default function UserApiRegistrationModal({
         codeHint: selectedFredStat.stat_code,
       };
     }
+    if (selectedProvider === "krx") {
+      if (!selectedKrxStat || !krxTemplateTarget) return null;
+      const endpointUrl = buildKrxEndpointUrl(selectedKrxStat.api_path, selectedKrxStat.api_id);
+      const normalizeKrxSource = (source: ApiSource) => ({
+        ...source,
+        base_url: endpointUrl,
+      });
+      const sourceForCall =
+        (krxRegisteredSource ? normalizeKrxSource(krxRegisteredSource) : null) ??
+        normalizeKrxSource(krxTemplateTarget.source);
+      const groupForCall = krxTemplateTarget.group;
+      return {
+        key: `krx:${selectedKrxStat.api_id}`,
+        provider: "krx",
+        source: sourceForCall,
+        group: groupForCall,
+        title: selectedKrxStat.api_name,
+        description: `${selectedKrxStat.category_name} / KRX ${selectedKrxStat.api_id}`,
+        typeLabel: "시계열",
+        statusLabel: "사용 가능",
+        codeHint: selectedKrxStat.api_id,
+      };
+    }
     return selectedTarget;
   }, [
     bokRegisteredSource,
@@ -650,10 +825,13 @@ export default function UserApiRegistrationModal({
     selectedDatagokrStat,
     fredRegisteredSource,
     fredTemplateTarget,
+    krxRegisteredSource,
+    krxTemplateTarget,
     kosisRegisteredSource,
     kosisTemplateTarget,
     selectedFredStat,
     selectedKosisStat,
+    selectedKrxStat,
     selectedBokStat,
     selectedProvider,
     selectedTarget,
@@ -688,6 +866,33 @@ export default function UserApiRegistrationModal({
     };
     void fetchBokStats();
   }, [bokLoading, bokStats.length, open, selectedProvider, step]);
+  useEffect(() => {
+    if (!open || step !== "target" || selectedProvider !== "krx") return;
+    if (krxStats.length > 0 || krxLoading) return;
+    const fetchKrxStats = async () => {
+      setKrxLoading(true);
+      setKrxError("");
+      try {
+        const response = await fetch("/api/ingestion/krx-stat-list");
+        const payload = (await response.json()) as {
+          ok?: boolean;
+          items?: KrxApiItem[];
+          error?: string;
+        };
+        if (!response.ok || !payload.ok) {
+          throw new Error(payload.error || "KRX API 목록을 불러오지 못했습니다.");
+        }
+        setKrxStats(payload.items ?? []);
+        setKrxExpandedCategories(new Set());
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "KRX API 목록을 불러오지 못했습니다.";
+        setKrxError(message);
+      } finally {
+        setKrxLoading(false);
+      }
+    };
+    void fetchKrxStats();
+  }, [krxLoading, krxStats.length, open, selectedProvider, step]);
   const loadKosisChildren = useCallback(
     async (parentCode: string, vwCd?: string) => {
       const cacheKey = kosisParentKey(parentCode, vwCd);
@@ -830,6 +1035,8 @@ export default function UserApiRegistrationModal({
   const canGoNextFromTarget =
     selectedProvider === "bok"
       ? Boolean(selectedBokStat && bokTemplateTarget)
+      : selectedProvider === "krx"
+        ? Boolean(selectedKrxStat && krxTemplateTarget)
       : selectedProvider === "kosis"
         ? Boolean(selectedKosisStat && kosisTemplateTarget)
       : selectedProvider === "datagokr"
@@ -904,9 +1111,13 @@ export default function UserApiRegistrationModal({
     const fredStartDate = normalizeIsoDate(startDate);
     const fredEndDate = normalizeIsoDate(endDate);
     const startValue =
-      selectedProvider === "fred" ? fredStartDate : formatForPeriod(startDate, periodType);
+      selectedProvider === "fred" || selectedProvider === "krx"
+        ? fredStartDate
+        : formatForPeriod(startDate, periodType);
     const endValue =
-      selectedProvider === "fred" ? fredEndDate : formatForPeriod(endDate, periodType);
+      selectedProvider === "fred" || selectedProvider === "krx"
+        ? fredEndDate
+        : formatForPeriod(endDate, periodType);
 
     if (startKey && startValue) {
       const item = paramMap.get(startKey);
@@ -1073,6 +1284,56 @@ export default function UserApiRegistrationModal({
       setOrInsert(["observation_end", "apiEnd", "end"], fredEndDate, "observation_end", "query", 8);
       setOrInsert(["file_type", "fileType", "format"], "json", "file_type", "query", 1);
     }
+    if (selectedProvider === "krx" && selectedKrxStat) {
+      const setOrInsert = (
+        keys: string[],
+        value: string,
+        defaultKey: string,
+        location: "path" | "query",
+        order: number,
+      ) => {
+        if (!value.trim()) return;
+        let found = false;
+        keys.forEach((key) => {
+          const current = paramMap.get(key);
+          if (current) {
+            paramMap.set(key, { ...current, value });
+            found = true;
+          }
+        });
+        if (!found) {
+          paramMap.set(defaultKey, {
+            key: defaultKey,
+            value,
+            location,
+            order,
+            encodeMode: "encode",
+            role: null,
+          });
+        }
+      };
+      const basDdValue = endDate ? formatForPeriod(endDate, "D") : "";
+      const startValueD = startDate ? formatForPeriod(startDate, "D") : "";
+      const endValueD = endDate ? formatForPeriod(endDate, "D") : "";
+      setOrInsert(
+        ["apiPath", "api_path", "krxApiPath"],
+        selectedKrxStat.api_path,
+        "apiPath",
+        "path",
+        1,
+      );
+      setOrInsert(
+        ["apiId", "api_id", "krxApiId"],
+        selectedKrxStat.api_id,
+        "apiId",
+        "path",
+        2,
+      );
+      setOrInsert(["period", "prdSe", "periodType"], "D", "period", "query", 1);
+      setOrInsert(["apiStart", "start", "startDt"], startValueD, "apiStart", "query", 2);
+      setOrInsert(["apiEnd", "end", "endDt"], endValueD, "apiEnd", "query", 3);
+      setOrInsert(["basDd", "BAS_DD"], basDdValue, "basDd", "query", 4);
+    }
 
     const maxOrder = params.reduce((acc, item) => Math.max(acc, item.order), 0);
     let orderCursor = maxOrder + 1;
@@ -1109,6 +1370,7 @@ export default function UserApiRegistrationModal({
     datagokrFunctionName,
     selectedDatagokrStat,
     selectedFredStat,
+    selectedKrxStat,
     fredTemplateTarget,
     kosisUserStatsId,
     selectedKosisStat,
@@ -1120,6 +1382,8 @@ export default function UserApiRegistrationModal({
     if (!resolvedSelectedTarget) return "";
     const source = resolvedSelectedTarget.source;
     if (!source.base_url) return "";
+    const provider = normalizeProvider(resolvedSelectedTarget.provider ?? selectedProvider ?? "");
+    const isKrxProvider = provider === "krx";
     const url = new URL(source.base_url);
     const base = `${url.origin}${url.pathname}`.replace(/\/$/, "");
     const apiKeyKey = source.api_key_param_key?.trim() || "";
@@ -1129,15 +1393,79 @@ export default function UserApiRegistrationModal({
       : 0;
     const apiKeyValue = source.api_key ?? "";
 
-    const pathParams = submitParams
+    const roleKeyMap = new Map<string, string>();
+    submitParams.forEach((item) => {
+      const role = item.role?.trim();
+      if (!role || roleKeyMap.has(role)) return;
+      roleKeyMap.set(role, item.key);
+    });
+    const paramValueByKey = new Map<string, string>(submitParams.map((item) => [item.key, item.value]));
+    const paramValueByKeyLower = new Map<string, string>(
+      submitParams.map((item) => [item.key.trim().toLowerCase(), item.value]),
+    );
+    const periodTypeKey =
+      roleKeyMap.get("period_type") ??
+      (["period", "prdse", "periodtype", "frequency", "freq"].find((key) =>
+        paramValueByKeyLower.has(key),
+      ) ?? null);
+    const startKey =
+      roleKeyMap.get("start") ??
+      (["apistart", "startprdde", "strtyymm", "observation_start"].find((key) =>
+        paramValueByKeyLower.has(key),
+      ) ?? null);
+    const endKey =
+      roleKeyMap.get("end") ??
+      (["apiend", "endprdde", "endyymm", "observation_end", "basdd"].find((key) =>
+        paramValueByKeyLower.has(key),
+      ) ?? null);
+    const effectivePeriod = normalizePeriodType(
+      periodTypeKey ? paramValueByKeyLower.get(periodTypeKey) : "M",
+    );
+    const resolvedParams = submitParams.map((item) => {
+      const paramKey = item.key.trim().toLowerCase();
+      const isStartParamByKey = ["apistart", "startprdde", "strtyymm", "observation_start"].includes(
+        paramKey,
+      );
+      const isEndParamByKey = ["apiend", "endprdde", "endyymm", "observation_end", "basdd"].includes(
+        paramKey,
+      );
+      const shouldResolveLatest =
+        item.value === END_LATEST_TOKEN &&
+        (paramKey === "basdd" || (endKey && paramKey === endKey) || (!endKey && isEndParamByKey));
+      if (shouldResolveLatest) {
+        return {
+          ...item,
+          value: formatParamDateValue(new Date(), effectivePeriod, item.key),
+        };
+      }
+      const shouldResolveStartRelative =
+        (startKey && paramKey === startKey) || (!startKey && isStartParamByKey);
+      const shouldResolveEndRelative =
+        (endKey && paramKey === endKey) || (!endKey && isEndParamByKey);
+      if (shouldResolveStartRelative) {
+        const startValue = resolveRelativeStartValue(item.value, effectivePeriod, item.key);
+        if (startValue) return { ...item, value: startValue };
+      }
+      if (shouldResolveEndRelative) {
+        const endValue = resolveRelativeStartValue(item.value, effectivePeriod, item.key);
+        if (endValue) return { ...item, value: endValue };
+      }
+      return item;
+    });
+
+    const pathParams = resolvedParams
       .filter((item) => item.location === "path" && item.value.trim())
       .map((item) => ({ ...item, encodeMode: item.encodeMode ?? "encode" }));
-    const queryParams = submitParams
+    const queryParams = resolvedParams
       .filter(
         (item) =>
           item.location === "query" &&
           item.key.trim() &&
           item.value.trim() &&
+          (!isKrxProvider ||
+            !["apistart", "apiend", "start", "end", "period", "prdse", "periodtype"].includes(
+              item.key.trim().toLowerCase(),
+            )) &&
           (!apiKeyKey || item.key !== apiKeyKey),
       )
       .map((item) => ({ ...item, encodeMode: item.encodeMode ?? "encode" }));
@@ -1170,9 +1498,17 @@ export default function UserApiRegistrationModal({
       .join("&");
     const existingQuery = url.search.replace(/^\?/, "");
     const mergedQuery = [existingQuery, queryPairs].filter(Boolean).join("&");
-    const fullPath = pathSegment ? `${base}/${pathSegment}` : base;
+    const fullPath = (() => {
+      if (!pathSegment) return base;
+      if (!isKrxProvider) return `${base}/${pathSegment}`;
+      const basePath = url.pathname.replace(/\/+$/, "");
+      if (basePath.includes("/svc/apis/")) {
+        return base;
+      }
+      return `${url.origin}/svc/apis/${pathSegment}`;
+    })();
     return mergedQuery ? `${fullPath}?${mergedQuery}` : fullPath;
-  }, [resolvedSelectedTarget, submitParams]);
+  }, [resolvedSelectedTarget, selectedProvider, submitParams]);
 
   const resetAll = () => {
     setStep("org");
@@ -1184,6 +1520,12 @@ export default function UserApiRegistrationModal({
     setBokExpanded(new Set());
     setBokSelectedStatCode(null);
     setBokError("");
+    setKrxStats([]);
+    setKrxLoading(false);
+    setKrxError("");
+    setKrxAppliedQuery("");
+    setKrxExpandedCategories(new Set());
+    setKrxSelectedApiId(null);
     setKosisExpanded(new Set());
     setKosisSelectedNodeId(null);
     setKosisStats([]);
@@ -1323,6 +1665,27 @@ export default function UserApiRegistrationModal({
     setTargetQuery("");
     setBokAppliedQuery("");
     setBokExpanded(new Set());
+  };
+  const runKrxSearch = () => {
+    const query = targetQuery.trim();
+    setKrxAppliedQuery(query);
+    if (!query) {
+      setKrxExpandedCategories(new Set());
+    }
+  };
+  const resetKrxSearch = () => {
+    setTargetQuery("");
+    setKrxAppliedQuery("");
+    setKrxExpandedCategories(new Set());
+    setKrxSelectedApiId(null);
+  };
+  const toggleKrxCategory = (category: string) => {
+    setKrxExpandedCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(category)) next.delete(category);
+      else next.add(category);
+      return next;
+    });
   };
   const toggleFredNode = async (node: FredTreeNode) => {
     const nodeId = node.node_id;
@@ -1527,6 +1890,37 @@ export default function UserApiRegistrationModal({
 
   const buildTabularFromJsonPreview = (raw: unknown) => {
     const tryExtractRows = (obj: Record<string, unknown>): Array<Record<string, unknown>> | null => {
+      const extractObjectRows = (value: unknown): Array<Record<string, unknown>> | null => {
+        if (Array.isArray(value)) {
+          const rows = value.filter(
+            (item): item is Record<string, unknown> =>
+              item != null && typeof item === "object" && !Array.isArray(item),
+          );
+          return rows.length > 0 ? rows : null;
+        }
+        if (value && typeof value === "object" && !Array.isArray(value)) {
+          return [value as Record<string, unknown>];
+        }
+        if (typeof value === "string") {
+          const trimmed = value.trim();
+          if ((trimmed.startsWith("{") || trimmed.startsWith("[")) && trimmed.length > 1) {
+            try {
+              return extractObjectRows(JSON.parse(trimmed) as unknown);
+            } catch {
+              return null;
+            }
+          }
+        }
+        return null;
+      };
+      const outBlockKeys = ["OutBlock_1", "OUTBLOCK_1", "outBlock_1", "outblock_1"];
+      for (const key of outBlockKeys) {
+        if (!(key in obj)) continue;
+        const rows = extractObjectRows(obj[key]);
+        if (rows && rows.length > 0) {
+          return rows;
+        }
+      }
       if (Array.isArray(obj.row)) {
         return obj.row.filter(
           (item): item is Record<string, unknown> =>
@@ -1706,13 +2100,152 @@ export default function UserApiRegistrationModal({
     const rows = objectRows.slice(0, 10).map((row) => header.map((key) => row[key] ?? null));
     return { header, rows };
   };
+  const buildTabularFromKrxPreview = (raw: unknown) => {
+    const toObjectRows = (value: unknown): Array<Record<string, unknown>> => {
+      if (value == null) return [];
+      if (Array.isArray(value)) {
+        return value.filter(
+          (item): item is Record<string, unknown> =>
+            item != null && typeof item === "object" && !Array.isArray(item),
+        );
+      }
+      if (typeof value === "object") {
+        return [value as Record<string, unknown>];
+      }
+      if (typeof value === "string") {
+        const trimmed = value.trim();
+        if (!trimmed) return [];
+        if (
+          (trimmed.startsWith("{") || trimmed.startsWith("[") || trimmed.startsWith('"')) &&
+          trimmed.length > 1
+        ) {
+          try {
+            const parsed = JSON.parse(trimmed) as unknown;
+            return toObjectRows(parsed);
+          } catch {
+            return [];
+          }
+        }
+      }
+      return [];
+    };
+    const findOutBlockRows = (
+      value: unknown,
+    ): { found: boolean; rows: Array<Record<string, unknown>> } => {
+      const rows = toObjectRows(value);
+      if (!rows.length) return { found: false, rows: [] };
+      for (const row of rows) {
+        for (const [key, nested] of Object.entries(row)) {
+          const normalizedKey = key.toLowerCase().replace(/[^a-z0-9]/g, "");
+          if (normalizedKey === "outblock1") {
+            const extracted = toObjectRows(nested);
+            return { found: true, rows: extracted };
+          }
+        }
+      }
+      for (const row of rows) {
+        for (const nested of Object.values(row)) {
+          const extracted = findOutBlockRows(nested);
+          if (extracted.found) return extracted;
+        }
+      }
+      return { found: false, rows: [] };
+    };
+
+    const outBlock = findOutBlockRows(raw);
+    if (!outBlock.found) {
+      throw new Error("KRX 응답에서 OutBlock_1 데이터를 찾지 못했습니다.");
+    }
+    if (!outBlock.rows.length) {
+      throw new Error("KRX 조회 결과가 없습니다. (휴장일/비영업일일 수 있습니다.)");
+    }
+    const objectRows = outBlock.rows;
+    const header = Array.from(new Set(objectRows.flatMap((row) => Object.keys(row))));
+    const rows = objectRows.slice(0, 10).map((row) => header.map((key) => row[key] ?? null));
+    return { header, rows };
+  };
+  const extractKrxOutBlockRows = (raw: unknown): { found: boolean; rows: Array<Record<string, unknown>> } => {
+    const toObjectRows = (value: unknown): Array<Record<string, unknown>> => {
+      if (value == null) return [];
+      if (Array.isArray(value)) {
+        return value.filter(
+          (item): item is Record<string, unknown> =>
+            item != null && typeof item === "object" && !Array.isArray(item),
+        );
+      }
+      if (typeof value === "object") {
+        return [value as Record<string, unknown>];
+      }
+      if (typeof value === "string") {
+        const trimmed = value.trim();
+        if (!trimmed) return [];
+        if (
+          (trimmed.startsWith("{") || trimmed.startsWith("[") || trimmed.startsWith('"')) &&
+          trimmed.length > 1
+        ) {
+          try {
+            const parsed = JSON.parse(trimmed) as unknown;
+            return toObjectRows(parsed);
+          } catch {
+            return [];
+          }
+        }
+      }
+      return [];
+    };
+    const walk = (value: unknown): { found: boolean; rows: Array<Record<string, unknown>> } => {
+      const rows = toObjectRows(value);
+      if (!rows.length) return { found: false, rows: [] };
+      for (const row of rows) {
+        for (const [key, nested] of Object.entries(row)) {
+          const normalizedKey = key.toLowerCase().replace(/[^a-z0-9]/g, "");
+          if (normalizedKey === "outblock1") {
+            return { found: true, rows: toObjectRows(nested) };
+          }
+        }
+      }
+      for (const row of rows) {
+        for (const nested of Object.values(row)) {
+          const extracted = walk(nested);
+          if (extracted.found) return extracted;
+        }
+      }
+      return { found: false, rows: [] };
+    };
+    return walk(raw);
+  };
 
   const fetchPreviewData = async () => {
     if (!previewUrl) return;
     setPreviewLoading(true);
     setPreviewError("");
     try {
-      const response = await fetch(`/api/collect?url=${encodeURIComponent(previewUrl)}`);
+      const provider = normalizeProvider(resolvedSelectedTarget?.provider ?? selectedProvider ?? "");
+      const isKrxProvider = provider === "krx";
+      const toCompactYmd = (value: string) => value.replace(/\D/g, "").slice(0, 8);
+      const fallbackBasDd = toCompactYmd(endDate || startDate || "");
+      const requestedBasDd = toCompactYmd(
+        submitParams.find((item) => item.key.trim().toLowerCase() === "basdd")?.value ?? "",
+      );
+      const initialBasDd = requestedBasDd || fallbackBasDd;
+      const response = isKrxProvider
+        ? await fetch("/api/collect", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              url: previewUrl.split("?")[0] ?? previewUrl,
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                AUTH_KEY: resolvedSelectedTarget?.source.api_key ?? "",
+                "X-Auth-Token": resolvedSelectedTarget?.source.api_key ?? "",
+              },
+              body: {
+                basDd: initialBasDd,
+              },
+            }),
+          })
+        : await fetch(`/api/collect?url=${encodeURIComponent(previewUrl)}`);
       const payload = (await response.json()) as {
         ok?: boolean;
         data?: unknown;
@@ -1722,9 +2255,72 @@ export default function UserApiRegistrationModal({
       if (!response.ok || !payload.ok) {
         throw new Error(payload.error || "데이터 미리보기에 실패했습니다.");
       }
-      const provider = normalizeProvider(resolvedSelectedTarget?.provider ?? selectedProvider ?? "");
+      if (isKrxProvider) {
+        const toYmd = (date: Date) =>
+          `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}`;
+        const start = new Date(`${startDate || endDate}T00:00:00`);
+        const end = new Date(`${endDate || startDate}T00:00:00`);
+        const hasValidStart = !Number.isNaN(start.getTime());
+        const hasValidEnd = !Number.isNaN(end.getTime());
+        const startDateObj = hasValidStart ? start : new Date(end);
+        const endDateObj = hasValidEnd ? end : new Date(start);
+        const minDate = startDateObj <= endDateObj ? startDateObj : endDateObj;
+        const maxDate = startDateObj <= endDateObj ? endDateObj : startDateObj;
+
+        const rows: Array<Record<string, unknown>> = [];
+        let foundOutBlock = false;
+        const firstExtracted = extractKrxOutBlockRows(payload.data);
+        foundOutBlock = foundOutBlock || firstExtracted.found;
+        rows.push(...firstExtracted.rows);
+
+        const cursor = new Date(maxDate);
+        cursor.setDate(cursor.getDate() - 1);
+        let guard = 0;
+        while (cursor >= minDate && rows.length < 10 && guard < 370) {
+          const daily = await fetch("/api/collect", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              url: previewUrl.split("?")[0] ?? previewUrl,
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                AUTH_KEY: resolvedSelectedTarget?.source.api_key ?? "",
+                "X-Auth-Token": resolvedSelectedTarget?.source.api_key ?? "",
+              },
+              body: { basDd: toYmd(cursor) },
+            }),
+          });
+          const dailyPayload = (await daily.json()) as {
+            ok?: boolean;
+            data?: unknown;
+            error?: string;
+          };
+          if (!daily.ok || !dailyPayload.ok) {
+            throw new Error(dailyPayload.error || "데이터 미리보기에 실패했습니다.");
+          }
+          const extracted = extractKrxOutBlockRows(dailyPayload.data);
+          foundOutBlock = foundOutBlock || extracted.found;
+          rows.push(...extracted.rows);
+          cursor.setDate(cursor.getDate() - 1);
+          guard += 1;
+        }
+        if (!foundOutBlock) {
+          throw new Error("KRX 응답에서 OutBlock_1 데이터를 찾지 못했습니다.");
+        }
+        if (!rows.length) {
+          throw new Error("KRX 조회 결과가 없습니다. (휴장일/비영업일일 수 있습니다.)");
+        }
+        const header = Array.from(new Set(rows.flatMap((row) => Object.keys(row))));
+        const previewRows = rows.slice(0, 10).map((row) => header.map((key) => row[key] ?? null));
+        setPreviewHeader(header);
+        setPreviewRows(previewRows);
+        return;
+      }
       const tabular =
-        provider === "datagokr"
+        provider === "krx"
+          ? buildTabularFromKrxPreview(payload.data)
+          : provider === "datagokr"
           ? buildTabularFromDatagokrXml(payload.data, payload.contentType)
           : provider === "fred"
             ? buildTabularFromFredPreview(payload.data)
@@ -2151,6 +2747,19 @@ export default function UserApiRegistrationModal({
                     <p>주기(frequency): {(selectedFredStat.cycle ?? "").toLowerCase() || "-"}</p>
                   </>
                 ) : null}
+                {selectedKrxStat ? (
+                  <>
+                    <p>
+                      <span className="font-semibold">API ID:</span> {selectedKrxStat.api_id}
+                    </p>
+                    <p>
+                      <span className="font-semibold">카테고리:</span> {selectedKrxStat.category_name}
+                    </p>
+                    <p>
+                      <span className="font-semibold">주기:</span> {selectedKrxStat.cycle || "-"}
+                    </p>
+                  </>
+                ) : null}
                 <p>
                   기간: {startDate || "-"} ~ {endDate || "-"}
                 </p>
@@ -2212,6 +2821,9 @@ export default function UserApiRegistrationModal({
                         setTargetQuery("");
                         setBokAppliedQuery("");
                         setBokExpanded(new Set());
+                        setKrxAppliedQuery("");
+                        setKrxExpandedCategories(new Set());
+                        setKrxSelectedApiId(null);
                         setKosisAppliedQuery("");
                         setKosisExpanded(new Set());
                         setKosisSearchResults([]);
@@ -2638,6 +3250,142 @@ export default function UserApiRegistrationModal({
                       ? `${selectedFredStat.node_name} (${selectedFredStat.stat_code || "-"}) / 주기 ${
                           selectedFredStat.cycle || "-"
                         }`
+                      : "없음"}
+                  </div>
+                </div>
+              ) : selectedProvider === "krx" ? (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_auto_auto]">
+                    <input
+                      value={targetQuery}
+                      onChange={(event) => setTargetQuery(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          event.preventDefault();
+                          runKrxSearch();
+                        }
+                      }}
+                      placeholder="카테고리/API명/API ID 검색"
+                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={runKrxSearch}
+                      className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                    >
+                      검색
+                    </button>
+                    <button
+                      type="button"
+                      onClick={resetKrxSearch}
+                      className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                    >
+                      초기화
+                    </button>
+                  </div>
+                  {krxAppliedQuery ? (
+                    <p className="text-xs text-slate-500">
+                      검색어 &quot;{krxAppliedQuery}&quot; — 선택 가능한 API만 표시합니다.
+                    </p>
+                  ) : (
+                    <p className="text-xs text-slate-500">
+                      기본 상태는 접힘입니다. 카테고리 카드를 눌러 펼쳐보세요.
+                    </p>
+                  )}
+                  {krxLoading ? (
+                    <p className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-500">
+                      KRX API 목록을 불러오는 중입니다...
+                    </p>
+                  ) : krxError ? (
+                    <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-5 text-sm text-rose-600">
+                      {krxError}
+                    </p>
+                  ) : (
+                    <div className="max-h-[42vh] space-y-3 overflow-y-auto rounded-2xl border border-slate-200 bg-slate-50 p-2">
+                      {krxAppliedQuery ? (
+                        krxSearchResults.length > 0 ? (
+                          krxSearchResults.map((item) => {
+                            const selected = krxSelectedApiId === item.api_id;
+                            return (
+                              <button
+                                key={item.api_id}
+                                type="button"
+                                onClick={() => setKrxSelectedApiId(item.api_id)}
+                                className={`w-full rounded-xl border px-3 py-2 text-left hover:border-slate-300 ${
+                                  selected
+                                    ? "border-slate-900 bg-slate-900 text-white"
+                                    : "border-slate-200 bg-white text-slate-700"
+                                }`}
+                              >
+                                <p className="text-sm font-semibold">
+                                  {formatKrxOrderLabel(item)}. {item.api_name}
+                                </p>
+                                <p className="text-[11px] opacity-80">
+                                  {item.category_name} / API ID {item.api_id}
+                                </p>
+                              </button>
+                            );
+                          })
+                        ) : (
+                          <p className="px-2 py-2 text-sm text-slate-500">검색 결과가 없습니다.</p>
+                        )
+                      ) : krxCategoryGroups.length > 0 ? (
+                        krxCategoryGroups.map(([category, items]) => {
+                          const expanded = krxExpandedCategories.has(category);
+                          const categoryLabel = formatKrxCategoryLabel(items[0]);
+                          return (
+                            <div key={category} className="rounded-xl border border-slate-200 bg-white">
+                              <button
+                                type="button"
+                                onClick={() => toggleKrxCategory(category)}
+                                className="flex w-full items-center gap-2 px-3 py-2 text-left hover:border-slate-300"
+                              >
+                                <span className="rounded-full border border-slate-200 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
+                                  {expanded ? "접기" : "펼치기"}
+                                </span>
+                                <span className="flex-1 text-slate-800">
+                                  <p className="text-sm font-semibold">{categoryLabel || category}</p>
+                                  <p className="text-[11px] opacity-80">분류 / {items.length}개 API</p>
+                                </span>
+                              </button>
+                              {expanded ? (
+                                <div className="space-y-2 border-t border-slate-100 px-2 pb-2 pt-2">
+                                  <div className="space-y-2 pl-3">
+                                    {items.map((item) => {
+                                      const selected = krxSelectedApiId === item.api_id;
+                                      return (
+                                        <button
+                                          key={item.api_id}
+                                          type="button"
+                                          onClick={() => setKrxSelectedApiId(item.api_id)}
+                                          className={`w-full rounded-xl border px-3 py-2 text-left hover:border-slate-300 ${
+                                            selected
+                                              ? "border-slate-900 bg-slate-900 text-white"
+                                              : "border-slate-200 bg-white text-slate-700"
+                                          }`}
+                                        >
+                                          <p className="text-sm font-semibold">
+                                            {formatKrxOrderLabel(item)}. {item.api_name}
+                                          </p>
+                                          <p className="text-[11px] opacity-80">API ID {item.api_id}</p>
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              ) : null}
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <p className="px-2 py-2 text-sm text-slate-500">수집대상 목록이 없습니다.</p>
+                      )}
+                    </div>
+                  )}
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
+                    선택된 수집대상:{" "}
+                    {selectedKrxStat
+                      ? `${selectedKrxStat.api_name} (${selectedKrxStat.api_id})`
                       : "없음"}
                   </div>
                 </div>

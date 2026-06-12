@@ -8,6 +8,7 @@ export const runtime = "nodejs";
 type RunPayload = {
   seriesId?: string;
   horizonMonths?: number;
+  enableLlmSummary?: boolean;
   modelType?:
     | "prophet"
     | "arima"
@@ -241,6 +242,7 @@ export async function POST(request: Request) {
 
   const seriesId = (payload?.seriesId ?? "").trim();
   const horizonMonths = Math.max(1, Math.min(24, Number(payload?.horizonMonths ?? 12) || 12));
+  const enableLlmSummary = payload?.enableLlmSummary === true;
   const modelType = ALLOWED_MODEL_TYPES.has(payload?.modelType ?? "")
     ? (payload?.modelType as
         | "prophet"
@@ -398,7 +400,7 @@ export async function POST(request: Request) {
     let llmWarning: string | null = null;
     let summaryElapsedMs: number | null = null;
     let summaryTokenUsage: TokenUsage | null = null;
-    if (OLLAMA_URL && OLLAMA_MODEL) {
+    if (enableLlmSummary && OLLAMA_URL && OLLAMA_MODEL) {
       const prompt = buildPrompt(
         meta,
         pythonPayload.history,
@@ -455,7 +457,7 @@ export async function POST(request: Request) {
         llmWarning = `LLM 요약 실패: ${llmError}`;
       }
       summaryElapsedMs = Date.now() - summaryStartedAt;
-    } else {
+    } else if (enableLlmSummary) {
       llmWarning = "OLLAMA_URL 또는 OLLAMA_MODEL 환경변수가 없어 요약을 생략했습니다.";
     }
 
@@ -489,6 +491,7 @@ export async function POST(request: Request) {
       summaryElapsedMs,
       summaryTokenUsage,
       totalTokenUsage,
+      llmSummaryEnabled: enableLlmSummary,
       llmSummary,
       llmWarning,
     });

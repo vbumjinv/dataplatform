@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { Client } from "pg";
+import { resolveDbConfig } from "../../db/_lib/connection";
 
 export const runtime = "nodejs";
 
@@ -44,6 +45,17 @@ const canUseDb = () =>
   isNonEmpty(DB_CONFIG.user) &&
   isNonEmpty(DB_CONFIG.password);
 
+const resolveConnectionString = async (request: Request) => {
+  const selectedSettingId = new URL(request.url).searchParams.get("dbSettingId");
+  const numericId = Number(selectedSettingId);
+  const resolvedDb = await resolveDbConfig({
+    settingId: Number.isFinite(numericId) ? numericId : null,
+  });
+  if (resolvedDb) return buildConnectionString(resolvedDb);
+  if (!canUseDb()) return null;
+  return buildConnectionString(DB_CONFIG);
+};
+
 type AnalysisCreatePayload = {
   chartName?: string;
   seriesIds?: string[];
@@ -53,14 +65,8 @@ type AnalysisCreatePayload = {
   analysisConfig?: unknown;
 };
 
-export async function GET() {
-  if (!canUseDb()) {
-    return NextResponse.json(
-      { ok: false, error: "DB 환경변수 설정이 필요합니다." },
-      { status: 400 },
-    );
-  }
-  const connectionString = buildConnectionString(DB_CONFIG);
+export async function GET(request: Request) {
+  const connectionString = await resolveConnectionString(request);
   if (!connectionString) {
     return NextResponse.json(
       { ok: false, error: "DB 접속 URL 형식이 올바르지 않습니다." },
@@ -122,13 +128,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  if (!canUseDb()) {
-    return NextResponse.json(
-      { ok: false, error: "DB 환경변수 설정이 필요합니다." },
-      { status: 400 },
-    );
-  }
-  const connectionString = buildConnectionString(DB_CONFIG);
+  const connectionString = await resolveConnectionString(request);
   if (!connectionString) {
     return NextResponse.json(
       { ok: false, error: "DB 접속 URL 형식이 올바르지 않습니다." },

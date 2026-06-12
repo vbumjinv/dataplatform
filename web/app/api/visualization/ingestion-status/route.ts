@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { Client } from "pg";
+import { resolveDbConfig } from "../../db/_lib/connection";
 
 export const runtime = "nodejs";
 
@@ -44,14 +45,19 @@ const canUseDb = () =>
   isNonEmpty(DB_CONFIG.user) &&
   isNonEmpty(DB_CONFIG.password);
 
-export async function GET() {
-  if (!canUseDb()) {
-    return NextResponse.json(
-      { ok: false, error: "DB 환경변수 설정이 필요합니다." },
-      { status: 400 },
-    );
-  }
-  const connectionString = buildConnectionString(DB_CONFIG);
+const resolveConnectionString = async (request: Request) => {
+  const selectedSettingId = new URL(request.url).searchParams.get("dbSettingId");
+  const numericId = Number(selectedSettingId);
+  const resolvedDb = await resolveDbConfig({
+    settingId: Number.isFinite(numericId) ? numericId : null,
+  });
+  if (resolvedDb) return buildConnectionString(resolvedDb);
+  if (!canUseDb()) return null;
+  return buildConnectionString(DB_CONFIG);
+};
+
+export async function GET(request: Request) {
+  const connectionString = await resolveConnectionString(request);
   if (!connectionString) {
     return NextResponse.json(
       { ok: false, error: "DB 접속 URL 형식이 올바르지 않습니다." },
@@ -74,7 +80,7 @@ export async function GET() {
       }),
     ]);
 
-    const [summaryResult, dailyResult, bySourceResult, failureResult] = await Promise.all([
+    const [summaryResult, dailyResult, dailyDetailResult, bySourceResult, failureResult] = await Promise.all([
       client.query(
         `
           select
@@ -84,6 +90,7 @@ export async function GET() {
             coalesce(sum(inserted_count), 0)::bigint as inserted_total,
             max(started_at) as last_run_at
           from dp.api_load_log
+          where started_at::date = current_date
         `,
       ),
       client.query(
@@ -98,6 +105,26 @@ export async function GET() {
           where started_at >= (current_date - interval '13 days')
           group by started_at::date
           order by started_at::date asc
+        `,
+      ),
+      client.query(
+        `
+          select
+            to_char(l.started_at::date, 'YYYY-MM-DD') as run_date,
+            l.load_log_id::bigint as load_log_id,
+            l.started_at,
+            coalesce(s.name, '(미상)') as source_name,
+            g.name as group_name,
+            l.trigger_type,
+            l.status,
+            coalesce(l.inserted_count, 0)::bigint as inserted_count,
+            l.error_message
+          from dp.api_load_log l
+          left join dp.api_source s on s.id = l.source_id
+          left join dp.api_param_group g on g.id = l.group_id
+          where l.started_at >= (current_date - interval '13 days')
+            and l.status in ('success', 'error')
+          order by l.started_at desc
         `,
       ),
       client.query(
@@ -123,14 +150,15 @@ export async function GET() {
             l.started_at,
             coalesce(s.name, '(미상)') as source_name,
             g.name as group_name,
+            l.status,
+            coalesce(l.inserted_count, 0)::bigint as inserted_count,
             l.error_stage,
             l.error_message
           from dp.api_load_log l
           left join dp.api_source s on s.id = l.source_id
           left join dp.api_param_group g on g.id = l.group_id
-          where l.status = 'error'
+          where l.started_at >= (current_date - interval '6 days')
           order by l.started_at desc
-          limit 20
         `,
       ),
     ]);
@@ -169,6 +197,24 @@ export async function GET() {
         errorRuns: Number(row.error_runs ?? 0),
         insertedTotal: Number(row.inserted_total ?? 0),
       })),
+      dailyDetails: dailyDetailResult.rows.map((row) => ({
+        // Legacy/variant values (e.g. "scheduler") are treated as schedule.
+        // Unknown values fall back to manual for safe display.
+        runDate: String(row.run_date),
+        loadLogId: Number(row.load_log_id ?? 0),
+        startedAt: new Date(row.started_at as Date).toISOString(),
+        sourceName: String(row.source_name ?? "(미상)"),
+        groupName: row.group_name ? String(row.group_name) : null,
+        triggerType: String(row.trigger_type ?? "")
+          .trim()
+          .toLowerCase()
+          .startsWith("sched")
+          ? "schedule"
+          : "manual",
+        status: row.status === "success" ? "success" : "error",
+        insertedCount: Number(row.inserted_count ?? 0),
+        errorMessage: row.error_message ? String(row.error_message) : null,
+      })),
       bySource: bySourceResult.rows.map((row) => {
         const srcTotal = Number(row.total_runs ?? 0);
         const srcSuccess = Number(row.success_runs ?? 0);
@@ -186,6 +232,9 @@ export async function GET() {
         startedAt: new Date(row.started_at as Date).toISOString(),
         sourceName: String(row.source_name ?? "(미상)"),
         groupName: row.group_name ? String(row.group_name) : null,
+        status:
+          row.status === "success" || row.status === "running" ? String(row.status) : "error",
+        insertedCount: Number(row.inserted_count ?? 0),
         errorStage: row.error_stage ? String(row.error_stage) : null,
         errorMessage: row.error_message ? String(row.error_message) : null,
       })),

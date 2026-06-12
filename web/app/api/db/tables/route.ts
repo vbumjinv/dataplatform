@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { Client } from "pg";
-
-const CONNECT_TIMEOUT_MS = 5000;
+import {
+  buildConnectionString,
+  CONNECT_TIMEOUT_MS,
+  isNonEmpty,
+  resolveDbConfig,
+} from "@/app/api/db/_lib/connection";
 
 type TablesRequest = {
   url?: string;
@@ -10,34 +14,6 @@ type TablesRequest = {
   password?: string;
   dbType?: "postgres";
   schema?: string;
-};
-
-const isNonEmpty = (value: unknown): value is string =>
-  typeof value === "string" && value.trim().length > 0;
-
-const normalizeJdbcUrl = (raw: string) => {
-  if (raw.startsWith("jdbc:")) {
-    return raw.replace(/^jdbc:/, "");
-  }
-  return raw;
-};
-
-const buildConnectionString = (payload: TablesRequest) => {
-  if (!payload.url) return null;
-  const normalized = normalizeJdbcUrl(payload.url);
-  let parsed: URL;
-  try {
-    parsed = new URL(normalized);
-  } catch {
-    return null;
-  }
-  if (!["postgres:", "postgresql:"].includes(parsed.protocol)) {
-    return null;
-  }
-  if (payload.user) parsed.username = payload.user;
-  if (payload.password) parsed.password = payload.password;
-  if (payload.database) parsed.pathname = `/${payload.database}`;
-  return parsed.toString();
 };
 
 export async function POST(request: Request) {
@@ -51,26 +27,21 @@ export async function POST(request: Request) {
     );
   }
 
-  if (!payload || payload.dbType !== "postgres") {
+  if (!payload || (payload.dbType && payload.dbType !== "postgres")) {
     return NextResponse.json(
       { ok: false, error: "현재 Postgres만 지원합니다." },
       { status: 400 },
     );
   }
 
-  if (
-    !isNonEmpty(payload.url) ||
-    !isNonEmpty(payload.database) ||
-    !isNonEmpty(payload.user) ||
-    !isNonEmpty(payload.password)
-  ) {
+  const resolved = await resolveDbConfig(payload);
+  if (!resolved) {
     return NextResponse.json(
-      { ok: false, error: "DB 설정 정보를 모두 입력하세요." },
+      { ok: false, error: "DB 설정이 없습니다. 'DB 설정' 메뉴에서 먼저 저장하세요." },
       { status: 400 },
     );
   }
-
-  const connectionString = buildConnectionString(payload);
+  const connectionString = buildConnectionString(resolved);
   if (!connectionString) {
     return NextResponse.json(
       { ok: false, error: "DB 접속 URL 형식이 올바르지 않습니다." },
