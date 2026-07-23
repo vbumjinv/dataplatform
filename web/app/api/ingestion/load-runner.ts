@@ -22,6 +22,20 @@ const BOK_PAGE_MAX_ROWS = parsePositiveInt(process.env.INGESTION_BOK_PAGE_SIZE, 
 const BOK_MAX_PAGES = parsePositiveInt(process.env.INGESTION_BOK_MAX_PAGES, 50);
 const KRX_GOLD_MAX_DAYS = parsePositiveInt(process.env.INGESTION_KRX_GOLD_MAX_DAYS, 10000);
 const KRX_GOLD_REQUEST_DELAY_MS = parsePositiveInt(process.env.INGESTION_KRX_GOLD_REQUEST_DELAY_MS, 350);
+// 공공데이터포털 특일정보(SpcdeInfoService)는 solYear/solMonth 로 월 단위 1회씩만 조회 가능하여
+// 기간만큼 월별로 반복 호출한다.
+const SPCDE_MAX_MONTHS = parsePositiveInt(process.env.INGESTION_SPCDE_MAX_MONTHS, 600);
+const SPCDE_DEFAULT_NUM_OF_ROWS = "100";
+// UN Population Division Data Portal: /data 응답은 100건씩 nextPage 로 페이지네이션된다.
+const UNDP_MAX_PAGES = parsePositiveInt(process.env.INGESTION_UNDP_MAX_PAGES, 2000);
+// UN 데이터 엔드포인트는 고정이므로 등록된 base_url 표기 편차와 무관하게 항상 이 값을 사용한다.
+const UNDP_DATA_BASE_URL = "https://population.un.org/dataportalapi/api/v1/data";
+// yfinance 수집은 HTTP API 가 아니라 python-forecast-api(/yfinance) 실행으로 처리한다.
+const PY_YFINANCE_API_URL = process.env.PY_YFINANCE_API_URL ?? "http://127.0.0.1:8001/yfinance";
+const PY_YFINANCE_TIMEOUT_MS = Math.max(
+  5000,
+  Number(process.env.PY_YFINANCE_TIMEOUT_MS ?? 120000) || 120000,
+);
 const END_LATEST_TOKEN = "__TODAY__";
 const START_RELATIVE_TOKEN_REGEX = /^__TODAY_MINUS_(\d+)(D|M|Q|A|Y)__$/i;
 const START_RELATIVE_KO_REGEX = /^(\d+)\s*(일|개월|분기|년)\s*전$/;
@@ -176,6 +190,13 @@ const normalizeValue = (value: string, mode?: string) => {
   if (mode === "none") return normalized;
   return encodeURIComponent(normalized);
 };
+// Path 값은 "/"를 경로 구분자로 보존하고, 각 세그먼트만 개별 인코딩한다.
+// (예: "openapi/service/SpcdeInfoService" 의 "/"가 %2F로 깨지지 않도록)
+const normalizePathValue = (value: string, mode?: string) =>
+  value
+    .split("/")
+    .map((segment) => normalizeValue(segment, mode))
+    .join("/");
 const parseXmlRows = (value: string): Array<Record<string, string>> | null => {
   const xmlCandidate = value.includes("&lt;")
     ? value
@@ -239,12 +260,29 @@ const shouldUseIsoDateParamFormat = (paramKey: string) => {
 };
 const shouldUseDailyCompactParamFormat = (paramKey: string) =>
   paramKey.trim().toLowerCase() === "basdd";
+// OECD(SDMX) startPeriod/endPeriod 는 하이픈 표기(YYYY / YYYY-Qn / YYYY-MM / YYYY-MM-DD)를 쓴다.
+const shouldUseOecdPeriodFormat = (paramKey: string) => {
+  const normalized = paramKey.trim().toLowerCase();
+  return normalized === "startperiod" || normalized === "endperiod";
+};
+const toOecdPeriodValue = (date: Date, period: string) => {
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+  const pad2 = (value: number) => String(value).padStart(2, "0");
+  if (period === "A" || period === "Y") return `${year}`;
+  if (period === "Q") return `${year}-Q${Math.floor((month - 1) / 3) + 1}`;
+  if (period === "D") return `${year}-${pad2(month)}-${pad2(date.getDate())}`;
+  return `${year}-${pad2(month)}`;
+};
 const toParamDateValue = (date: Date, period: string, paramKey: string) => {
   if (shouldUseIsoDateParamFormat(paramKey)) {
     return toIsoDateValue(date);
   }
   if (shouldUseDailyCompactParamFormat(paramKey)) {
     return toPeriodValue(date, "D");
+  }
+  if (shouldUseOecdPeriodFormat(paramKey)) {
+    return toOecdPeriodValue(date, period);
   }
   return toPeriodValue(date, period);
 };
@@ -313,6 +351,40 @@ const formatAsYmdCompact = (date: Date) =>
   `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, "0")}${String(
     date.getDate(),
   ).padStart(2, "0")}`;
+// World Bank date=시작:종료 의 각 구간을 "연도"로 해석한다.
+//   - __TODAY__ → 올해, __TODAY_MINUS_{n}Y__ / "{n}년 전" → 올해-n (연 단위 데이터라 n을 연으로 취급)
+//   - 그 외 값에서 4자리 연도를 추출 (예: '1980', '1980-01-01' → '1980')
+const resolveWorldBankYear = (raw: string): string | null => {
+  const value = (raw ?? "").trim();
+  if (!value) return null;
+  const now = new Date();
+  if (value === END_LATEST_TOKEN) return String(now.getFullYear());
+  const tokenMatch = START_RELATIVE_TOKEN_REGEX.exec(value);
+  if (tokenMatch) {
+    const n = Number(tokenMatch[1]);
+    return Number.isFinite(n) ? String(now.getFullYear() - n) : null;
+  }
+  const koMatch = START_RELATIVE_KO_REGEX.exec(value);
+  if (koMatch) {
+    const n = Number(koMatch[1]);
+    return Number.isFinite(n) ? String(now.getFullYear() - n) : null;
+  }
+  const year = value.match(/(\d{4})/);
+  return year ? year[1] : null;
+};
+// "시작:종료"(또는 단일 값)를 실제 연도 범위로 해석한다. 토큰이 섞여 있어도 처리한다.
+const resolveWorldBankDateRange = (raw: string): string | null => {
+  const value = (raw ?? "").trim();
+  if (!value) return null;
+  if (value.includes(":")) {
+    const [start, end] = value.split(":");
+    const startYear = resolveWorldBankYear(start);
+    const endYear = resolveWorldBankYear(end);
+    if (startYear && endYear) return `${startYear}:${endYear}`;
+    return startYear ?? endYear ?? null;
+  }
+  return resolveWorldBankYear(value);
+};
 const parsePeriodDate = (value: string, period: string) => {
   const text = (value ?? "").trim();
   if (!text) return null;
@@ -458,7 +530,7 @@ const buildUrlFromSourceParams = (
 
   const pathSegment = pathParams
     .sort((a, b) => a.order - b.order)
-    .map((item) => normalizeValue(item.value, item.encodeMode))
+    .map((item) => normalizePathValue(item.value, item.encodeMode))
     .join("/");
   const queryPairs = queryParams
     .sort((a, b) => a.order - b.order)
@@ -589,6 +661,151 @@ const parseApiBodyToRows = (body: unknown) => {
     }
   }
   return { header, dataRows };
+};
+// 구조화된 행을 못 만들고 원본 문자열을 그대로 1건으로 담은 fallback 인지 판별.
+// (예: 공휴일 없는 달의 <items/> 응답 → 원본 XML 이 value 컬럼 한 칸에 들어옴)
+const isRawValueFallback = (parsed: { header: string[] }) =>
+  parsed.header.length === 1 && parsed.header[0] === "value";
+// OECD(SDMX-JSON, format=jsondata&dimensionAtObservation=AllDimensions) 전용 파서.
+// 다른 기관(평평한 JSON/XML 행)과 달리 OECD 응답은 차원 인덱스 튜플로 키가 매겨진
+// observations 객체라 normalizeApiPayload 로는 풀 수 없어 별도 파싱한다.
+// 출력 컬럼: [차원 id...] + OBS_VALUE + [속성 id...] (예: REF_AREA, TIME_PERIOD, OBS_VALUE, OBS_STATUS ...)
+type SdmxDimOrAttr = { id?: string; values?: Array<{ id?: string; name?: string }> };
+const parseSdmxJsonToRows = (
+  body: unknown,
+): { header: string[]; dataRows: unknown[][] } => {
+  const empty = { header: [] as string[], dataRows: [] as unknown[][] };
+  let root: unknown = body;
+  if (typeof body === "string") {
+    const trimmed = body.trim();
+    if (!trimmed) return empty;
+    try {
+      root = JSON.parse(trimmed);
+    } catch {
+      return empty;
+    }
+  }
+  if (!root || typeof root !== "object") return empty;
+  const data = (root as Record<string, unknown>).data;
+  if (!data || typeof data !== "object") return empty;
+  const dataRecord = data as Record<string, unknown>;
+  const structuresValue = dataRecord.structures;
+  const structure = Array.isArray(structuresValue)
+    ? (structuresValue[0] as Record<string, unknown> | undefined)
+    : (dataRecord.structure as Record<string, unknown> | undefined);
+  const dataSetsValue = dataRecord.dataSets;
+  const dataSet = Array.isArray(dataSetsValue)
+    ? (dataSetsValue[0] as Record<string, unknown> | undefined)
+    : undefined;
+  if (!structure || !dataSet) return empty;
+  const dimensions = (structure.dimensions as Record<string, unknown> | undefined)
+    ?.observation;
+  const attributes = (structure.attributes as Record<string, unknown> | undefined)
+    ?.observation;
+  const dims: SdmxDimOrAttr[] = Array.isArray(dimensions)
+    ? (dimensions as SdmxDimOrAttr[])
+    : [];
+  const attrs: SdmxDimOrAttr[] = Array.isArray(attributes)
+    ? (attributes as SdmxDimOrAttr[])
+    : [];
+  const observations = dataSet.observations;
+  if (!dims.length || !observations || typeof observations !== "object") {
+    return empty;
+  }
+  const header = [
+    ...dims.map((dim, index) => dim.id ?? `DIM_${index}`),
+    "OBS_VALUE",
+    ...attrs.map((attr, index) => attr.id ?? `ATTR_${index}`),
+  ];
+  const resolveCode = (
+    entry: SdmxDimOrAttr | undefined,
+    index: number,
+  ): string | null => {
+    if (!entry || !Array.isArray(entry.values)) return null;
+    if (!Number.isInteger(index) || index < 0) return null;
+    const value = entry.values[index];
+    if (!value) return null;
+    return value.id ?? value.name ?? null;
+  };
+  const dataRows: unknown[][] = [];
+  for (const [key, rawArr] of Object.entries(
+    observations as Record<string, unknown>,
+  )) {
+    const arr = Array.isArray(rawArr) ? rawArr : [];
+    const idxs = key.split(":").map((part) => Number(part));
+    const row: unknown[] = [];
+    dims.forEach((dim, position) => {
+      row.push(resolveCode(dim, idxs[position] ?? -1));
+    });
+    row.push(arr[0] ?? null);
+    attrs.forEach((attr, position) => {
+      const valueIndex = arr[position + 1];
+      row.push(
+        typeof valueIndex === "number" ? resolveCode(attr, valueIndex) : null,
+      );
+    });
+    dataRows.push(row);
+  }
+  return { header, dataRows };
+};
+// World Bank Open Data API 전용 파서.
+// 응답은 [meta, dataArray] 형태이고 각 행이 중첩객체(indicator/country)를 가져
+// 평평한 행으로 풀어야 컬럼 매핑이 된다.
+// 출력 컬럼: DATE, VALUE, COUNTRY, COUNTRY_ISO3, INDICATOR, INDICATOR_NAME
+const parseWorldBankRows = (
+  body: unknown,
+): { header: string[]; dataRows: unknown[][]; pages: number } => {
+  const header = ["DATE", "VALUE", "COUNTRY", "COUNTRY_ISO3", "INDICATOR", "INDICATOR_NAME"];
+  const empty = { header, dataRows: [] as unknown[][], pages: 1 };
+  let root: unknown = body;
+  if (typeof body === "string") {
+    const trimmed = body.trim();
+    if (!trimmed) return empty;
+    try {
+      root = JSON.parse(trimmed);
+    } catch {
+      return empty;
+    }
+  }
+  if (!Array.isArray(root) || root.length < 2) return empty;
+  const meta = root[0] as Record<string, unknown> | undefined;
+  const dataArray = Array.isArray(root[1]) ? (root[1] as unknown[]) : [];
+  const pages = Number(meta?.pages);
+  const getField = (row: unknown, key: string) =>
+    row && typeof row === "object" ? (row as Record<string, unknown>)[key] : null;
+  const getNested = (row: unknown, key: string, sub: string) => {
+    const obj = getField(row, key);
+    return obj && typeof obj === "object" ? ((obj as Record<string, unknown>)[sub] ?? null) : null;
+  };
+  const dataRows = dataArray.map((row) => [
+    getField(row, "date") ?? null,
+    getField(row, "value") ?? null,
+    getNested(row, "country", "value") ?? null,
+    getField(row, "countryiso3code") ?? null,
+    getNested(row, "indicator", "id") ?? null,
+    getNested(row, "indicator", "value") ?? null,
+  ]);
+  return { header, dataRows, pages: Number.isFinite(pages) && pages > 0 ? pages : 1 };
+};
+// UN Population Division /data 응답의 nextPage(다음 페이지 절대 URL)를 추출한다.
+// http:// 로 내려오는 경우가 있어 https 로 정규화한다.
+const extractUndpNextPage = (body: unknown): string | null => {
+  let root: unknown = body;
+  if (typeof body === "string") {
+    const trimmed = body.trim();
+    if (!trimmed) return null;
+    try {
+      root = JSON.parse(trimmed);
+    } catch {
+      return null;
+    }
+  }
+  if (!root || typeof root !== "object") return null;
+  const next = (root as Record<string, unknown>).nextPage;
+  if (typeof next !== "string") return null;
+  const trimmed = next.trim();
+  if (!trimmed) return null;
+  return trimmed.replace(/^http:\/\//i, "https://");
 };
 const fetchApiBodyWithRetry = async (
   url: string,
@@ -791,15 +1008,20 @@ options?: {
       ) ?? null);
     const endKey =
       roleKeyMap.get("end") ??
-      (["apiend", "endprdde", "endyymm", "observation_end", "basdd"].find((key) =>
+      (["apiend", "endprdde", "endyymm", "observation_end", "endperiod", "basdd"].find((key) =>
         paramValueByKeyLower.has(key),
       ) ?? null);
     const startKey =
       roleKeyMap.get("start") ??
-      (["apistart", "startprdde", "strtyymm", "observation_start"].find((key) =>
+      (["apistart", "startprdde", "strtyymm", "observation_start", "startperiod"].find((key) =>
         paramValueByKeyLower.has(key),
       ) ?? null);
-    const periodTypeValueRaw = periodTypeKey ? paramValueByKeyLower.get(periodTypeKey) ?? "M" : "M";
+    const periodTypeKeyLower = periodTypeKey?.trim().toLowerCase() ?? null;
+    const startKeyLower = startKey?.trim().toLowerCase() ?? null;
+    const endKeyLower = endKey?.trim().toLowerCase() ?? null;
+    const periodTypeValueRaw = periodTypeKeyLower
+      ? paramValueByKeyLower.get(periodTypeKeyLower) ?? "M"
+      : "M";
     const periodTypeValue = periodTypeValueRaw.trim().toUpperCase();
     const effectivePeriod =
       periodTypeValue && ["D", "M", "Q", "A", "Y"].includes(periodTypeValue)
@@ -807,15 +1029,26 @@ options?: {
         : "M";
     const requestParams = resolvedParamRows.map((param) => {
       const paramKey = param.key.trim().toLowerCase();
-      const isEndParamByKey = ["apiend", "endprdde", "endyymm", "observation_end", "basdd"].includes(
-        paramKey,
-      );
-      const isStartParamByKey = ["apistart", "startprdde", "strtyymm", "observation_start"].includes(
-        paramKey,
-      );
+      const isEndParamByKey = [
+        "apiend",
+        "endprdde",
+        "endyymm",
+        "observation_end",
+        "endperiod",
+        "basdd",
+      ].includes(paramKey);
+      const isStartParamByKey = [
+        "apistart",
+        "startprdde",
+        "strtyymm",
+        "observation_start",
+        "startperiod",
+      ].includes(paramKey);
       const shouldResolveLatest =
         param.value === END_LATEST_TOKEN &&
-        (paramKey === "basdd" || (endKey && paramKey === endKey) || (!endKey && isEndParamByKey));
+        (paramKey === "basdd" ||
+          (endKeyLower && paramKey === endKeyLower) ||
+          (!endKeyLower && isEndParamByKey));
       if (shouldResolveLatest) {
         return {
           ...param,
@@ -823,9 +1056,9 @@ options?: {
         };
       }
       const shouldResolveStartRelative =
-        (startKey && paramKey === startKey) || (!startKey && isStartParamByKey);
+        (startKeyLower && paramKey === startKeyLower) || (!startKeyLower && isStartParamByKey);
       const shouldResolveEndRelative =
-        (endKey && paramKey === endKey) || (!endKey && isEndParamByKey);
+        (endKeyLower && paramKey === endKeyLower) || (!endKeyLower && isEndParamByKey);
       if (shouldResolveStartRelative) {
         const startValue = resolveRelativeStartValue(param.value, effectivePeriod, param.key);
         if (startValue) {
@@ -840,9 +1073,20 @@ options?: {
       }
       return param;
     });
+    const sourceProvider = String(first.provider ?? "").trim().toLowerCase();
+    const requestParamsForFetch =
+      sourceProvider === "kosis"
+        ? requestParams.filter((param) => {
+            const key = param.key.trim().toLowerCase();
+            return key !== "vwcd" && key !== "statid" && key !== "sendde";
+          })
+        : requestParams;
     const url = buildUrlFromSourceParams(
       {
-        baseUrl: String(first.base_url ?? ""),
+        baseUrl:
+          sourceProvider === "undp"
+            ? UNDP_DATA_BASE_URL
+            : String(first.base_url ?? ""),
         apiKey: (first.api_key as string | null) ?? "",
         apiKeyParamKey: (first.api_key_param_key as string | null) ?? "",
         apiKeyLocation: (first.api_key_location as string | null) ?? "query",
@@ -851,7 +1095,7 @@ options?: {
           : 0,
         apiKeyEncodeMode: (first.api_key_encode_mode as string | null) ?? "encode",
       },
-      requestParams,
+      requestParamsForFetch,
     );
     try {
       const logInsert = await client.query<{ load_log_id: number }>(
@@ -885,12 +1129,13 @@ options?: {
     throwIfLoadAborted(options?.abortSignal);
 
     errorStage = "api_fetch";
-    const sourceProvider = String(first.provider ?? "").trim().toLowerCase();
     const sourceInfo = {
       baseUrl:
         sourceProvider === "krx"
           ? normalizeKrxEndpointUrl(String(first.base_url ?? ""))
-          : String(first.base_url ?? ""),
+          : sourceProvider === "undp"
+            ? UNDP_DATA_BASE_URL
+            : String(first.base_url ?? ""),
       apiKey: (first.api_key as string | null) ?? "",
       apiKeyParamKey: (first.api_key_param_key as string | null) ?? "",
       apiKeyLocation: (first.api_key_location as string | null) ?? "query",
@@ -899,6 +1144,13 @@ options?: {
         : 0,
       apiKeyEncodeMode: (first.api_key_encode_mode as string | null) ?? "encode",
     };
+    // 특일정보(SpcdeInfoService): 경로(서비스명)에 SpcdeInfoService 가 포함되면 월별 반복 조회로 처리한다.
+    const isDatagokrSpcde =
+      sourceProvider === "datagokr" &&
+      (requestParams.some(
+        (param) => param.location === "path" && /spcdeinfoservice/i.test(param.value),
+      ) ||
+        /spcdeinfoservice/i.test(sourceInfo.baseUrl));
     const startParam = requestParams.find((param) => param.key === "start");
     const endParam = requestParams.find((param) => param.key === "end");
     const initialStart = Number(startParam?.value ?? "");
@@ -921,10 +1173,118 @@ options?: {
 
     let header: string[] = [];
     let dataRows: unknown[][] = [];
-    if (sourceProvider === "krx") {
+    if (sourceProvider === "yfinance") {
+      // yfinance 는 HTTP API 가 아니라 python-forecast-api(/yfinance) 실행으로 수집한다.
+      // apiStart/apiEnd(상대일 토큰 포함)는 위에서 이미 resolveRelativeStartValue/
+      // toParamDateValue 로 해석돼 requestParams 에 들어있다. 대소문자 무시로 값을 찾는다.
+      const valueByLower = new Map(
+        requestParams.map((param) => [param.key.trim().toLowerCase(), param.value]),
+      );
+      const lookup = (key: string | null) =>
+        !key ? "" : valueByLower.get(key.trim().toLowerCase()) ?? "";
+      const ticker = (lookup("ticker") || "").trim();
+      const interval = (lookup("interval") || "1d").trim() || "1d";
+      const startDateObj = parseDateText(lookup(startKey));
+      const endDateObj = parseDateText(lookup(endKey));
+      if (!ticker) throw new Error("yfinance 티커(ticker)가 지정되지 않았습니다.");
+      if (!startDateObj || !endDateObj) {
+        throw new Error("yfinance 수집 시작일/종료일을 해석하지 못했습니다.");
+      }
+      // 파이썬 엔드포인트는 ISO(YYYY-MM-DD)를 기대한다. 시작>종료면 서로 바꾼다.
+      const toIso = (d: Date) =>
+        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+          d.getDate(),
+        ).padStart(2, "0")}`;
+      const startIso = toIso(startDateObj <= endDateObj ? startDateObj : endDateObj);
+      const endIso = toIso(startDateObj <= endDateObj ? endDateObj : startDateObj);
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), PY_YFINANCE_TIMEOUT_MS);
+      let responseBody = "";
+      try {
+        const response = await fetch(PY_YFINANCE_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ticker, start: startIso, end: endIso, interval }),
+          signal: controller.signal,
+        });
+        responseBody = await response.text();
+        if (!response.ok) {
+          let detail = responseBody;
+          try {
+            const parsedErr = JSON.parse(responseBody) as { detail?: unknown };
+            detail =
+              typeof parsedErr.detail === "string"
+                ? parsedErr.detail
+                : JSON.stringify(parsedErr.detail ?? parsedErr);
+          } catch {
+            // keep raw body
+          }
+          throw new Error(`yfinance 조회 실패: ${detail}`);
+        }
+      } catch (error) {
+        if (
+          error instanceof Error &&
+          (error.name === "AbortError" || /aborted|timeout/i.test(error.message))
+        ) {
+          throw new Error(
+            `yfinance 응답 시간 초과(${Math.round(
+              PY_YFINANCE_TIMEOUT_MS / 1000,
+            )}초). python-forecast-api(8001) 기동을 확인하세요.`,
+          );
+        }
+        throw error instanceof Error ? error : new Error(String(error));
+      } finally {
+        clearTimeout(timeoutId);
+      }
+
+      let parsed: {
+        rows?: Array<{
+          date?: string;
+          open?: number | null;
+          high?: number | null;
+          low?: number | null;
+          close?: number | null;
+          adj_close?: number | null;
+          volume?: number | null;
+          ticker?: string;
+        }>;
+      };
+      try {
+        parsed = JSON.parse(responseBody) as typeof parsed;
+      } catch {
+        throw new Error("yfinance 응답 형식이 올바르지 않습니다.");
+      }
+      const rows = parsed.rows ?? [];
+      // OHLCV 전체 + 수정종가를 컬럼으로 내려, 매핑 단계에서 필요한 값을 시리즈로 만들 수 있게 한다.
+      header = ["DATE", "OPEN", "HIGH", "LOW", "CLOSE", "ADJ_CLOSE", "VOLUME", "TICKER"];
+      dataRows = rows.map((row) => [
+        row.date ?? null,
+        row.open ?? null,
+        row.high ?? null,
+        row.low ?? null,
+        row.close ?? null,
+        row.adj_close ?? null,
+        row.volume ?? null,
+        row.ticker ?? ticker,
+      ]);
+      if (!dataRows.length) throw new Error("적재할 데이터가 없습니다.");
+    } else if (sourceProvider === "krx") {
       const krxParamValueMapRaw = new Map(requestParams.map((param) => [param.key, param.value]));
-      const resolvedStartText = startKey ? krxParamValueMapRaw.get(startKey) ?? "" : "";
-      const resolvedEndText = endKey ? krxParamValueMapRaw.get(endKey) ?? "" : "";
+      // param_role 이 없으면 startKey/endKey 가 소문자 후보키(apistart/apiend)로 잡히는데,
+      // 값 맵은 원본 대소문자 키(apiStart/apiEnd)라 대소문자 무시 조회로 값을 찾는다.
+      // (역할 미지정으로 등록된 기존 KRX API도 기간 순회가 동작하도록)
+      const krxParamValueMapByLower = new Map(
+        requestParams.map((param) => [param.key.trim().toLowerCase(), param.value]),
+      );
+      const lookupKrxValue = (key: string | null) =>
+        !key
+          ? ""
+          : krxParamValueMapRaw.get(key) ??
+            krxParamValueMapByLower.get(key.trim().toLowerCase()) ??
+            "";
+      const resolvedStartText = lookupKrxValue(startKey);
+      const resolvedEndText = lookupKrxValue(endKey);
       const basDdKey =
         requestParams.find((param) => param.key.toLowerCase() === "basdd")?.key ?? "basDd";
       const startDate = parseDateText(resolvedStartText);
@@ -1025,10 +1385,98 @@ options?: {
       if (!dataRows.length) {
         throw new Error("적재할 데이터가 없습니다.");
       }
-    } else if (sourceProvider === "datagokr" && startKey && endKey) {
-      const valueByKey = new Map(requestParams.map((param) => [param.key, param.value]));
-      const startValue = valueByKey.get(startKey) ?? "";
-      const endValue = valueByKey.get(endKey) ?? "";
+    } else if (isDatagokrSpcde && startKeyLower && endKeyLower) {
+      // 특일정보: 기간(strtYymm~endYymm)을 월 단위로 쪼개 solYear/solMonth 로 매월 조회 후 누적.
+      const valueByKey = new Map(
+        requestParams.map((param) => [param.key.trim().toLowerCase(), param.value]),
+      );
+      const startValue = valueByKey.get(startKeyLower) ?? "";
+      const endValue = valueByKey.get(endKeyLower) ?? "";
+      const parsedStart = parsePeriodDate(startValue, "M");
+      const parsedEnd = parsePeriodDate(endValue, "M");
+      if (!parsedStart || !parsedEnd) {
+        const { body } = await fetchApiBodyWithRetry(url, options?.abortSignal);
+        const parsed = parseApiBodyToRows(body);
+        header = parsed.header;
+        dataRows = parsed.dataRows;
+      } else {
+        const rangeStart = parsedStart <= parsedEnd ? parsedStart : parsedEnd;
+        const rangeEnd = parsedStart <= parsedEnd ? parsedEnd : parsedStart;
+        // 기간/주기 파라미터(strtYymm·endYymm·periodType)와 기존 solYear/solMonth 는 제외하고,
+        // 매월 solYear/solMonth 를 새로 채워 요청한다.
+        const baseParams = requestParams.filter((param) => {
+          const key = param.key.trim().toLowerCase();
+          if (key === startKeyLower || key === endKeyLower) return false;
+          if (periodTypeKeyLower && key === periodTypeKeyLower) return false;
+          if (key === "solyear" || key === "solmonth") return false;
+          return true;
+        });
+        const hasNumOfRows = baseParams.some(
+          (param) => param.key.trim().toLowerCase() === "numofrows",
+        );
+        const cursor = new Date(rangeStart);
+        let guard = 0;
+        while (cursor <= rangeEnd) {
+          throwIfLoadAborted(options?.abortSignal);
+          const solYear = String(cursor.getFullYear());
+          const solMonth = String(cursor.getMonth() + 1).padStart(2, "0");
+          const monthParams = [
+            ...baseParams,
+            {
+              key: "solYear",
+              value: solYear,
+              location: "query" as const,
+              order: 50,
+              encodeMode: "encode",
+              role: null,
+            },
+            {
+              key: "solMonth",
+              value: solMonth,
+              location: "query" as const,
+              order: 51,
+              encodeMode: "encode",
+              role: null,
+            },
+          ];
+          if (!hasNumOfRows) {
+            monthParams.push({
+              key: "numOfRows",
+              value: SPCDE_DEFAULT_NUM_OF_ROWS,
+              location: "query" as const,
+              order: 52,
+              encodeMode: "encode",
+              role: null,
+            });
+          }
+          const monthUrl = buildUrlFromSourceParams(sourceInfo, monthParams);
+          const { body } = await fetchApiBodyWithRetry(monthUrl, options?.abortSignal);
+          const parsed = parseApiBodyToRows(body);
+          // 공휴일 없는 달(<items/>, totalCount=0)은 원본 XML 이 그대로 담긴 fallback 이므로 건너뛴다.
+          if (parsed.header.length && parsed.dataRows.length && !isRawValueFallback(parsed)) {
+            if (!header.length) {
+              header = parsed.header;
+            }
+            dataRows.push(...parsed.dataRows);
+          }
+          cursor.setMonth(cursor.getMonth() + 1);
+          guard += 1;
+          if (guard > SPCDE_MAX_MONTHS) {
+            throw new Error(
+              `특일정보 조회 기간 제한(${SPCDE_MAX_MONTHS}개월)을 초과했습니다. INGESTION_SPCDE_MAX_MONTHS 값을 늘려주세요.`,
+            );
+          }
+        }
+        if (!dataRows.length) {
+          throw new Error("적재할 데이터가 없습니다.");
+        }
+      }
+    } else if (sourceProvider === "datagokr" && startKeyLower && endKeyLower) {
+      const valueByKey = new Map(
+        requestParams.map((param) => [param.key.trim().toLowerCase(), param.value]),
+      );
+      const startValue = valueByKey.get(startKeyLower) ?? "";
+      const endValue = valueByKey.get(endKeyLower) ?? "";
       const parsedStart = parsePeriodDate(startValue, effectivePeriod);
       const parsedEnd = parsePeriodDate(endValue, effectivePeriod);
       if (!parsedStart || !parsedEnd) {
@@ -1045,14 +1493,15 @@ options?: {
           const windowStart = toPeriodValue(window.startDate, effectivePeriod);
           const windowEnd = toPeriodValue(window.endDate, effectivePeriod);
           const windowParams = requestParams.map((param) => {
-            if (param.key === startKey) return { ...param, value: windowStart };
-            if (param.key === endKey) return { ...param, value: windowEnd };
+            const paramKey = param.key.trim().toLowerCase();
+            if (paramKey === startKeyLower) return { ...param, value: windowStart };
+            if (paramKey === endKeyLower) return { ...param, value: windowEnd };
             return param;
           });
           const windowUrl = buildUrlFromSourceParams(sourceInfo, windowParams);
           const { body } = await fetchApiBodyWithRetry(windowUrl, options?.abortSignal);
           const parsed = parseApiBodyToRows(body);
-          if (!parsed.header.length || !parsed.dataRows.length) {
+          if (!parsed.header.length || !parsed.dataRows.length || isRawValueFallback(parsed)) {
             continue;
           }
           if (!header.length) {
@@ -1060,6 +1509,88 @@ options?: {
           }
           dataRows.push(...parsed.dataRows);
         }
+      }
+    } else if (sourceProvider === "oecd") {
+      // OECD(SDMX-JSON): 단일 호출 후 차원/관측치 구조를 평평한 행으로 변환한다.
+      // Accept-Language 헤더가 없으면 OECD 서버가 500(languageTag) 을 반환하므로 반드시 지정한다.
+      const { body } = await fetchApiBodyWithRetry(url, options?.abortSignal, {
+        headers: { "Accept-Language": "en" },
+      });
+      const parsed = parseSdmxJsonToRows(body);
+      header = parsed.header;
+      dataRows = parsed.dataRows;
+      if (!header.length || !dataRows.length) {
+        throw new Error("적재할 데이터가 없습니다.");
+      }
+    } else if (sourceProvider === "undp") {
+      // UN Population Division Data Portal: /data 엔드포인트는 Authorization: Bearer 토큰이 필수다.
+      // (지표/지역 목록은 공개지만 데이터 조회는 인증 필요) 응답은 { data:[...], nextPage } 형태로
+      // 100건씩 페이지네이션되므로 nextPage 를 따라가며 전량 누적한다.
+      // 등록된 토큰에 "Bearer " 접두어가 포함돼 있어도 중복되지 않도록 제거한다.
+      const undpToken = (sourceInfo.apiKey ?? "").trim().replace(/^Bearer\s+/i, "");
+      if (!undpToken) {
+        throw new Error(
+          "UN Population Division 토큰이 필요합니다. 기관 관리에서 API Key(토큰)를 등록하세요.",
+        );
+      }
+      const undpHeaders: Record<string, string> = {
+        Accept: "application/json",
+        Authorization: `Bearer ${undpToken}`,
+      };
+      let nextUrl: string | null = url;
+      let guard = 0;
+      while (nextUrl) {
+        throwIfLoadAborted(options?.abortSignal);
+        const { body } = await fetchApiBodyWithRetry(nextUrl, options?.abortSignal, {
+          headers: undpHeaders,
+        });
+        const parsed = parseApiBodyToRows(body);
+        if (parsed.header.length && parsed.dataRows.length && !isRawValueFallback(parsed)) {
+          if (!header.length) {
+            header = parsed.header;
+          }
+          dataRows.push(...parsed.dataRows);
+        }
+        nextUrl = extractUndpNextPage(body);
+        guard += 1;
+        if (guard > UNDP_MAX_PAGES) {
+          throw new Error(
+            `UN 데이터 페이지 제한(${UNDP_MAX_PAGES}페이지)을 초과했습니다. INGESTION_UNDP_MAX_PAGES 값을 늘려주세요.`,
+          );
+        }
+      }
+      if (!dataRows.length) {
+        throw new Error("적재할 데이터가 없습니다.");
+      }
+    } else if (sourceProvider === "worldbank") {
+      // World Bank: url(country/{code}/indicator/{code}?...&date=...)을 조회.
+      // date 값에 상대일 토큰(__TODAY__, __TODAY_MINUS_{n}Y__)이 있으면 실행 시점 연도로 해석해
+      // date=시작연:종료연 으로 치환한다. (스케줄러가 매번 최신 연도까지 수집하도록)
+      const rawDate = requestParams.find((param) => param.key.trim().toLowerCase() === "date")?.value ?? "";
+      const resolvedDate = resolveWorldBankDateRange(rawDate);
+      let fetchUrl = url;
+      if (resolvedDate) {
+        fetchUrl = /([?&]date=)[^&]*/i.test(url)
+          ? url.replace(/([?&]date=)[^&]*/i, `$1${resolvedDate}`)
+          : `${url}${url.includes("?") ? "&" : "?"}date=${resolvedDate}`;
+      }
+      // 응답 [meta,[행]] 을 평탄화하고, meta.pages 만큼만 추가 페이지를 이어붙인다.
+      const WORLDBANK_MAX_PAGES = 50;
+      const first = await fetchApiBodyWithRetry(fetchUrl, options?.abortSignal);
+      const firstParsed = parseWorldBankRows(first.body);
+      header = firstParsed.header;
+      // 값이 없는(미발표) 연도 행은 저장하지 않는다.
+      dataRows.push(...firstParsed.dataRows.filter((row) => row[1] != null));
+      const totalPages = Math.min(firstParsed.pages, WORLDBANK_MAX_PAGES);
+      for (let page = 2; page <= totalPages; page += 1) {
+        throwIfLoadAborted(options?.abortSignal);
+        const sep = fetchUrl.includes("?") ? "&" : "?";
+        const { body } = await fetchApiBodyWithRetry(`${fetchUrl}${sep}page=${page}`, options?.abortSignal);
+        const parsed = parseWorldBankRows(body);
+        dataRows.push(...parsed.dataRows.filter((row) => row[1] != null));
+      }
+      if (!dataRows.length) {
+        throw new Error("적재할 데이터가 없습니다. (국가/지표/연도 범위를 확인하세요)");
       }
     } else if (!shouldPaginateBok) {
       const { body } = await fetchApiBodyWithRetry(url, options?.abortSignal);

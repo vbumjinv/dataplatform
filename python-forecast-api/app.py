@@ -65,6 +65,234 @@ def health():
     return {"ok": True}
 
 
+# ---------------------------------------------------------------------------
+# 데이터 가공(Transform): 운영자가 작성한 Python 코드를 실행해 시계열을 변환한다.
+#   - 입력: df (pandas DataFrame, 컬럼 ds=날짜 / y=값, 날짜 오름차순)
+#   - 출력: 코드가 result 변수에 담은 결과 (DataFrame(ds,y) / Series / 1차원 배열)
+#   - 용도: HP 필터 등 SQL로 표현하기 어려운 가공. 운영자 전용(임의 코드 실행).
+# ---------------------------------------------------------------------------
+class TransformPoint(BaseModel):
+    ds: str
+    y: Optional[float] = None
+
+
+class TransformRequest(BaseModel):
+    code: str = Field(..., min_length=1)
+    data: List[TransformPoint]
+    data2: Optional[List[TransformPoint]] = None  # 보조 입력 시리즈(선택) → 코드에서 df2 로 제공
+
+
+class TransformResponse(BaseModel):
+    count: int
+    result: List[TransformPoint]
+
+
+def coerce_transform_result(result_obj, source_df: pd.DataFrame) -> pd.DataFrame:
+    """사용자 코드의 result 를 ds/y 두 컬럼 DataFrame 으로 정규화한다."""
+    # 1) DataFrame: ds 컬럼이 있으면 그대로, 없으면 길이가 같을 때 입력 ds 를 붙인다.
+    if isinstance(result_obj, pd.DataFrame):
+        out = result_obj.copy()
+        if "y" not in out.columns:
+            raise ValueError("result DataFrame에 'y' 컬럼이 필요합니다.")
+        if "ds" not in out.columns:
+            if len(out) != len(source_df):
+                raise ValueError("result DataFrame에 'ds' 컬럼이 없고 행 수도 입력과 다릅니다.")
+            out = out.reset_index(drop=True)
+            out["ds"] = source_df["ds"].reset_index(drop=True)
+        return out[["ds", "y"]]
+    # 2) Series: 입력과 길이가 같아야 하며 입력 ds 를 사용한다.
+    if isinstance(result_obj, pd.Series):
+        if len(result_obj) != len(source_df):
+            raise ValueError("result Series 길이가 입력 데이터와 다릅니다.")
+        return pd.DataFrame(
+            {
+                "ds": source_df["ds"].reset_index(drop=True),
+                "y": result_obj.reset_index(drop=True),
+            }
+        )
+    # 3) list / tuple / ndarray: 1차원이고 길이가 같아야 한다.
+    if isinstance(result_obj, (list, tuple, np.ndarray)):
+        arr = np.asarray(result_obj, dtype=float)
+        if arr.ndim == 1:
+            if len(arr) != len(source_df):
+                raise ValueError("result 배열 길이가 입력 데이터와 다릅니다.")
+            return pd.DataFrame({"ds": source_df["ds"].reset_index(drop=True), "y": arr})
+    raise ValueError("result는 DataFrame(ds,y) / Series / 1차원 배열 형식이어야 합니다.")
+
+
+@app.post("/transform", response_model=TransformResponse)
+def transform(payload: TransformRequest):
+    if not payload.data:
+        raise HTTPException(status_code=400, detail="입력 데이터가 비어 있습니다.")
+
+    df = pd.DataFrame([{"ds": p.ds, "y": p.y} for p in payload.data])
+    df["ds"] = pd.to_datetime(df["ds"], errors="coerce")
+    df["y"] = pd.to_numeric(df["y"], errors="coerce")
+    df = df.dropna(subset=["ds"]).sort_values("ds").reset_index(drop=True)
+    if df.empty:
+        raise HTTPException(status_code=400, detail="유효한 입력 데이터가 없습니다.")
+
+    # 보조 입력(df2): 있으면 df 와 동일하게 정규화한다. 없으면 None.
+    df2 = None
+    if payload.data2:
+        df2 = pd.DataFrame([{"ds": p.ds, "y": p.y} for p in payload.data2])
+        df2["ds"] = pd.to_datetime(df2["ds"], errors="coerce")
+        df2["y"] = pd.to_numeric(df2["y"], errors="coerce")
+        df2 = df2.dropna(subset=["ds"]).sort_values("ds").reset_index(drop=True)
+
+    # 운영자 전용 도구이므로 별도 샌드박스 없이 실행한다.
+    # pd / np 와 입력 df(및 보조 df2)를 제공하고, 코드가 result 를 설정하도록 한다.
+    # 단일 네임스페이스로 실행한다: globals 와 locals 를 분리하면 사용자가 정의한
+    # 함수(def)나 컴프리헨션이 최상위 변수를 못 찾는다(name ... is not defined). 한 dict 로 통일.
+    sandbox = {
+        "pd": pd,
+        "np": np,
+        "__builtins__": __builtins__,
+        "df": df.copy(),
+        "df2": (df2.copy() if df2 is not None else None),
+        "result": None,
+    }
+    try:
+        exec(payload.code, sandbox)  # noqa: S102 - operator-only
+    except Exception as exec_error:  # noqa: BLE001
+        raise HTTPException(status_code=400, detail=f"Python 실행 오류: {exec_error}")
+
+    result_obj = sandbox.get("result")
+    if result_obj is None:
+        raise HTTPException(status_code=400, detail="코드에서 result 변수를 설정해야 합니다.")
+
+    try:
+        out = coerce_transform_result(result_obj, df)
+    except Exception as shape_error:  # noqa: BLE001
+        raise HTTPException(status_code=400, detail=str(shape_error))
+
+    out = out.copy()
+    out["ds"] = pd.to_datetime(out["ds"], errors="coerce")
+    out["y"] = pd.to_numeric(out["y"], errors="coerce")
+    out = out.dropna(subset=["ds", "y"]).sort_values("ds").reset_index(drop=True)
+
+    rows = [
+        TransformPoint(ds=row["ds"].strftime("%Y-%m-%d"), y=float(row["y"]))
+        for _, row in out.iterrows()
+    ]
+    return TransformResponse(count=len(rows), result=rows)
+
+
+# ---------------------------------------------------------------------------
+# yfinance 수집: 큐레이션된 티커(예: ^GSPC, DX-Y.NYB)와 기간을 받아 일별 시세를 반환.
+#   - 입력: ticker / start / end (YYYY-MM-DD) / interval (기본 1d)
+#   - 출력: date, open/high/low/close/adj_close/volume, ticker 행 목록 (OHLCV 전체)
+#   - 종가·수정종가를 "둘 다" 받기 위해 auto_adjust=False 로 둔다.
+#     (auto_adjust=True 로 두면 Close 가 수정값으로 덮이고 Adj Close 컬럼이 사라진다)
+#   - 참고: 지수·환율·금리류는 Adj Close 가 Close 와 동일하고 Volume 이 0 인 경우가 많다.
+# ---------------------------------------------------------------------------
+class YfinanceRequest(BaseModel):
+    ticker: str = Field(..., min_length=1)
+    start: str = Field(..., min_length=1)  # YYYY-MM-DD
+    end: str = Field(..., min_length=1)  # YYYY-MM-DD (yfinance end 는 미포함이라 +1일 처리)
+    interval: str = "1d"
+
+
+class YfinanceRow(BaseModel):
+    date: str  # YYYY-MM-DD
+    open: Optional[float] = None
+    high: Optional[float] = None
+    low: Optional[float] = None
+    close: Optional[float] = None
+    adj_close: Optional[float] = None
+    volume: Optional[float] = None
+    ticker: str
+
+
+class YfinanceResponse(BaseModel):
+    count: int
+    rows: List[YfinanceRow]
+
+
+@app.post("/yfinance", response_model=YfinanceResponse)
+def yfinance_collect(payload: YfinanceRequest):
+    import yfinance as yf  # 지연 임포트: 서비스 기동 시 네트워크/의존성 부담 최소화
+
+    ticker = payload.ticker.strip()
+    interval = (payload.interval or "1d").strip() or "1d"
+    start_ts = pd.to_datetime(payload.start, errors="coerce")
+    end_ts = pd.to_datetime(payload.end, errors="coerce")
+    if pd.isna(start_ts) or pd.isna(end_ts):
+        raise HTTPException(status_code=400, detail="start/end 날짜 형식이 올바르지 않습니다. (YYYY-MM-DD)")
+    if end_ts < start_ts:
+        raise HTTPException(status_code=400, detail="end 는 start 보다 빠를 수 없습니다.")
+    # yfinance 의 end 는 미포함(exclusive)이라 사용자가 고른 종료일을 포함하도록 하루 더한다.
+    end_exclusive = (end_ts + pd.Timedelta(days=1)).strftime("%Y-%m-%d")
+    start_iso = start_ts.strftime("%Y-%m-%d")
+
+    try:
+        # yf.download 는 MultiIndex 컬럼(('Close','^GSPC'))을 주므로 다루기 번거롭다.
+        # Ticker.history 는 단일 레벨 컬럼(Close/Adj Close/...)을 주므로 이쪽을 쓴다.
+        frame = yf.Ticker(ticker).history(
+            start=start_iso,
+            end=end_exclusive,
+            interval=interval,
+            auto_adjust=False,
+        )
+    except Exception as fetch_error:  # noqa: BLE001
+        raise HTTPException(status_code=502, detail=f"yfinance 조회 실패: {fetch_error}")
+
+    if frame is None or frame.empty:
+        raise HTTPException(
+            status_code=400,
+            detail="해당 티커/기간에 조회된 데이터가 없습니다. (티커·기간·휴장일을 확인하세요)",
+        )
+
+    frame = frame.reset_index()
+    # 날짜 컬럼 이름은 interval 에 따라 'Date' 또는 'Datetime' 로 온다.
+    date_col = "Date" if "Date" in frame.columns else ("Datetime" if "Datetime" in frame.columns else None)
+    if date_col is None:
+        raise HTTPException(status_code=502, detail="yfinance 응답에 날짜 컬럼이 없습니다.")
+
+    # yfinance 컬럼명 → 응답 필드명. 없는 컬럼은 None 으로 둔다.
+    col_map = {
+        "open": "Open",
+        "high": "High",
+        "low": "Low",
+        "close": "Close",
+        "adj_close": "Adj Close",
+        "volume": "Volume",
+    }
+    series_map = {
+        field: frame[col] if col in frame.columns else None
+        for field, col in col_map.items()
+    }
+
+    def num_at(field: str, idx: int):
+        series = series_map[field]
+        if series is None:
+            return None
+        v = pd.to_numeric(series.iloc[idx], errors="coerce")
+        return float(v) if pd.notna(v) else None
+
+    rows: List[YfinanceRow] = []
+    for idx in range(len(frame)):
+        dt = pd.to_datetime(frame[date_col].iloc[idx], errors="coerce")
+        if pd.isna(dt):
+            continue
+        rows.append(
+            YfinanceRow(
+                date=dt.strftime("%Y-%m-%d"),
+                open=num_at("open", idx),
+                high=num_at("high", idx),
+                low=num_at("low", idx),
+                close=num_at("close", idx),
+                adj_close=num_at("adj_close", idx),
+                volume=num_at("volume", idx),
+                ticker=ticker,
+            )
+        )
+
+    if not rows:
+        raise HTTPException(status_code=400, detail="유효한 시세 데이터가 없습니다.")
+    return YfinanceResponse(count=len(rows), rows=rows)
+
+
 def calc_metrics(y_true: np.ndarray, y_pred: np.ndarray) -> Metrics:
     mae = float(np.mean(np.abs(y_true - y_pred)))
     rmse = float(np.sqrt(np.mean((y_true - y_pred) ** 2)))

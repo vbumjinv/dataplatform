@@ -16,6 +16,8 @@ type MapPayload = {
   whereClause?: string | null;
   unitName?: string | null;
   freq?: string | null;
+  duplicateDatePolicy?: "none" | "sum" | null;
+  fillForward?: boolean | null;
   isActive?: boolean;
 };
 
@@ -49,6 +51,11 @@ const validatePayload = (payload: MapPayload) => {
   if (!isNonEmpty(payload.dateColumn)) return "날짜 컬럼(dateColumn)은 필수입니다.";
   if (!isNonEmpty(payload.valueColumn)) return "값 컬럼(valueColumn)은 필수입니다.";
   return null;
+};
+
+const normalizeDuplicateDatePolicy = (value: unknown): "none" | "sum" => {
+  const text = typeof value === "string" ? value.trim().toLowerCase() : "";
+  return text === "sum" ? "sum" : "none";
 };
 
 export async function GET(request: Request) {
@@ -86,6 +93,8 @@ export async function GET(request: Request) {
               m.where_clause,
               m.unit_name,
               m.freq,
+              m.duplicate_date_policy,
+              m.fill_forward,
               m.is_active,
               m.schedule_enabled,
               m.schedule_type,
@@ -122,6 +131,8 @@ export async function GET(request: Request) {
               m.where_clause,
               m.unit_name,
               m.freq,
+              m.duplicate_date_policy,
+              m.fill_forward,
               m.is_active,
               false as schedule_enabled,
               'interval'::text as schedule_type,
@@ -160,6 +171,11 @@ export async function GET(request: Request) {
         whereClause: (row.where_clause as string | null) ?? null,
         unitName: (row.unit_name as string | null) ?? null,
         freq: (row.freq as string | null) ?? null,
+        duplicateDatePolicy:
+          ((row.duplicate_date_policy as string | null) ?? "none").trim().toLowerCase() === "sum"
+            ? "sum"
+            : "none",
+        fillForward: row.fill_forward == null ? true : Boolean(row.fill_forward),
         isActive: Boolean(row.is_active),
         scheduleEnabled: Boolean(row.schedule_enabled),
         scheduleType:
@@ -235,10 +251,12 @@ export async function POST(request: Request) {
           where_clause,
           unit_name,
           freq,
+          duplicate_date_policy,
+          fill_forward,
           is_active
         )
         values (
-          $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12
+          $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14
         )
         returning map_id
       `,
@@ -254,6 +272,8 @@ export async function POST(request: Request) {
         payload?.whereClause?.trim() || null,
         payload?.unitName?.trim() || null,
         payload?.freq?.trim() || null,
+        normalizeDuplicateDatePolicy(payload?.duplicateDatePolicy),
+        payload?.fillForward ?? true,
         payload?.isActive ?? true,
       ],
     );

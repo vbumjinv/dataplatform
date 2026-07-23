@@ -1,9 +1,16 @@
 {
+  "scripts": {
+    "dev": "concurrently -k -n web,forecast,timesfm -c cyan,green,magenta \"npm --prefix web run dev\" \"python-forecast-api\\.venv\\Scripts\\uvicorn app:app --app-dir python-forecast-api --host 127.0.0.1 --port 8001\" \"python-timesfm-api\\.venv\\Scripts\\uvicorn app:app --app-dir python-timesfm-api --host 127.0.0.1 --port 8002\"",
+    "dev:web": "npm --prefix web run dev",
+    "dev:forecast": "python-forecast-api\\.venv\\Scripts\\uvicorn app:app --app-dir python-forecast-api --host 127.0.0.1 --port 8001",
+    "dev:timesfm": "python-timesfm-api\\.venv\\Scripts\\uvicorn app:app --app-dir python-timesfm-api --host 127.0.0.1 --port 8002"
+  },
   "dependencies": {
     "reactflow": "^11.11.4"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.18",
+    "concurrently": "^9.1.2",
     "tailwindcss": "^4.1.18"
   }
 }

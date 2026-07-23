@@ -49,6 +49,7 @@ type Step =
   | "target"
   | "kosisUserStats"
   | "datagokrSpec"
+  | "krxApiApply"
   | "period"
   | "extra"
   | "name"
@@ -112,6 +113,58 @@ type KrxApiItem = {
   srch_yn: string;
   category_sort: number;
   api_sort: number;
+  guide_url?: string;
+};
+type OecdApiItem = {
+  id: string;
+  category_name: string;
+  indicator_name: string;
+  flow_ref: string;
+  data_key: string;
+  ref_area: string;
+  cycle: string;
+  srch_yn: string;
+  category_sort: number;
+  item_sort: number;
+};
+type YfinanceApiItem = {
+  ticker: string;
+  item_name: string;
+  category_name: string;
+  cycle: string;
+  srch_yn: string;
+  category_sort: number;
+  item_sort: number;
+};
+type WorldBankApiItem = {
+  id: string;
+  item_name: string;
+  country_code: string;
+  country_name: string;
+  indicator_code: string;
+  indicator_name: string;
+  category_name: string;
+  cycle: string;
+  srch_yn: string;
+  category_sort: number;
+  item_sort: number;
+};
+type UndpIndicator = {
+  id: string;
+  name: string;
+  short_name: string;
+  display_name: string;
+  description: string;
+  topic_id: number;
+  topic_name: string;
+  source_start_year: number | null;
+  source_end_year: number | null;
+};
+type UndpLocation = {
+  id: string;
+  name: string;
+  iso3: string;
+  iso2: string;
 };
 type DatagokrTreeNode = DatagokrStatItem & {
   children: DatagokrTreeNode[];
@@ -156,6 +209,26 @@ const ORG_CATALOG = [
     name: "KRX",
     description: "한국거래소 API 데이터를 수집합니다.",
   },
+  {
+    provider: "oecd",
+    name: "OECD",
+    description: "OECD 핵심 경제지표(CLI·물가·실업률 등)를 수집합니다.",
+  },
+  {
+    provider: "undp",
+    name: "UN Population Division",
+    description: "UN 세계 인구 통계(인구·출생·사망 등)를 수집합니다.",
+  },
+  {
+    provider: "yfinance",
+    name: "Yahoo Finance",
+    description: "주가·지수·환율·원자재 시세를 티커로 수집합니다.",
+  },
+  {
+    provider: "worldbank",
+    name: "World Bank",
+    description: "세계은행 개발지표(GDP 등)를 국가별로 수집합니다.",
+  },
 ];
 
 const DEFAULT_STEP_LABELS: Array<{ key: Step; label: string }> = [
@@ -184,6 +257,17 @@ const DATAGOKR_STEP_LABELS: Array<{ key: Step; label: string }> = [
   { key: "name", label: "API 명 입력" },
   { key: "confirm", label: "완료" },
 ];
+const KRX_STEP_LABELS: Array<{ key: Step; label: string }> = [
+  { key: "org", label: "기관 선택" },
+  { key: "target", label: "수집대상 선택" },
+  { key: "krxApiApply", label: "API 신청 확인" },
+  { key: "period", label: "기간 입력" },
+  { key: "extra", label: "추가 파라미터 입력(선택)" },
+  { key: "name", label: "API 명 입력" },
+  { key: "confirm", label: "완료" },
+];
+// KRX Data Marketplace OPEN API 포털(로그인 후 인증키·컨텐츠별 이용신청)
+const KRX_OPENAPI_PORTAL_URL = "https://openapi.krx.co.kr/";
 const normalizeProvider = (provider?: string | null) => {
   const value = (provider ?? "").trim().toLowerCase();
   if (!value) return "custom";
@@ -191,6 +275,34 @@ const normalizeProvider = (provider?: string | null) => {
   return value;
 };
 const KRX_API_BASE_PATH = "https://data-dbg.krx.co.kr/svc/apis";
+// OECD SDMX REST 데이터 엔드포인트(고정). 데이터플로우/필터키는 path 파라미터로 들어간다.
+const OECD_DATA_BASE_URL = "https://sdmx.oecd.org/public/rest/data";
+// UN Population Division Data Portal 데이터 엔드포인트(고정). 지표/지역/기간을 path 로 이어붙인다.
+// 예: .../api/v1/data/indicators/{지표ID}/locations/{지역ID}/start/{시작연}/end/{종료연}
+const UNDP_DATA_BASE_URL = "https://population.un.org/dataportalapi/api/v1/data";
+// API 키가 필요 없는 기관이지만 등록 API 검증이 비어있는 키를 허용하지 않으므로 센티넬 값을 사용한다.
+// api_key_param_key 가 없으므로 실제 호출 URL 에는 절대 포함되지 않는다.
+const OECD_PUBLIC_KEY = "OECD_PUBLIC";
+// yfinance 는 HTTP API 가 아니라 Python(yfinance) 실행으로 수집한다.
+// base_url 은 buildUrlFromSourceParams/previewUrl 의 new URL() 파싱을 통과해야 하므로
+// 실제 Yahoo 호스트를 센티넬로 둔다. api_key_param_key 를 null 로 두면 키가 URL 에 절대 안 붙는다.
+const YFINANCE_BASE_URL = "https://query1.finance.yahoo.com";
+const YFINANCE_PUBLIC_KEY = "YFINANCE_PUBLIC";
+// World Bank Open Data API. 키가 필요 없다. 최종 URL:
+//   {base}/country/{국가코드}/indicator/{지표코드}?format=json&per_page=20000&date=시작연:종료연
+const WORLDBANK_BASE_URL = "https://api.worldbank.org/v2";
+const WORLDBANK_PUBLIC_KEY = "WORLDBANK_PUBLIC";
+// OECD startPeriod/endPeriod 표기: 연 YYYY / 분기 YYYY-Qn / 월 YYYY-MM / 일 YYYY-MM-DD
+const formatOecdPeriod = (dateText: string, period: string) => {
+  const date = new Date(`${dateText}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return "";
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+  if (period === "A" || period === "Y") return `${year}`;
+  if (period === "Q") return `${year}-Q${Math.floor((month - 1) / 3) + 1}`;
+  if (period === "D") return `${year}-${pad(month)}-${pad(date.getDate())}`;
+  return `${year}-${pad(month)}`;
+};
 const END_LATEST_TOKEN = "__TODAY__";
 const START_RELATIVE_TOKEN_REGEX = /^__TODAY_MINUS_(\d+)(D|M|Q|A|Y)__$/i;
 const START_RELATIVE_KO_REGEX = /^(\d+)\s*(일|개월|분기|년)\s*전$/;
@@ -226,9 +338,25 @@ const shouldUseIsoDateParamFormat = (paramKey: string) => {
   const normalized = paramKey.trim().toLowerCase();
   return normalized === "observation_start" || normalized === "observation_end";
 };
+// OECD(SDMX) startPeriod/endPeriod: 하이픈 표기(YYYY / YYYY-Qn / YYYY-MM / YYYY-MM-DD)
+const shouldUseOecdPeriodFormat = (paramKey: string) => {
+  const normalized = paramKey.trim().toLowerCase();
+  return normalized === "startperiod" || normalized === "endperiod";
+};
+const formatOecdPeriodDate = (date: Date, period: string) => {
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+  if (period === "A" || period === "Y") return `${year}`;
+  if (period === "Q") return `${year}-Q${Math.floor((month - 1) / 3) + 1}`;
+  if (period === "D") return `${year}-${pad(month)}-${pad(date.getDate())}`;
+  return `${year}-${pad(month)}`;
+};
 const formatParamDateValue = (date: Date, period: string, paramKey: string) => {
   if (shouldUseIsoDateParamFormat(paramKey)) {
     return formatIsoDate(date);
+  }
+  if (shouldUseOecdPeriodFormat(paramKey)) {
+    return formatOecdPeriodDate(date, period);
   }
   return formatDateForPeriod(date, period);
 };
@@ -312,6 +440,13 @@ const normalizeValue = (value: string, mode?: string | null) => {
   if (mode === "none") return normalized;
   return encodeURIComponent(normalized);
 };
+// Path 값은 "/"를 경로 구분자로 보존하고, 각 세그먼트만 개별 인코딩한다.
+// (예: "openapi/service/SpcdeInfoService" 의 "/"가 %2F로 깨지지 않도록)
+const normalizePathValue = (value: string, mode?: string | null) =>
+  value
+    .split("/")
+    .map((segment) => normalizeValue(segment, mode))
+    .join("/");
 const parseNumberedPrefix = (label: string) => {
   const token = (label.trim().match(/^([0-9]+(?:\.[0-9]+)*)\./) ?? [])[1] ?? "";
   if (!token) return null;
@@ -374,6 +509,9 @@ export default function UserApiRegistrationModal({
   const [krxAppliedQuery, setKrxAppliedQuery] = useState("");
   const [krxExpandedCategories, setKrxExpandedCategories] = useState<Set<string>>(new Set());
   const [krxSelectedApiId, setKrxSelectedApiId] = useState<string | null>(null);
+  // KRX 는 통계청처럼 사이트에서 1회 로그인 후 API 이용신청을 해야 한다.
+  // userStatsId 같은 입력값은 없고, 신청 완료 여부만 사용자가 확인(체크)하면 진행한다.
+  const [krxApiApplied, setKrxApiApplied] = useState(false);
   const [kosisStats, setKosisStats] = useState<KosisStatItem[]>([]);
   const [kosisLoading, setKosisLoading] = useState(false);
   const [kosisLoadingParentKeys, setKosisLoadingParentKeys] = useState<Set<string>>(new Set());
@@ -408,6 +546,37 @@ export default function UserApiRegistrationModal({
   const [fredChildrenByParent, setFredChildrenByParent] = useState<Record<string, FredTreeNode[]>>({});
   const [fredLoadedParentKeys, setFredLoadedParentKeys] = useState<Set<string>>(new Set());
   const [fredLoadingParentKeys, setFredLoadingParentKeys] = useState<Set<string>>(new Set());
+  // OECD: KRX 처럼 큐레이션된 지표 목록에서 선택한다. 주기는 선택 지표에 고정된다.
+  const [oecdStats, setOecdStats] = useState<OecdApiItem[]>([]);
+  const [oecdLoading, setOecdLoading] = useState(false);
+  const [oecdError, setOecdError] = useState("");
+  const [oecdAppliedQuery, setOecdAppliedQuery] = useState("");
+  const [oecdExpandedCategories, setOecdExpandedCategories] = useState<Set<string>>(new Set());
+  const [oecdSelectedId, setOecdSelectedId] = useState<string | null>(null);
+  // yfinance: KRX/OECD 처럼 큐레이션된 티커 목록에서 선택한다. 주기는 일별로 고정.
+  const [yfinanceStats, setYfinanceStats] = useState<YfinanceApiItem[]>([]);
+  const [yfinanceLoading, setYfinanceLoading] = useState(false);
+  const [yfinanceError, setYfinanceError] = useState("");
+  const [yfinanceAppliedQuery, setYfinanceAppliedQuery] = useState("");
+  const [yfinanceExpandedCategories, setYfinanceExpandedCategories] = useState<Set<string>>(new Set());
+  const [yfinanceSelectedTicker, setYfinanceSelectedTicker] = useState<string | null>(null);
+  // World Bank: OECD/yfinance 처럼 큐레이션된 지표×국가 목록에서 선택한다. 주기는 연간 고정.
+  const [worldbankStats, setWorldbankStats] = useState<WorldBankApiItem[]>([]);
+  const [worldbankLoading, setWorldbankLoading] = useState(false);
+  const [worldbankError, setWorldbankError] = useState("");
+  const [worldbankAppliedQuery, setWorldbankAppliedQuery] = useState("");
+  const [worldbankExpandedCategories, setWorldbankExpandedCategories] = useState<Set<string>>(new Set());
+  const [worldbankSelectedId, setWorldbankSelectedId] = useState<string | null>(null);
+  // UN Population Division: 지표(indicator)와 지역(location)을 각각 선택하고 연 단위 기간으로 조회한다.
+  const [undpIndicators, setUndpIndicators] = useState<UndpIndicator[]>([]);
+  const [undpLocations, setUndpLocations] = useState<UndpLocation[]>([]);
+  const [undpLoading, setUndpLoading] = useState(false);
+  const [undpError, setUndpError] = useState("");
+  const [undpIndicatorQuery, setUndpIndicatorQuery] = useState("");
+  const [undpLocationQuery, setUndpLocationQuery] = useState("");
+  const [undpSelectedIndicatorId, setUndpSelectedIndicatorId] = useState<string | null>(null);
+  const [undpSelectedLocationId, setUndpSelectedLocationId] = useState<string | null>(null);
+  const [undpExpandedTopics, setUndpExpandedTopics] = useState<Set<string>>(new Set());
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [extraParams, setExtraParams] = useState<ExtraParam[]>([{ key: "", value: "" }]);
@@ -641,6 +810,144 @@ export default function UserApiRegistrationModal({
     () => krxStats.find((item) => item.api_id === krxSelectedApiId) ?? null,
     [krxSelectedApiId, krxStats],
   );
+  const oecdSortedStats = useMemo(() => {
+    return oecdStats
+      .filter((item) => item.srch_yn.trim().toUpperCase() === "Y")
+      .sort((a, b) => {
+        const categoryOrder = a.category_sort - b.category_sort;
+        if (categoryOrder !== 0) return categoryOrder;
+        const itemOrder = a.item_sort - b.item_sort;
+        if (itemOrder !== 0) return itemOrder;
+        return a.indicator_name.localeCompare(b.indicator_name, "ko");
+      });
+  }, [oecdStats]);
+  const oecdCategoryGroups = useMemo(() => {
+    const map = new Map<string, OecdApiItem[]>();
+    oecdSortedStats.forEach((item) => {
+      const key = item.category_name || "기타";
+      const bucket = map.get(key);
+      if (bucket) bucket.push(item);
+      else map.set(key, [item]);
+    });
+    return Array.from(map.entries());
+  }, [oecdSortedStats]);
+  const oecdSearchResults = useMemo(() => {
+    const query = oecdAppliedQuery.trim().toLowerCase();
+    if (!query) return [] as OecdApiItem[];
+    return oecdSortedStats.filter((item) =>
+      [item.category_name, item.indicator_name, item.ref_area, item.flow_ref]
+        .join(" ")
+        .toLowerCase()
+        .includes(query),
+    );
+  }, [oecdAppliedQuery, oecdSortedStats]);
+  const selectedOecdStat = useMemo(
+    () => oecdStats.find((item) => item.id === oecdSelectedId) ?? null,
+    [oecdSelectedId, oecdStats],
+  );
+  const yfinanceSortedStats = useMemo(() => {
+    return yfinanceStats
+      .filter((item) => item.srch_yn.trim().toUpperCase() === "Y")
+      .sort((a, b) => {
+        const categoryOrder = a.category_sort - b.category_sort;
+        if (categoryOrder !== 0) return categoryOrder;
+        const itemOrder = a.item_sort - b.item_sort;
+        if (itemOrder !== 0) return itemOrder;
+        return a.item_name.localeCompare(b.item_name, "ko");
+      });
+  }, [yfinanceStats]);
+  const yfinanceCategoryGroups = useMemo(() => {
+    const map = new Map<string, YfinanceApiItem[]>();
+    yfinanceSortedStats.forEach((item) => {
+      const key = item.category_name || "기타";
+      const bucket = map.get(key);
+      if (bucket) bucket.push(item);
+      else map.set(key, [item]);
+    });
+    return Array.from(map.entries());
+  }, [yfinanceSortedStats]);
+  const yfinanceSearchResults = useMemo(() => {
+    const query = yfinanceAppliedQuery.trim().toLowerCase();
+    if (!query) return [] as YfinanceApiItem[];
+    return yfinanceSortedStats.filter((item) =>
+      [item.category_name, item.item_name, item.ticker].join(" ").toLowerCase().includes(query),
+    );
+  }, [yfinanceAppliedQuery, yfinanceSortedStats]);
+  const selectedYfinanceStat = useMemo(
+    () => yfinanceStats.find((item) => item.ticker === yfinanceSelectedTicker) ?? null,
+    [yfinanceSelectedTicker, yfinanceStats],
+  );
+  const worldbankSortedStats = useMemo(() => {
+    return worldbankStats
+      .filter((item) => item.srch_yn.trim().toUpperCase() === "Y")
+      .sort((a, b) => {
+        const categoryOrder = a.category_sort - b.category_sort;
+        if (categoryOrder !== 0) return categoryOrder;
+        const itemOrder = a.item_sort - b.item_sort;
+        if (itemOrder !== 0) return itemOrder;
+        return a.item_name.localeCompare(b.item_name, "ko");
+      });
+  }, [worldbankStats]);
+  const worldbankCategoryGroups = useMemo(() => {
+    const map = new Map<string, WorldBankApiItem[]>();
+    worldbankSortedStats.forEach((item) => {
+      const key = item.category_name || "기타";
+      const bucket = map.get(key);
+      if (bucket) bucket.push(item);
+      else map.set(key, [item]);
+    });
+    return Array.from(map.entries());
+  }, [worldbankSortedStats]);
+  const worldbankSearchResults = useMemo(() => {
+    const query = worldbankAppliedQuery.trim().toLowerCase();
+    if (!query) return [] as WorldBankApiItem[];
+    return worldbankSortedStats.filter((item) =>
+      [item.category_name, item.item_name, item.country_name, item.country_code, item.indicator_code]
+        .join(" ")
+        .toLowerCase()
+        .includes(query),
+    );
+  }, [worldbankAppliedQuery, worldbankSortedStats]);
+  const selectedWorldbankStat = useMemo(
+    () => worldbankStats.find((item) => item.id === worldbankSelectedId) ?? null,
+    [worldbankSelectedId, worldbankStats],
+  );
+  // UN 지표는 주제(topicName)별로 묶어 접이식으로 표시한다(OECD 분류 카드와 동일 UX).
+  const undpIndicatorTopics = useMemo(() => {
+    const map = new Map<string, UndpIndicator[]>();
+    undpIndicators.forEach((item) => {
+      const key = item.topic_name || "기타";
+      const bucket = map.get(key);
+      if (bucket) bucket.push(item);
+      else map.set(key, [item]);
+    });
+    return Array.from(map.entries());
+  }, [undpIndicators]);
+  const undpIndicatorSearchResults = useMemo(() => {
+    const query = undpIndicatorQuery.trim().toLowerCase();
+    if (!query) return [] as UndpIndicator[];
+    return undpIndicators.filter((item) =>
+      [item.name, item.display_name, item.short_name, item.topic_name]
+        .join(" ")
+        .toLowerCase()
+        .includes(query),
+    );
+  }, [undpIndicatorQuery, undpIndicators]);
+  const undpLocationResults = useMemo(() => {
+    const query = undpLocationQuery.trim().toLowerCase();
+    if (!query) return undpLocations;
+    return undpLocations.filter((item) =>
+      [item.name, item.iso3, item.iso2].join(" ").toLowerCase().includes(query),
+    );
+  }, [undpLocationQuery, undpLocations]);
+  const selectedUndpIndicator = useMemo(
+    () => undpIndicators.find((item) => item.id === undpSelectedIndicatorId) ?? null,
+    [undpIndicators, undpSelectedIndicatorId],
+  );
+  const selectedUndpLocation = useMemo(
+    () => undpLocations.find((item) => item.id === undpSelectedLocationId) ?? null,
+    [undpLocations, undpSelectedLocationId],
+  );
   const datagokrTreeRoots = useMemo(() => {
     if (!datagokrStats.length) return [] as DatagokrTreeNode[];
     const nodeMap = new Map<string, DatagokrTreeNode>();
@@ -731,6 +1038,16 @@ export default function UserApiRegistrationModal({
     );
     return candidates.find((item) => item.enabled) ?? candidates[0] ?? null;
   }, [sources]);
+  // UN 은 데이터 조회에 Bearer 토큰이 필수라, 기관 관리에서 등록한 소스(api_key=토큰)를 사용한다.
+  const undpRegisteredSource = useMemo(() => {
+    const candidates = sources.filter(
+      (item) => normalizeProvider(item.provider) === "undp" && !item.is_template,
+    );
+    const withKey = candidates.find(
+      (item) => item.enabled && Boolean((item.api_key ?? "").trim()),
+    );
+    return withKey ?? candidates.find((item) => item.enabled) ?? candidates[0] ?? null;
+  }, [sources]);
 
   const resolvedSelectedTarget = useMemo(() => {
     if (selectedProvider === "bok") {
@@ -816,8 +1133,250 @@ export default function UserApiRegistrationModal({
         codeHint: selectedKrxStat.api_id,
       };
     }
+    if (selectedProvider === "oecd") {
+      if (!selectedOecdStat) return null;
+      const oecdSource: ApiSource = {
+        id: -1,
+        name: "OECD",
+        provider: "oecd",
+        base_url: OECD_DATA_BASE_URL,
+        api_key: OECD_PUBLIC_KEY,
+        api_key_param_key: null,
+        api_key_location: "query",
+        api_key_order: 0,
+        api_key_encode_mode: "encode",
+        enabled: true,
+        is_template: false,
+        created_at: new Date().toISOString(),
+        groups: [],
+      };
+      const makeParam = (
+        key: string,
+        value: string,
+        location: "path" | "query",
+        order: number,
+        encodeMode: string,
+      ): ApiParam => ({
+        id: order,
+        param_key: key,
+        param_value: value,
+        param_location: location,
+        param_order: order,
+        encode_mode: encodeMode,
+        param_role: null,
+      });
+      const oecdGroup: ApiGroup = {
+        id: -1,
+        name: selectedOecdStat.indicator_name,
+        is_template: false,
+        created_at: new Date().toISOString(),
+        params: [
+          makeParam("flowRef", selectedOecdStat.flow_ref, "path", 1, "none"),
+          makeParam("dataKey", selectedOecdStat.data_key, "path", 2, "none"),
+          makeParam("dimensionAtObservation", "AllDimensions", "query", 3, "encode"),
+          makeParam("format", "jsondata", "query", 4, "encode"),
+          makeParam("startPeriod", "", "query", 5, "encode"),
+          makeParam("endPeriod", "", "query", 6, "encode"),
+        ],
+      };
+      return {
+        key: `oecd:${selectedOecdStat.id}`,
+        provider: "oecd",
+        source: oecdSource,
+        group: oecdGroup,
+        title: selectedOecdStat.indicator_name,
+        description: `${selectedOecdStat.flow_ref} / ${selectedOecdStat.data_key}`,
+        typeLabel: "SDMX",
+        statusLabel: "사용 가능",
+        codeHint: selectedOecdStat.ref_area,
+      };
+    }
+    if (selectedProvider === "yfinance") {
+      if (!selectedYfinanceStat) return null;
+      // OECD 와 동일하게 소스/그룹을 즉석 합성한다. (DB 템플릿 불필요)
+      const yfinanceSource: ApiSource = {
+        id: -1,
+        name: "Yahoo Finance",
+        provider: "yfinance",
+        base_url: YFINANCE_BASE_URL,
+        api_key: YFINANCE_PUBLIC_KEY,
+        api_key_param_key: null,
+        api_key_location: "query",
+        api_key_order: 0,
+        api_key_encode_mode: "encode",
+        enabled: true,
+        is_template: false,
+        created_at: new Date().toISOString(),
+        groups: [],
+      };
+      const makeParam = (
+        key: string,
+        value: string,
+        location: "path" | "query",
+        order: number,
+        encodeMode: string,
+      ): ApiParam => ({
+        id: order,
+        param_key: key,
+        param_value: value,
+        param_location: location,
+        param_order: order,
+        encode_mode: encodeMode,
+        param_role: null,
+      });
+      // apiStart/apiEnd 의 param_role(start/end)은 submitParams 에서 부여한다.
+      const yfinanceGroup: ApiGroup = {
+        id: -1,
+        name: selectedYfinanceStat.item_name,
+        is_template: false,
+        created_at: new Date().toISOString(),
+        params: [
+          makeParam("ticker", selectedYfinanceStat.ticker, "query", 1, "none"),
+          makeParam("interval", "1d", "query", 2, "none"),
+          // period(role=period_type)=D 를 둬야 apiEnd=__TODAY__ 등 상대일 토큰이
+          // 일별(YYYYMMDD)로 해석된다. (없으면 월간 M 으로 잘못 해석됨)
+          makeParam("period", "D", "query", 3, "none"),
+          makeParam("apiStart", "", "query", 4, "encode"),
+          makeParam("apiEnd", END_LATEST_TOKEN, "query", 5, "encode"),
+        ],
+      };
+      return {
+        key: `yfinance:${selectedYfinanceStat.ticker}`,
+        provider: "yfinance",
+        source: yfinanceSource,
+        group: yfinanceGroup,
+        title: selectedYfinanceStat.item_name,
+        description: `${selectedYfinanceStat.category_name} / ${selectedYfinanceStat.ticker}`,
+        typeLabel: "시세",
+        statusLabel: "사용 가능",
+        codeHint: selectedYfinanceStat.ticker,
+      };
+    }
+    if (selectedProvider === "worldbank") {
+      if (!selectedWorldbankStat) return null;
+      // OECD/UNDP 처럼 소스/그룹을 즉석 합성한다. World Bank 는 키가 필요 없다.
+      // 최종 URL: {base}/country/{국가}/indicator/{지표}?format=json&per_page=20000&date=시작연:종료연
+      const worldbankSource: ApiSource = {
+        id: -1,
+        name: "World Bank",
+        provider: "worldbank",
+        base_url: WORLDBANK_BASE_URL,
+        api_key: WORLDBANK_PUBLIC_KEY,
+        api_key_param_key: null,
+        api_key_location: "query",
+        api_key_order: 0,
+        api_key_encode_mode: "encode",
+        enabled: true,
+        is_template: false,
+        created_at: new Date().toISOString(),
+        groups: [],
+      };
+      const makeParam = (
+        key: string,
+        value: string,
+        location: "path" | "query",
+        order: number,
+        encodeMode: string,
+      ): ApiParam => ({
+        id: order,
+        param_key: key,
+        param_value: value,
+        param_location: location,
+        param_order: order,
+        encode_mode: encodeMode,
+        param_role: null,
+      });
+      // country/{code}/indicator/{code} 는 리터럴 세그먼트+값을 path 파라미터로 이어붙인다(UNDP 방식).
+      // date 값은 submitParams 에서 "시작연:종료연" 으로 채운다.
+      const worldbankGroup: ApiGroup = {
+        id: -1,
+        name: `${selectedWorldbankStat.item_name} (${selectedWorldbankStat.indicator_code})`,
+        is_template: false,
+        created_at: new Date().toISOString(),
+        params: [
+          makeParam("segCountry", "country", "path", 1, "none"),
+          makeParam("countryCode", selectedWorldbankStat.country_code, "path", 2, "none"),
+          makeParam("segIndicator", "indicator", "path", 3, "none"),
+          makeParam("indicatorCode", selectedWorldbankStat.indicator_code, "path", 4, "none"),
+          makeParam("format", "json", "query", 5, "encode"),
+          makeParam("per_page", "20000", "query", 6, "encode"),
+          // date=시작연:종료연 — 콜론이 %3A 로 깨지지 않도록 인코딩하지 않는다.
+          makeParam("date", "", "query", 7, "none"),
+        ],
+      };
+      return {
+        key: `worldbank:${selectedWorldbankStat.id}`,
+        provider: "worldbank",
+        source: worldbankSource,
+        group: worldbankGroup,
+        title: selectedWorldbankStat.item_name,
+        description: `${selectedWorldbankStat.country_name} / ${selectedWorldbankStat.indicator_code}`,
+        typeLabel: "개발지표",
+        statusLabel: "사용 가능",
+        codeHint: selectedWorldbankStat.country_code,
+      };
+    }
+    if (selectedProvider === "undp") {
+      // 기관 관리에서 등록한 UN 소스(토큰 보유)가 없으면 진행 불가.
+      if (!selectedUndpIndicator || !selectedUndpLocation || !undpRegisteredSource) {
+        return null;
+      }
+      const undpSource: ApiSource = {
+        ...undpRegisteredSource,
+        // 데이터 엔드포인트는 고정. 토큰은 Authorization: Bearer 헤더로만 전송되므로
+        // api_key_param_key 를 비워 URL 에는 절대 포함되지 않게 한다.
+        base_url: UNDP_DATA_BASE_URL,
+        api_key_param_key: null,
+      };
+      const makeParam = (
+        key: string,
+        value: string,
+        location: "path" | "query",
+        order: number,
+        encodeMode: string,
+        role: string | null,
+      ): ApiParam => ({
+        id: order,
+        param_key: key,
+        param_value: value,
+        param_location: location,
+        param_order: order,
+        encode_mode: encodeMode,
+        param_role: role,
+      });
+      // 최종 URL: {base}/indicators/{지표ID}/locations/{지역ID}/start/{시작연}/end/{종료연}
+      // 리터럴 세그먼트와 값 세그먼트를 모두 path 파라미터(encode none)로 순서대로 이어붙인다.
+      const undpGroup: ApiGroup = {
+        id: -1,
+        name: `${selectedUndpIndicator.name} / ${selectedUndpLocation.name}`,
+        is_template: false,
+        created_at: new Date().toISOString(),
+        params: [
+          makeParam("segIndicators", "indicators", "path", 1, "none", null),
+          makeParam("indicatorId", selectedUndpIndicator.id, "path", 2, "none", null),
+          makeParam("segLocations", "locations", "path", 3, "none", null),
+          makeParam("locationId", selectedUndpLocation.id, "path", 4, "none", null),
+          makeParam("segStart", "start", "path", 5, "none", null),
+          makeParam("startYear", "", "path", 6, "none", "start"),
+          makeParam("segEnd", "end", "path", 7, "none", null),
+          makeParam("endYear", "", "path", 8, "none", "end"),
+        ],
+      };
+      return {
+        key: `undp:${selectedUndpIndicator.id}:${selectedUndpLocation.id}`,
+        provider: "undp",
+        source: undpSource,
+        group: undpGroup,
+        title: selectedUndpIndicator.name,
+        description: `${selectedUndpLocation.name} (${selectedUndpLocation.iso3})`,
+        typeLabel: "인구통계",
+        statusLabel: "사용 가능",
+        codeHint: selectedUndpLocation.iso3,
+      };
+    }
     return selectedTarget;
   }, [
+    selectedOecdStat,
     bokRegisteredSource,
     bokTemplateTarget,
     datagokrRegisteredSource,
@@ -835,6 +1394,11 @@ export default function UserApiRegistrationModal({
     selectedBokStat,
     selectedProvider,
     selectedTarget,
+    selectedUndpIndicator,
+    selectedUndpLocation,
+    selectedYfinanceStat,
+    selectedWorldbankStat,
+    undpRegisteredSource,
   ]);
 
   useEffect(() => {
@@ -893,6 +1457,130 @@ export default function UserApiRegistrationModal({
     };
     void fetchKrxStats();
   }, [krxLoading, krxStats.length, open, selectedProvider, step]);
+  useEffect(() => {
+    if (!open || step !== "target" || selectedProvider !== "oecd") return;
+    if (oecdStats.length > 0 || oecdLoading) return;
+    const fetchOecdStats = async () => {
+      setOecdLoading(true);
+      setOecdError("");
+      try {
+        const response = await fetch("/api/ingestion/oecd-stat-list");
+        const payload = (await response.json()) as {
+          ok?: boolean;
+          items?: OecdApiItem[];
+          error?: string;
+        };
+        if (!response.ok || !payload.ok) {
+          throw new Error(payload.error || "OECD 지표 목록을 불러오지 못했습니다.");
+        }
+        setOecdStats(payload.items ?? []);
+        setOecdExpandedCategories(new Set());
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "OECD 지표 목록을 불러오지 못했습니다.";
+        setOecdError(message);
+      } finally {
+        setOecdLoading(false);
+      }
+    };
+    void fetchOecdStats();
+  }, [oecdLoading, oecdStats.length, open, selectedProvider, step]);
+  useEffect(() => {
+    if (!open || step !== "target" || selectedProvider !== "yfinance") return;
+    if (yfinanceStats.length > 0 || yfinanceLoading) return;
+    const fetchYfinanceStats = async () => {
+      setYfinanceLoading(true);
+      setYfinanceError("");
+      try {
+        const response = await fetch("/api/ingestion/yfinance-stat-list");
+        const payload = (await response.json()) as {
+          ok?: boolean;
+          items?: YfinanceApiItem[];
+          error?: string;
+        };
+        if (!response.ok || !payload.ok) {
+          throw new Error(payload.error || "yfinance 티커 목록을 불러오지 못했습니다.");
+        }
+        setYfinanceStats(payload.items ?? []);
+        setYfinanceExpandedCategories(new Set());
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "yfinance 티커 목록을 불러오지 못했습니다.";
+        setYfinanceError(message);
+      } finally {
+        setYfinanceLoading(false);
+      }
+    };
+    void fetchYfinanceStats();
+  }, [open, selectedProvider, step, yfinanceLoading, yfinanceStats.length]);
+  useEffect(() => {
+    if (!open || step !== "target" || selectedProvider !== "worldbank") return;
+    if (worldbankStats.length > 0 || worldbankLoading) return;
+    const fetchWorldbankStats = async () => {
+      setWorldbankLoading(true);
+      setWorldbankError("");
+      try {
+        const response = await fetch("/api/ingestion/worldbank-stat-list");
+        const payload = (await response.json()) as {
+          ok?: boolean;
+          items?: WorldBankApiItem[];
+          error?: string;
+        };
+        if (!response.ok || !payload.ok) {
+          throw new Error(payload.error || "World Bank 지표 목록을 불러오지 못했습니다.");
+        }
+        setWorldbankStats(payload.items ?? []);
+        setWorldbankExpandedCategories(new Set());
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "World Bank 지표 목록을 불러오지 못했습니다.";
+        setWorldbankError(message);
+      } finally {
+        setWorldbankLoading(false);
+      }
+    };
+    void fetchWorldbankStats();
+  }, [open, selectedProvider, step, worldbankLoading, worldbankStats.length]);
+  useEffect(() => {
+    if (!open || step !== "target" || selectedProvider !== "undp") return;
+    if ((undpIndicators.length > 0 && undpLocations.length > 0) || undpLoading) return;
+    const fetchUndpMeta = async () => {
+      setUndpLoading(true);
+      setUndpError("");
+      try {
+        const [indRes, locRes] = await Promise.all([
+          fetch("/api/ingestion/undp-indicator-list"),
+          fetch("/api/ingestion/undp-location-list"),
+        ]);
+        const indPayload = (await indRes.json()) as {
+          ok?: boolean;
+          items?: UndpIndicator[];
+          error?: string;
+        };
+        const locPayload = (await locRes.json()) as {
+          ok?: boolean;
+          items?: UndpLocation[];
+          error?: string;
+        };
+        if (!indRes.ok || !indPayload.ok) {
+          throw new Error(indPayload.error || "UN 지표 목록을 불러오지 못했습니다.");
+        }
+        if (!locRes.ok || !locPayload.ok) {
+          throw new Error(locPayload.error || "UN 지역 목록을 불러오지 못했습니다.");
+        }
+        setUndpIndicators(indPayload.items ?? []);
+        setUndpLocations(locPayload.items ?? []);
+        setUndpExpandedTopics(new Set());
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "UN 목록을 불러오지 못했습니다.";
+        setUndpError(message);
+      } finally {
+        setUndpLoading(false);
+      }
+    };
+    void fetchUndpMeta();
+  }, [open, selectedProvider, step, undpIndicators.length, undpLocations.length, undpLoading]);
   const loadKosisChildren = useCallback(
     async (parentCode: string, vwCd?: string) => {
       const cacheKey = kosisParentKey(parentCode, vwCd);
@@ -1018,6 +1706,21 @@ export default function UserApiRegistrationModal({
     if (selectedProvider === "fred" && selectedFredStat) {
       return normalizePeriodType(selectedFredStat.cycle ?? "M");
     }
+    if (selectedProvider === "oecd") {
+      return normalizePeriodType(selectedOecdStat?.cycle ?? "M");
+    }
+    if (selectedProvider === "undp") {
+      // UN Population Division 데이터는 연 단위(start/end 연도)로 조회한다.
+      return "Y";
+    }
+    if (selectedProvider === "yfinance") {
+      // yfinance 는 일별(1d) 시세로 고정한다.
+      return "D";
+    }
+    if (selectedProvider === "worldbank") {
+      // World Bank 개발지표(GDP 등)는 연간(A) 데이터.
+      return "A";
+    }
     if (!resolvedSelectedTarget) return "M";
     const params = resolvedSelectedTarget.group.params ?? [];
     const rolePeriod =
@@ -1029,7 +1732,7 @@ export default function UserApiRegistrationModal({
       )?.param_value ?? "";
     const value = rolePeriod || keyPeriod || "M";
     return normalizePeriodType(value);
-  }, [kosisCycle, resolvedSelectedTarget, selectedBokStat, selectedFredStat, selectedProvider]);
+  }, [kosisCycle, selectedOecdStat, resolvedSelectedTarget, selectedBokStat, selectedFredStat, selectedProvider, selectedYfinanceStat, selectedWorldbankStat]);
 
   const canGoNextFromOrg = Boolean(selectedProvider);
   const canGoNextFromTarget =
@@ -1043,6 +1746,14 @@ export default function UserApiRegistrationModal({
         ? Boolean(selectedDatagokrStat && datagokrTemplateTarget)
       : selectedProvider === "fred"
         ? Boolean(selectedFredStat && selectedFredStat.stat_code && fredTemplateTarget)
+      : selectedProvider === "oecd"
+        ? Boolean(selectedOecdStat)
+      : selectedProvider === "undp"
+        ? Boolean(selectedUndpIndicator && selectedUndpLocation && undpRegisteredSource)
+      : selectedProvider === "yfinance"
+        ? Boolean(selectedYfinanceStat)
+      : selectedProvider === "worldbank"
+        ? Boolean(selectedWorldbankStat)
       : Boolean(selectedTarget);
   const kosisUserStatsError =
     selectedProvider === "kosis" && kosisUserStatsId.trim().length === 0
@@ -1055,6 +1766,7 @@ export default function UserApiRegistrationModal({
       ? "API 서비스명과 상세 기능명을 모두 입력해주세요."
       : "";
   const canGoNextFromDatagokrSpec = datagokrSpecError.length === 0;
+  const canGoNextFromKrxApiApply = selectedProvider !== "krx" || krxApiApplied;
   const periodError =
     !startDate || !endDate
       ? "시작일과 종료일을 입력해주세요."
@@ -1075,6 +1787,8 @@ export default function UserApiRegistrationModal({
       ? KOSIS_STEP_LABELS
       : selectedProvider === "datagokr"
         ? DATAGOKR_STEP_LABELS
+      : selectedProvider === "krx"
+        ? KRX_STEP_LABELS
       : DEFAULT_STEP_LABELS;
   const activeStepIndex = currentStepLabels.findIndex((item) => item.key === step);
   const submitParams = useMemo(() => {
@@ -1110,14 +1824,12 @@ export default function UserApiRegistrationModal({
       (["apiEnd", "endPrdDe", "endYymm"].find((key) => paramMap.has(key)) ?? null);
     const fredStartDate = normalizeIsoDate(startDate);
     const fredEndDate = normalizeIsoDate(endDate);
-    const startValue =
-      selectedProvider === "fred" || selectedProvider === "krx"
-        ? fredStartDate
-        : formatForPeriod(startDate, periodType);
-    const endValue =
-      selectedProvider === "fred" || selectedProvider === "krx"
-        ? fredEndDate
-        : formatForPeriod(endDate, periodType);
+    const usesIsoDate =
+      selectedProvider === "fred" ||
+      selectedProvider === "krx" ||
+      selectedProvider === "yfinance";
+    const startValue = usesIsoDate ? fredStartDate : formatForPeriod(startDate, periodType);
+    const endValue = usesIsoDate ? fredEndDate : formatForPeriod(endDate, periodType);
 
     if (startKey && startValue) {
       const item = paramMap.get(startKey);
@@ -1186,10 +1898,7 @@ export default function UserApiRegistrationModal({
         4,
       );
       setOrInsert(["userStatsId"], kosisUserStatsId.trim(), "userStatsId", "query", 4);
-      setOrInsert(["vwCd", "vw_cd"], selectedKosisStat.vw_cd ?? "", "vwCd", "query", 5);
-      setOrInsert(["statId", "stat_id"], selectedKosisStat.stat_id ?? "", "statId", "query", 6);
-      setOrInsert(["sendDe", "send_de"], selectedKosisStat.send_de ?? "", "sendDe", "query", 7);
-      setOrInsert(["prdSe", "period", "periodType"], kosisCycle, "prdSe", "query", 8);
+      setOrInsert(["prdSe", "period", "periodType"], kosisCycle, "prdSe", "query", 5);
     }
     if (selectedProvider === "datagokr" && selectedDatagokrStat) {
       const setOrInsert = (
@@ -1240,13 +1949,31 @@ export default function UserApiRegistrationModal({
         "path",
         3,
       );
-      setOrInsert(
-        ["listId", "list_id", "statCode", "stat_code"],
-        selectedDatagokrStat.stat_code,
-        "listId",
-        "query",
-        6,
-      );
+      // 특일정보(SpcdeInfoService)는 solYear/solMonth 로 월 단위 조회하며 listId/periodType 를 쓰지 않는다.
+      const isSpcde = /spcdeinfoservice/i.test(datagokrApiServiceName);
+      if (!isSpcde) {
+        setOrInsert(
+          ["listId", "list_id", "statCode", "stat_code"],
+          selectedDatagokrStat.stat_code,
+          "listId",
+          "query",
+          6,
+        );
+      } else {
+        // periodType/listId 는 특일정보 요청에 불필요하므로 저장 파라미터에서 제거.
+        // strtYymm/endYymm 은 수집 기간(월별 반복용)으로 저장하되, 미리보기/요청 URL 에선 제외한다.
+        Array.from(paramMap.keys()).forEach((key) => {
+          const lower = key.trim().toLowerCase();
+          if (lower === "periodtype" || lower === "listid" || lower === "list_id") {
+            paramMap.delete(key);
+          }
+        });
+        const solYear = startDate ? startDate.slice(0, 4) : "";
+        const solMonth = startDate ? startDate.slice(5, 7) : "";
+        if (solYear) setOrInsert(["solYear"], solYear, "solYear", "query", 7);
+        if (solMonth) setOrInsert(["solMonth"], solMonth, "solMonth", "query", 8);
+        setOrInsert(["numOfRows"], "100", "numOfRows", "query", 9);
+      }
     }
     if (selectedProvider === "fred" && selectedFredStat?.stat_code) {
       const setOrInsert = (
@@ -1334,6 +2061,33 @@ export default function UserApiRegistrationModal({
       setOrInsert(["apiEnd", "end", "endDt"], endValueD, "apiEnd", "query", 3);
       setOrInsert(["basDd", "BAS_DD"], basDdValue, "basDd", "query", 4);
     }
+    if (selectedProvider === "oecd") {
+      // 선택 기간을 OECD 표기(YYYY / YYYY-Qn / YYYY-MM / YYYY-MM-DD)로 채운다.
+      const oecdStart = formatOecdPeriod(startDate, periodType);
+      const oecdEnd = formatOecdPeriod(endDate, periodType);
+      const startItem = paramMap.get("startPeriod");
+      if (startItem) paramMap.set("startPeriod", { ...startItem, value: oecdStart });
+      const endItem = paramMap.get("endPeriod");
+      if (endItem) paramMap.set("endPeriod", { ...endItem, value: oecdEnd });
+    }
+    if (selectedProvider === "yfinance") {
+      // 값은 위 일반 채움에서 ISO(YYYY-MM-DD)로 채워졌다. 여기서는 role(start/end/period_type)만
+      // 부여해 등록 시 저장되고 load-runner 가 기간·주기를 인식하도록 한다.
+      const startItem = paramMap.get("apiStart");
+      if (startItem) paramMap.set("apiStart", { ...startItem, role: "start" });
+      const endItem = paramMap.get("apiEnd");
+      if (endItem) paramMap.set("apiEnd", { ...endItem, role: "end" });
+      const periodItem = paramMap.get("period");
+      if (periodItem) paramMap.set("period", { ...periodItem, role: "period_type" });
+    }
+    if (selectedProvider === "worldbank") {
+      // World Bank 는 date=시작연:종료연(연도 범위) 한 파라미터로 기간을 지정한다.
+      const startYear = formatForPeriod(startDate, "A");
+      const endYear = formatForPeriod(endDate, "A");
+      const dateValue = startYear && endYear ? `${startYear}:${endYear}` : "";
+      const dateItem = paramMap.get("date");
+      if (dateItem) paramMap.set("date", { ...dateItem, value: dateValue });
+    }
 
     const maxOrder = params.reduce((acc, item) => Math.max(acc, item.order), 0);
     let orderCursor = maxOrder + 1;
@@ -1410,12 +2164,12 @@ export default function UserApiRegistrationModal({
       ) ?? null);
     const startKey =
       roleKeyMap.get("start") ??
-      (["apistart", "startprdde", "strtyymm", "observation_start"].find((key) =>
+      (["apistart", "startprdde", "strtyymm", "observation_start", "startperiod"].find((key) =>
         paramValueByKeyLower.has(key),
       ) ?? null);
     const endKey =
       roleKeyMap.get("end") ??
-      (["apiend", "endprdde", "endyymm", "observation_end", "basdd"].find((key) =>
+      (["apiend", "endprdde", "endyymm", "observation_end", "endperiod", "basdd"].find((key) =>
         paramValueByKeyLower.has(key),
       ) ?? null);
     const effectivePeriod = normalizePeriodType(
@@ -1423,12 +2177,21 @@ export default function UserApiRegistrationModal({
     );
     const resolvedParams = submitParams.map((item) => {
       const paramKey = item.key.trim().toLowerCase();
-      const isStartParamByKey = ["apistart", "startprdde", "strtyymm", "observation_start"].includes(
-        paramKey,
-      );
-      const isEndParamByKey = ["apiend", "endprdde", "endyymm", "observation_end", "basdd"].includes(
-        paramKey,
-      );
+      const isStartParamByKey = [
+        "apistart",
+        "startprdde",
+        "strtyymm",
+        "observation_start",
+        "startperiod",
+      ].includes(paramKey);
+      const isEndParamByKey = [
+        "apiend",
+        "endprdde",
+        "endyymm",
+        "observation_end",
+        "endperiod",
+        "basdd",
+      ].includes(paramKey);
       const shouldResolveLatest =
         item.value === END_LATEST_TOKEN &&
         (paramKey === "basdd" || (endKey && paramKey === endKey) || (!endKey && isEndParamByKey));
@@ -1456,6 +2219,12 @@ export default function UserApiRegistrationModal({
     const pathParams = resolvedParams
       .filter((item) => item.location === "path" && item.value.trim())
       .map((item) => ({ ...item, encodeMode: item.encodeMode ?? "encode" }));
+    // 특일정보(SpcdeInfoService): 미리보기/요청 URL 에서는 기간·주기·목록 파라미터를 제외하고
+    // solYear/solMonth 만 노출한다(strtYymm/endYymm 은 저장만 되고 월별 반복에 사용됨).
+    const isSpcdePreview = resolvedParams.some(
+      (item) => item.location === "path" && /spcdeinfoservice/i.test(item.value),
+    );
+    const spcdeExcludedKeys = ["strtyymm", "endyymm", "periodtype", "listid", "list_id"];
     const queryParams = resolvedParams
       .filter(
         (item) =>
@@ -1466,6 +2235,7 @@ export default function UserApiRegistrationModal({
             !["apistart", "apiend", "start", "end", "period", "prdse", "periodtype"].includes(
               item.key.trim().toLowerCase(),
             )) &&
+          (!isSpcdePreview || !spcdeExcludedKeys.includes(item.key.trim().toLowerCase())) &&
           (!apiKeyKey || item.key !== apiKeyKey),
       )
       .map((item) => ({ ...item, encodeMode: item.encodeMode ?? "encode" }));
@@ -1490,7 +2260,7 @@ export default function UserApiRegistrationModal({
     }
     const pathSegment = pathParams
       .sort((a, b) => a.order - b.order)
-      .map((item) => normalizeValue(item.value, item.encodeMode))
+      .map((item) => normalizePathValue(item.value, item.encodeMode))
       .join("/");
     const queryPairs = queryParams
       .sort((a, b) => a.order - b.order)
@@ -1526,6 +2296,7 @@ export default function UserApiRegistrationModal({
     setKrxAppliedQuery("");
     setKrxExpandedCategories(new Set());
     setKrxSelectedApiId(null);
+    setKrxApiApplied(false);
     setKosisExpanded(new Set());
     setKosisSelectedNodeId(null);
     setKosisStats([]);
@@ -1559,6 +2330,33 @@ export default function UserApiRegistrationModal({
     setFredChildrenByParent({});
     setFredLoadedParentKeys(new Set());
     setFredLoadingParentKeys(new Set());
+    setOecdStats([]);
+    setOecdLoading(false);
+    setOecdError("");
+    setOecdAppliedQuery("");
+    setOecdExpandedCategories(new Set());
+    setOecdSelectedId(null);
+    setYfinanceStats([]);
+    setYfinanceLoading(false);
+    setYfinanceError("");
+    setYfinanceAppliedQuery("");
+    setYfinanceExpandedCategories(new Set());
+    setYfinanceSelectedTicker(null);
+    setWorldbankStats([]);
+    setWorldbankLoading(false);
+    setWorldbankError("");
+    setWorldbankAppliedQuery("");
+    setWorldbankExpandedCategories(new Set());
+    setWorldbankSelectedId(null);
+    setUndpIndicators([]);
+    setUndpLocations([]);
+    setUndpLoading(false);
+    setUndpError("");
+    setUndpIndicatorQuery("");
+    setUndpLocationQuery("");
+    setUndpSelectedIndicatorId(null);
+    setUndpSelectedLocationId(null);
+    setUndpExpandedTopics(new Set());
     setStartDate("");
     setEndDate("");
     setExtraParams([{ key: "", value: "" }]);
@@ -1582,12 +2380,15 @@ export default function UserApiRegistrationModal({
     if (step === "target") setStep("org");
     else if (step === "kosisUserStats") setStep("target");
     else if (step === "datagokrSpec") setStep("target");
+    else if (step === "krxApiApply") setStep("target");
     else if (step === "period")
       setStep(
         selectedProvider === "kosis"
           ? "kosisUserStats"
           : selectedProvider === "datagokr"
             ? "datagokrSpec"
+          : selectedProvider === "krx"
+            ? "krxApiApply"
           : "target",
       );
     else if (step === "extra") setStep("period");
@@ -1684,6 +2485,77 @@ export default function UserApiRegistrationModal({
       const next = new Set(prev);
       if (next.has(category)) next.delete(category);
       else next.add(category);
+      return next;
+    });
+  };
+  const runOecdSearch = () => {
+    const query = targetQuery.trim();
+    setOecdAppliedQuery(query);
+    if (!query) {
+      setOecdExpandedCategories(new Set());
+    }
+  };
+  const resetOecdSearch = () => {
+    setTargetQuery("");
+    setOecdAppliedQuery("");
+    setOecdExpandedCategories(new Set());
+    setOecdSelectedId(null);
+  };
+  const toggleOecdCategory = (category: string) => {
+    setOecdExpandedCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(category)) next.delete(category);
+      else next.add(category);
+      return next;
+    });
+  };
+  const runYfinanceSearch = () => {
+    const query = targetQuery.trim();
+    setYfinanceAppliedQuery(query);
+    if (!query) {
+      setYfinanceExpandedCategories(new Set());
+    }
+  };
+  const resetYfinanceSearch = () => {
+    setTargetQuery("");
+    setYfinanceAppliedQuery("");
+    setYfinanceExpandedCategories(new Set());
+    setYfinanceSelectedTicker(null);
+  };
+  const toggleYfinanceCategory = (category: string) => {
+    setYfinanceExpandedCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(category)) next.delete(category);
+      else next.add(category);
+      return next;
+    });
+  };
+  const runWorldbankSearch = () => {
+    const query = targetQuery.trim();
+    setWorldbankAppliedQuery(query);
+    if (!query) {
+      setWorldbankExpandedCategories(new Set());
+    }
+  };
+  const resetWorldbankSearch = () => {
+    setTargetQuery("");
+    setWorldbankAppliedQuery("");
+    setWorldbankExpandedCategories(new Set());
+    setWorldbankSelectedId(null);
+  };
+  const toggleWorldbankCategory = (category: string) => {
+    setWorldbankExpandedCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(category)) next.delete(category);
+      else next.add(category);
+      return next;
+    });
+  };
+  const toggleUndpTopic = (topic: string) => {
+    setUndpExpandedTopics((prev) => {
+      const next = new Set(prev);
+      if (next.has(topic)) next.delete(topic);
+      else next.add(topic);
       return next;
     });
   };
@@ -2061,6 +2933,36 @@ export default function UserApiRegistrationModal({
 
     throw new Error("미리보기 응답 구조를 확인해주세요.");
   };
+  // 특일정보 월별 미리보기용: XML 의 <item>/<row> 를 객체 배열로 추출(없으면 빈 배열, 예외 던지지 않음).
+  const extractDatagokrItemRows = (raw: unknown): Array<Record<string, string>> => {
+    if (typeof raw !== "string") return [];
+    const trimmed = raw.trim();
+    if (!trimmed || !trimmed.startsWith("<")) return [];
+    let document: Document;
+    try {
+      document = new DOMParser().parseFromString(trimmed, "application/xml");
+    } catch {
+      return [];
+    }
+    if (document.querySelector("parsererror")) return [];
+    const elementChildren = (element: Element) =>
+      Array.from(element.children).filter(
+        (child): child is Element => child.nodeType === Node.ELEMENT_NODE,
+      );
+    const nodes = ["item", "row"].flatMap((tagName) =>
+      Array.from(document.getElementsByTagName(tagName)).filter(
+        (node) => elementChildren(node).length > 0,
+      ),
+    );
+    return nodes
+      .map((element) =>
+        elementChildren(element).reduce<Record<string, string>>((acc, child) => {
+          acc[child.tagName] = (child.textContent ?? "").trim();
+          return acc;
+        }, {}),
+      )
+      .filter((row) => Object.keys(row).length > 0);
+  };
   const buildTabularFromFredPreview = (raw: unknown) => {
     const parsed = (() => {
       if (raw == null) return null;
@@ -2098,6 +3000,85 @@ export default function UserApiRegistrationModal({
     const rest = keys.filter((key) => !preferred.includes(key));
     const header = [...preferred, ...rest];
     const rows = objectRows.slice(0, 10).map((row) => header.map((key) => row[key] ?? null));
+    return { header, rows };
+  };
+  const buildTabularFromOecdPreview = (raw: unknown) => {
+    const parsed = (() => {
+      if (raw == null) return null;
+      if (typeof raw === "string") {
+        const trimmed = raw.trim();
+        if (!trimmed) return null;
+        try {
+          return JSON.parse(trimmed) as unknown;
+        } catch {
+          throw new Error("OECD 응답(JSON) 파싱에 실패했습니다.");
+        }
+      }
+      return raw;
+    })();
+    if (!parsed || typeof parsed !== "object") {
+      throw new Error("OECD 응답에서 데이터를 찾을 수 없습니다.");
+    }
+    const data = (parsed as Record<string, unknown>).data as
+      | Record<string, unknown>
+      | undefined;
+    if (!data || typeof data !== "object") {
+      throw new Error("OECD 응답에서 데이터를 찾을 수 없습니다.");
+    }
+    const structuresValue = data.structures;
+    const structure = (
+      Array.isArray(structuresValue) ? structuresValue[0] : data.structure
+    ) as Record<string, unknown> | undefined;
+    const dataSetsValue = data.dataSets;
+    const dataSet = (
+      Array.isArray(dataSetsValue) ? dataSetsValue[0] : undefined
+    ) as Record<string, unknown> | undefined;
+    if (!structure || !dataSet) {
+      throw new Error("OECD 응답 구조를 확인해주세요.");
+    }
+    type SdmxEntry = { id?: string; values?: Array<{ id?: string; name?: string }> };
+    const dimsRaw = (structure.dimensions as Record<string, unknown> | undefined)
+      ?.observation;
+    const attrsRaw = (structure.attributes as Record<string, unknown> | undefined)
+      ?.observation;
+    const dims: SdmxEntry[] = Array.isArray(dimsRaw) ? (dimsRaw as SdmxEntry[]) : [];
+    const attrs: SdmxEntry[] = Array.isArray(attrsRaw) ? (attrsRaw as SdmxEntry[]) : [];
+    const observations = dataSet.observations as
+      | Record<string, unknown[]>
+      | undefined;
+    if (!dims.length || !observations || typeof observations !== "object") {
+      throw new Error("OECD 조회 결과가 없습니다.");
+    }
+    const header = [
+      ...dims.map((dim, index) => dim.id ?? `DIM_${index}`),
+      "OBS_VALUE",
+      ...attrs.map((attr, index) => attr.id ?? `ATTR_${index}`),
+    ];
+    const resolveCode = (entry: SdmxEntry | undefined, index: number) => {
+      if (!entry || !Array.isArray(entry.values)) return null;
+      if (!Number.isInteger(index) || index < 0) return null;
+      const value = entry.values[index];
+      if (!value) return null;
+      return value.id ?? value.name ?? null;
+    };
+    const entries = Object.entries(observations).slice(0, 10);
+    if (entries.length === 0) {
+      throw new Error("OECD 조회 결과가 없습니다.");
+    }
+    const rows = entries.map(([key, rawArr]) => {
+      const arr = Array.isArray(rawArr) ? rawArr : [];
+      const idxs = key.split(":").map((part) => Number(part));
+      const row: unknown[] = [];
+      dims.forEach((dim, position) => {
+        row.push(resolveCode(dim, idxs[position] ?? -1));
+      });
+      row.push(arr[0] ?? null);
+      attrs.forEach((attr, position) => {
+        const valueIndex = arr[position + 1];
+        row.push(typeof valueIndex === "number" ? resolveCode(attr, valueIndex) : null);
+      });
+      return row;
+    });
     return { header, rows };
   };
   const buildTabularFromKrxPreview = (raw: unknown) => {
@@ -2221,6 +3202,100 @@ export default function UserApiRegistrationModal({
     setPreviewError("");
     try {
       const provider = normalizeProvider(resolvedSelectedTarget?.provider ?? selectedProvider ?? "");
+      if (provider === "yfinance") {
+        // yfinance 는 HTTP 직접 호출이 아니라 Python(yfinance) 실행이므로 전용 프리뷰 라우트를 쓴다.
+        // 미리보기는 종료일(없으면 오늘) 기준 최근 30일 구간만 조회해 최대 10건을 보여준다.
+        const ticker =
+          submitParams.find((item) => item.key.trim().toLowerCase() === "ticker")?.value?.trim() ?? "";
+        const interval =
+          submitParams.find((item) => item.key.trim().toLowerCase() === "interval")?.value?.trim() ||
+          "1d";
+        const endIso = normalizeIsoDate(endDate) || formatIsoDate(new Date());
+        const startBase = new Date(`${endIso}T00:00:00`);
+        startBase.setDate(startBase.getDate() - 30);
+        const startIso = formatIsoDate(startBase);
+        const res = await fetch("/api/ingestion/yfinance-preview", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ticker, start: startIso, end: endIso, interval }),
+        });
+        const payload = (await res.json()) as {
+          ok?: boolean;
+          rows?: Array<{
+            date?: string;
+            open?: number | null;
+            high?: number | null;
+            low?: number | null;
+            close?: number | null;
+            adj_close?: number | null;
+            volume?: number | null;
+            ticker?: string;
+          }>;
+          error?: string;
+        };
+        if (!res.ok || !payload.ok) {
+          throw new Error(payload.error || "yfinance 미리보기 조회에 실패했습니다.");
+        }
+        const rows = payload.rows ?? [];
+        if (!rows.length) {
+          throw new Error("조회된 시세 데이터가 없습니다. (티커/기간/휴장일 확인)");
+        }
+        setPreviewHeader(["DATE", "OPEN", "HIGH", "LOW", "CLOSE", "ADJ_CLOSE", "VOLUME", "TICKER"]);
+        setPreviewRows(
+          rows
+            .slice(-10)
+            .map((r) => [
+              r.date ?? "",
+              r.open ?? null,
+              r.high ?? null,
+              r.low ?? null,
+              r.close ?? null,
+              r.adj_close ?? null,
+              r.volume ?? null,
+              r.ticker ?? ticker,
+            ]),
+        );
+        return;
+      }
+      if (provider === "worldbank") {
+        // World Bank 응답은 [메타, [행]] 이고 행이 중첩객체(country/indicator)라 전용 파싱한다.
+        const res = await fetch(`/api/collect?url=${encodeURIComponent(previewUrl)}`);
+        const payload = (await res.json()) as { ok?: boolean; data?: unknown; error?: string };
+        if (!res.ok || !payload.ok) {
+          throw new Error(payload.error || "World Bank 미리보기 조회에 실패했습니다.");
+        }
+        let root: unknown = payload.data;
+        if (typeof root === "string") {
+          try {
+            root = JSON.parse(root);
+          } catch {
+            root = null;
+          }
+        }
+        const dataArray = Array.isArray(root) && Array.isArray(root[1]) ? (root[1] as unknown[]) : [];
+        if (!dataArray.length) {
+          throw new Error("조회된 데이터가 없습니다. (국가/지표/연도 범위를 확인하세요)");
+        }
+        const getField = (row: unknown, key: string) =>
+          row && typeof row === "object" ? (row as Record<string, unknown>)[key] : null;
+        const getNested = (row: unknown, key: string, sub: string) => {
+          const obj = getField(row, key);
+          return obj && typeof obj === "object"
+            ? ((obj as Record<string, unknown>)[sub] ?? null)
+            : null;
+        };
+        setPreviewHeader(["DATE", "VALUE", "COUNTRY", "COUNTRY_ISO3", "INDICATOR"]);
+        setPreviewRows(
+          dataArray.slice(0, 10).map((row) => [
+            getField(row, "date") ?? "",
+            getField(row, "value") ?? null,
+            getNested(row, "country", "value") ?? "",
+            getField(row, "countryiso3code") ?? "",
+            getNested(row, "indicator", "id") ?? "",
+          ]),
+        );
+        return;
+      }
       const isKrxProvider = provider === "krx";
       const toCompactYmd = (value: string) => value.replace(/\D/g, "").slice(0, 8);
       const fallbackBasDd = toCompactYmd(endDate || startDate || "");
@@ -2245,6 +3320,36 @@ export default function UserApiRegistrationModal({
               },
             }),
           })
+        : provider === "oecd"
+          ? // OECD 는 Accept-Language 헤더가 없으면 서버가 500(languageTag) 을 반환하므로
+            // 프록시가 헤더를 전달할 수 있도록 POST 로 호출한다.
+            await fetch("/api/collect", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                url: previewUrl,
+                method: "GET",
+                headers: { "Accept-Language": "en" },
+              }),
+            })
+        : provider === "undp"
+          ? // UN /data 엔드포인트는 Authorization: Bearer 토큰이 필수라 프록시가 헤더를
+            // 전달할 수 있도록 POST 로 호출한다.
+            await fetch("/api/collect", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                url: previewUrl,
+                method: "GET",
+                headers: {
+                  Accept: "application/json",
+                  // 등록된 토큰에 "Bearer " 접두어가 있어도 중복되지 않게 제거한다.
+                  Authorization: `Bearer ${(resolvedSelectedTarget?.source.api_key ?? "")
+                    .trim()
+                    .replace(/^Bearer\s+/i, "")}`,
+                },
+              }),
+            })
         : await fetch(`/api/collect?url=${encodeURIComponent(previewUrl)}`);
       const payload = (await response.json()) as {
         ok?: boolean;
@@ -2317,6 +3422,53 @@ export default function UserApiRegistrationModal({
         setPreviewRows(previewRows);
         return;
       }
+      const isSpcdePreview =
+        provider === "datagokr" &&
+        submitParams.some(
+          (item) => item.location === "path" && /spcdeinfoservice/i.test(item.value),
+        );
+      if (isSpcdePreview) {
+        // 특일정보: 시작월 응답(이미 받은 payload)부터 시작해, 약 10건이 모일 때까지 다음 달로 넘어가며 누적.
+        const startD = new Date(`${startDate || endDate}T00:00:00`);
+        const endD = new Date(`${endDate || startDate}T00:00:00`);
+        const a = Number.isNaN(startD.getTime()) ? endD : startD;
+        const b = Number.isNaN(endD.getTime()) ? startD : endD;
+        const minD = a <= b ? a : b;
+        const maxD = a <= b ? b : a;
+        const lastMonth = new Date(maxD.getFullYear(), maxD.getMonth(), 1);
+        const cursor = new Date(minD.getFullYear(), minD.getMonth(), 1);
+        const collected: Array<Record<string, string>> = [];
+        collected.push(...extractDatagokrItemRows(payload.data));
+        cursor.setMonth(cursor.getMonth() + 1);
+        let guard = 0;
+        while (cursor <= lastMonth && collected.length < 10 && guard < 600) {
+          const solYear = String(cursor.getFullYear());
+          const solMonth = pad(cursor.getMonth() + 1);
+          const monthUrl = previewUrl
+            .replace(/([?&]solYear=)[^&]*/i, `$1${solYear}`)
+            .replace(/([?&]solMonth=)[^&]*/i, `$1${solMonth}`);
+          const monthResponse = await fetch(`/api/collect?url=${encodeURIComponent(monthUrl)}`);
+          const monthPayload = (await monthResponse.json()) as {
+            ok?: boolean;
+            data?: unknown;
+            error?: string;
+          };
+          if (!monthResponse.ok || !monthPayload.ok) {
+            throw new Error(monthPayload.error || "데이터 미리보기에 실패했습니다.");
+          }
+          collected.push(...extractDatagokrItemRows(monthPayload.data));
+          cursor.setMonth(cursor.getMonth() + 1);
+          guard += 1;
+        }
+        if (!collected.length) {
+          throw new Error("조회 기간 내 특일정보가 없습니다.");
+        }
+        const header = Array.from(new Set(collected.flatMap((row) => Object.keys(row))));
+        const rows = collected.slice(0, 10).map((row) => header.map((key) => row[key] ?? ""));
+        setPreviewHeader(header);
+        setPreviewRows(rows);
+        return;
+      }
       const tabular =
         provider === "krx"
           ? buildTabularFromKrxPreview(payload.data)
@@ -2324,6 +3476,8 @@ export default function UserApiRegistrationModal({
           ? buildTabularFromDatagokrXml(payload.data, payload.contentType)
           : provider === "fred"
             ? buildTabularFromFredPreview(payload.data)
+          : provider === "oecd"
+            ? buildTabularFromOecdPreview(payload.data)
           : buildTabularFromJsonPreview(payload.data);
       setPreviewHeader(tabular.header);
       setPreviewRows(tabular.rows);
@@ -2764,21 +3918,34 @@ export default function UserApiRegistrationModal({
                   기간: {startDate || "-"} ~ {endDate || "-"}
                 </p>
                 <div className="mt-2">
-                  <p className="font-semibold">생성 URL:</p>
-                  <p className="mt-1 break-all rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
-                    {previewUrl || "URL을 생성할 수 없습니다."}
-                  </p>
+                  {selectedProvider === "yfinance" ? (
+                    <>
+                      <p className="font-semibold">수집 방식:</p>
+                      <p className="mt-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
+                        Python(yfinance)으로 티커·기간을 조회해 수집합니다. 별도의 호출 URL이 없습니다.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="font-semibold">생성 URL:</p>
+                      <p className="mt-1 break-all rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
+                        {previewUrl || "URL을 생성할 수 없습니다."}
+                      </p>
+                    </>
+                  )}
                 </div>
               </div>
               <div className="flex justify-end">
-                <button
-                  type="button"
-                  onClick={() => void copyPreviewUrl()}
-                  disabled={!previewUrl}
-                  className="mr-2 rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-400"
-                >
-                  {urlCopied ? "복사됨" : "URL 복사"}
-                </button>
+                {selectedProvider === "yfinance" ? null : (
+                  <button
+                    type="button"
+                    onClick={() => void copyPreviewUrl()}
+                    disabled={!previewUrl}
+                    className="mr-2 rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-400"
+                  >
+                    {urlCopied ? "복사됨" : "URL 복사"}
+                  </button>
+                )}
                 <button
                   onClick={handleClose}
                   className="rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white hover:bg-slate-800"
@@ -2806,7 +3973,16 @@ export default function UserApiRegistrationModal({
               <div className="grid gap-3 sm:grid-cols-2">
                 {visibleOrgs.map((org) => {
                   const count = providerGroups.get(org.provider) ?? 0;
-                  const disabled = count === 0;
+                  // OECD/yfinance/World Bank 는 카탈로그 템플릿 없이 소스를 즉석 합성하므로 항상 선택 가능.
+                  // UN 은 기관 관리에서 토큰을 등록한 소스가 있어야 선택 가능하다.
+                  const disabled =
+                    org.provider === "oecd" ||
+                    org.provider === "yfinance" ||
+                    org.provider === "worldbank"
+                      ? false
+                      : org.provider === "undp"
+                        ? !undpRegisteredSource
+                        : count === 0;
                   const selected = selectedProvider === org.provider;
                   return (
                     <button
@@ -2824,6 +4000,7 @@ export default function UserApiRegistrationModal({
                         setKrxAppliedQuery("");
                         setKrxExpandedCategories(new Set());
                         setKrxSelectedApiId(null);
+                        setKrxApiApplied(false);
                         setKosisAppliedQuery("");
                         setKosisExpanded(new Set());
                         setKosisSearchResults([]);
@@ -2844,6 +4021,23 @@ export default function UserApiRegistrationModal({
                         setFredLoadingParentKeys(new Set());
                         setFredLoadingRoots(false);
                         setFredLoadingSearch(false);
+                        setOecdStats([]);
+                        setOecdLoading(false);
+                        setOecdError("");
+                        setOecdAppliedQuery("");
+                        setOecdExpandedCategories(new Set());
+                        setOecdSelectedId(null);
+                        setYfinanceAppliedQuery("");
+                        setYfinanceExpandedCategories(new Set());
+                        setYfinanceSelectedTicker(null);
+                        setWorldbankAppliedQuery("");
+                        setWorldbankExpandedCategories(new Set());
+                        setWorldbankSelectedId(null);
+                        setUndpIndicatorQuery("");
+                        setUndpLocationQuery("");
+                        setUndpSelectedIndicatorId(null);
+                        setUndpSelectedLocationId(null);
+                        setUndpExpandedTopics(new Set());
                       }}
                       className={`rounded-2xl border p-4 text-left transition ${
                         selected
@@ -2856,7 +4050,15 @@ export default function UserApiRegistrationModal({
                       <p className="text-base font-semibold">{org.name}</p>
                       <p className="mt-1 text-xs opacity-80">{org.description}</p>
                       <p className="mt-3 text-[11px] opacity-80">
-                        {disabled ? "등록 가능한 수집대상이 없습니다." : `${count}개 수집대상`}
+                        {org.provider === "oecd"
+                          ? "핵심 경제지표 목록"
+                          : org.provider === "undp"
+                            ? undpRegisteredSource
+                              ? "세계 인구 통계 목록"
+                              : "기관 관리에서 토큰 등록이 필요합니다."
+                          : disabled
+                            ? "등록 가능한 수집대상이 없습니다."
+                            : `${count}개 수집대상`}
                       </p>
                     </button>
                   );
@@ -3389,6 +4591,546 @@ export default function UserApiRegistrationModal({
                       : "없음"}
                   </div>
                 </div>
+              ) : selectedProvider === "oecd" ? (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_auto_auto]">
+                    <input
+                      value={targetQuery}
+                      onChange={(event) => setTargetQuery(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          event.preventDefault();
+                          runOecdSearch();
+                        }
+                      }}
+                      placeholder="지표명/지역/데이터플로우 검색 (예: 경기선행, G20, CLI)"
+                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={runOecdSearch}
+                      className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                    >
+                      검색
+                    </button>
+                    <button
+                      type="button"
+                      onClick={resetOecdSearch}
+                      className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                    >
+                      초기화
+                    </button>
+                  </div>
+                  {oecdAppliedQuery ? (
+                    <p className="text-xs text-slate-500">
+                      검색어 &quot;{oecdAppliedQuery}&quot; — 선택 가능한 지표만 표시합니다.
+                    </p>
+                  ) : (
+                    <p className="text-xs text-slate-500">
+                      기본 상태는 접힘입니다. 분류 카드를 눌러 지표를 펼쳐보세요.
+                    </p>
+                  )}
+                  {oecdLoading ? (
+                    <p className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-500">
+                      OECD 지표 목록을 불러오는 중입니다...
+                    </p>
+                  ) : oecdError ? (
+                    <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-5 text-sm text-rose-600">
+                      {oecdError}
+                    </p>
+                  ) : (
+                    <div className="max-h-[42vh] space-y-3 overflow-y-auto rounded-2xl border border-slate-200 bg-slate-50 p-2">
+                      {oecdAppliedQuery ? (
+                        oecdSearchResults.length > 0 ? (
+                          oecdSearchResults.map((item) => {
+                            const selected = oecdSelectedId === item.id;
+                            return (
+                              <button
+                                key={item.id}
+                                type="button"
+                                onClick={() => setOecdSelectedId(item.id)}
+                                className={`w-full rounded-xl border px-3 py-2 text-left hover:border-slate-300 ${
+                                  selected
+                                    ? "border-slate-900 bg-slate-900 text-white"
+                                    : "border-slate-200 bg-white text-slate-700"
+                                }`}
+                              >
+                                <p className="text-sm font-semibold">{item.indicator_name}</p>
+                                <p className="text-[11px] opacity-80">
+                                  {item.category_name} / {item.ref_area} / {item.data_key}
+                                </p>
+                              </button>
+                            );
+                          })
+                        ) : (
+                          <p className="px-2 py-2 text-sm text-slate-500">검색 결과가 없습니다.</p>
+                        )
+                      ) : oecdCategoryGroups.length > 0 ? (
+                        oecdCategoryGroups.map(([category, items]) => {
+                          const expanded = oecdExpandedCategories.has(category);
+                          return (
+                            <div key={category} className="rounded-xl border border-slate-200 bg-white">
+                              <button
+                                type="button"
+                                onClick={() => toggleOecdCategory(category)}
+                                className="flex w-full items-center gap-2 px-3 py-2 text-left hover:border-slate-300"
+                              >
+                                <span className="rounded-full border border-slate-200 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
+                                  {expanded ? "접기" : "펼치기"}
+                                </span>
+                                <span className="flex-1 text-slate-800">
+                                  <p className="text-sm font-semibold">{category}</p>
+                                  <p className="text-[11px] opacity-80">분류 / {items.length}개 지표</p>
+                                </span>
+                              </button>
+                              {expanded ? (
+                                <div className="space-y-2 border-t border-slate-100 px-2 pb-2 pt-2">
+                                  <div className="space-y-2 pl-3">
+                                    {items.map((item) => {
+                                      const selected = oecdSelectedId === item.id;
+                                      return (
+                                        <button
+                                          key={item.id}
+                                          type="button"
+                                          onClick={() => setOecdSelectedId(item.id)}
+                                          className={`w-full rounded-xl border px-3 py-2 text-left hover:border-slate-300 ${
+                                            selected
+                                              ? "border-slate-900 bg-slate-900 text-white"
+                                              : "border-slate-200 bg-white text-slate-700"
+                                          }`}
+                                        >
+                                          <p className="text-sm font-semibold">{item.indicator_name}</p>
+                                          <p className="text-[11px] opacity-80">
+                                            {item.ref_area} / {item.data_key}
+                                          </p>
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              ) : null}
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <p className="px-2 py-2 text-sm text-slate-500">수집대상 목록이 없습니다.</p>
+                      )}
+                    </div>
+                  )}
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
+                    선택된 수집대상:{" "}
+                    {selectedOecdStat
+                      ? `${selectedOecdStat.indicator_name} (${selectedOecdStat.data_key})`
+                      : "없음"}
+                  </div>
+                </div>
+              ) : selectedProvider === "yfinance" ? (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_auto_auto]">
+                    <input
+                      value={targetQuery}
+                      onChange={(event) => setTargetQuery(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          event.preventDefault();
+                          runYfinanceSearch();
+                        }
+                      }}
+                      placeholder="티커/종목명/분류 검색 (예: S&P, DX-Y, 금)"
+                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={runYfinanceSearch}
+                      className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                    >
+                      검색
+                    </button>
+                    <button
+                      type="button"
+                      onClick={resetYfinanceSearch}
+                      className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                    >
+                      초기화
+                    </button>
+                  </div>
+                  {yfinanceAppliedQuery ? (
+                    <p className="text-xs text-slate-500">
+                      검색어 &quot;{yfinanceAppliedQuery}&quot; — 일치하는 티커만 표시합니다.
+                    </p>
+                  ) : (
+                    <p className="text-xs text-slate-500">
+                      기본 상태는 접힘입니다. 분류 카드를 눌러 티커를 펼쳐보세요.
+                    </p>
+                  )}
+                  {yfinanceLoading ? (
+                    <p className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-500">
+                      yfinance 티커 목록을 불러오는 중입니다...
+                    </p>
+                  ) : yfinanceError ? (
+                    <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-5 text-sm text-rose-600">
+                      {yfinanceError}
+                    </p>
+                  ) : (
+                    <div className="max-h-[42vh] space-y-3 overflow-y-auto rounded-2xl border border-slate-200 bg-slate-50 p-2">
+                      {yfinanceAppliedQuery ? (
+                        yfinanceSearchResults.length > 0 ? (
+                          yfinanceSearchResults.map((item) => {
+                            const selected = yfinanceSelectedTicker === item.ticker;
+                            return (
+                              <button
+                                key={item.ticker}
+                                type="button"
+                                onClick={() => setYfinanceSelectedTicker(item.ticker)}
+                                className={`w-full rounded-xl border px-3 py-2 text-left hover:border-slate-300 ${
+                                  selected
+                                    ? "border-slate-900 bg-slate-900 text-white"
+                                    : "border-slate-200 bg-white text-slate-700"
+                                }`}
+                              >
+                                <p className="text-sm font-semibold">{item.item_name}</p>
+                                <p className="text-[11px] opacity-80">
+                                  {item.category_name} / {item.ticker}
+                                </p>
+                              </button>
+                            );
+                          })
+                        ) : (
+                          <p className="px-2 py-2 text-sm text-slate-500">검색 결과가 없습니다.</p>
+                        )
+                      ) : yfinanceCategoryGroups.length > 0 ? (
+                        yfinanceCategoryGroups.map(([category, items]) => {
+                          const expanded = yfinanceExpandedCategories.has(category);
+                          return (
+                            <div key={category} className="rounded-xl border border-slate-200 bg-white">
+                              <button
+                                type="button"
+                                onClick={() => toggleYfinanceCategory(category)}
+                                className="flex w-full items-center gap-2 px-3 py-2 text-left hover:border-slate-300"
+                              >
+                                <span className="rounded-full border border-slate-200 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
+                                  {expanded ? "접기" : "펼치기"}
+                                </span>
+                                <span className="flex-1 text-slate-800">
+                                  <p className="text-sm font-semibold">{category}</p>
+                                  <p className="text-[11px] opacity-80">분류 / {items.length}개 티커</p>
+                                </span>
+                              </button>
+                              {expanded ? (
+                                <div className="space-y-2 border-t border-slate-100 px-2 pb-2 pt-2">
+                                  <div className="space-y-2 pl-3">
+                                    {items.map((item) => {
+                                      const selected = yfinanceSelectedTicker === item.ticker;
+                                      return (
+                                        <button
+                                          key={item.ticker}
+                                          type="button"
+                                          onClick={() => setYfinanceSelectedTicker(item.ticker)}
+                                          className={`w-full rounded-xl border px-3 py-2 text-left hover:border-slate-300 ${
+                                            selected
+                                              ? "border-slate-900 bg-slate-900 text-white"
+                                              : "border-slate-200 bg-white text-slate-700"
+                                          }`}
+                                        >
+                                          <p className="text-sm font-semibold">{item.item_name}</p>
+                                          <p className="text-[11px] opacity-80">{item.ticker}</p>
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              ) : null}
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <p className="px-2 py-2 text-sm text-slate-500">수집대상 목록이 없습니다.</p>
+                      )}
+                    </div>
+                  )}
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
+                    선택된 수집대상:{" "}
+                    {selectedYfinanceStat
+                      ? `${selectedYfinanceStat.item_name} (${selectedYfinanceStat.ticker})`
+                      : "없음"}
+                  </div>
+                </div>
+              ) : selectedProvider === "worldbank" ? (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_auto_auto]">
+                    <input
+                      value={targetQuery}
+                      onChange={(event) => setTargetQuery(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          event.preventDefault();
+                          runWorldbankSearch();
+                        }
+                      }}
+                      placeholder="지표/국가 검색 (예: GDP, 미국, 세계)"
+                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={runWorldbankSearch}
+                      className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                    >
+                      검색
+                    </button>
+                    <button
+                      type="button"
+                      onClick={resetWorldbankSearch}
+                      className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                    >
+                      초기화
+                    </button>
+                  </div>
+                  {worldbankAppliedQuery ? (
+                    <p className="text-xs text-slate-500">
+                      검색어 &quot;{worldbankAppliedQuery}&quot; — 일치하는 항목만 표시합니다.
+                    </p>
+                  ) : (
+                    <p className="text-xs text-slate-500">
+                      기본 상태는 접힘입니다. 분류 카드를 눌러 지표를 펼쳐보세요.
+                    </p>
+                  )}
+                  {worldbankLoading ? (
+                    <p className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-500">
+                      World Bank 지표 목록을 불러오는 중입니다...
+                    </p>
+                  ) : worldbankError ? (
+                    <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-5 text-sm text-rose-600">
+                      {worldbankError}
+                    </p>
+                  ) : (
+                    <div className="max-h-[42vh] space-y-3 overflow-y-auto rounded-2xl border border-slate-200 bg-slate-50 p-2">
+                      {worldbankAppliedQuery ? (
+                        worldbankSearchResults.length > 0 ? (
+                          worldbankSearchResults.map((item) => {
+                            const selected = worldbankSelectedId === item.id;
+                            return (
+                              <button
+                                key={item.id}
+                                type="button"
+                                onClick={() => setWorldbankSelectedId(item.id)}
+                                className={`w-full rounded-xl border px-3 py-2 text-left hover:border-slate-300 ${
+                                  selected
+                                    ? "border-slate-900 bg-slate-900 text-white"
+                                    : "border-slate-200 bg-white text-slate-700"
+                                }`}
+                              >
+                                <p className="text-sm font-semibold">{item.item_name}</p>
+                                <p className="text-[11px] opacity-80">
+                                  {item.country_name} / {item.indicator_code}
+                                </p>
+                              </button>
+                            );
+                          })
+                        ) : (
+                          <p className="px-2 py-2 text-sm text-slate-500">검색 결과가 없습니다.</p>
+                        )
+                      ) : worldbankCategoryGroups.length > 0 ? (
+                        worldbankCategoryGroups.map(([category, items]) => {
+                          const expanded = worldbankExpandedCategories.has(category);
+                          return (
+                            <div key={category} className="rounded-xl border border-slate-200 bg-white">
+                              <button
+                                type="button"
+                                onClick={() => toggleWorldbankCategory(category)}
+                                className="flex w-full items-center gap-2 px-3 py-2 text-left hover:border-slate-300"
+                              >
+                                <span className="rounded-full border border-slate-200 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
+                                  {expanded ? "접기" : "펼치기"}
+                                </span>
+                                <span className="flex-1 text-slate-800">
+                                  <p className="text-sm font-semibold">{category}</p>
+                                  <p className="text-[11px] opacity-80">분류 / {items.length}개 지표</p>
+                                </span>
+                              </button>
+                              {expanded ? (
+                                <div className="space-y-2 border-t border-slate-100 px-2 pb-2 pt-2">
+                                  <div className="space-y-2 pl-3">
+                                    {items.map((item) => {
+                                      const selected = worldbankSelectedId === item.id;
+                                      return (
+                                        <button
+                                          key={item.id}
+                                          type="button"
+                                          onClick={() => setWorldbankSelectedId(item.id)}
+                                          className={`w-full rounded-xl border px-3 py-2 text-left hover:border-slate-300 ${
+                                            selected
+                                              ? "border-slate-900 bg-slate-900 text-white"
+                                              : "border-slate-200 bg-white text-slate-700"
+                                          }`}
+                                        >
+                                          <p className="text-sm font-semibold">{item.item_name}</p>
+                                          <p className="text-[11px] opacity-80">
+                                            {item.country_name} ({item.country_code}) / {item.indicator_code}
+                                          </p>
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              ) : null}
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <p className="px-2 py-2 text-sm text-slate-500">수집대상 목록이 없습니다.</p>
+                      )}
+                    </div>
+                  )}
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
+                    선택된 수집대상:{" "}
+                    {selectedWorldbankStat
+                      ? `${selectedWorldbankStat.item_name} (${selectedWorldbankStat.country_code} / ${selectedWorldbankStat.indicator_code})`
+                      : "없음"}
+                  </div>
+                </div>
+              ) : selectedProvider === "undp" ? (
+                <div className="space-y-4">
+                  {!undpRegisteredSource ? (
+                    <p className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+                      먼저 기관 관리에서 UN Population Division 기관(기관식별자 undp)을 발급받은
+                      토큰과 함께 등록해주세요.
+                    </p>
+                  ) : null}
+                  {undpLoading ? (
+                    <p className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-500">
+                      UN 지표/지역 목록을 불러오는 중입니다...
+                    </p>
+                  ) : undpError ? (
+                    <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-5 text-sm text-rose-600">
+                      {undpError}
+                    </p>
+                  ) : (
+                    <div className="grid gap-4 lg:grid-cols-2">
+                      <div className="space-y-2">
+                        <p className="text-sm font-semibold text-slate-800">1) 지표 선택</p>
+                        <input
+                          value={undpIndicatorQuery}
+                          onChange={(event) => setUndpIndicatorQuery(event.target.value)}
+                          placeholder="지표명 검색 (예: population, births)"
+                          className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm"
+                        />
+                        <div className="max-h-[38vh] space-y-2 overflow-y-auto rounded-2xl border border-slate-200 bg-slate-50 p-2">
+                          {undpIndicatorQuery.trim() ? (
+                            undpIndicatorSearchResults.length > 0 ? (
+                              undpIndicatorSearchResults.map((item) => {
+                                const selected = undpSelectedIndicatorId === item.id;
+                                return (
+                                  <button
+                                    key={item.id}
+                                    type="button"
+                                    onClick={() => setUndpSelectedIndicatorId(item.id)}
+                                    className={`w-full rounded-xl border px-3 py-2 text-left hover:border-slate-300 ${
+                                      selected
+                                        ? "border-slate-900 bg-slate-900 text-white"
+                                        : "border-slate-200 bg-white text-slate-700"
+                                    }`}
+                                  >
+                                    <p className="text-sm font-semibold">{item.name}</p>
+                                    <p className="text-[11px] opacity-80">{item.topic_name}</p>
+                                  </button>
+                                );
+                              })
+                            ) : (
+                              <p className="px-2 py-2 text-sm text-slate-500">검색 결과가 없습니다.</p>
+                            )
+                          ) : undpIndicatorTopics.length > 0 ? (
+                            undpIndicatorTopics.map(([topic, items]) => {
+                              const expanded = undpExpandedTopics.has(topic);
+                              return (
+                                <div key={topic} className="rounded-xl border border-slate-200 bg-white">
+                                  <button
+                                    type="button"
+                                    onClick={() => toggleUndpTopic(topic)}
+                                    className="flex w-full items-center gap-2 px-3 py-2 text-left hover:border-slate-300"
+                                  >
+                                    <span className="rounded-full border border-slate-200 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
+                                      {expanded ? "접기" : "펼치기"}
+                                    </span>
+                                    <span className="flex-1 text-slate-800">
+                                      <span className="block text-sm font-semibold">{topic}</span>
+                                      <span className="block text-[11px] opacity-80">
+                                        {items.length}개 지표
+                                      </span>
+                                    </span>
+                                  </button>
+                                  {expanded ? (
+                                    <div className="space-y-2 border-t border-slate-100 px-2 pb-2 pt-2">
+                                      {items.map((item) => {
+                                        const selected = undpSelectedIndicatorId === item.id;
+                                        return (
+                                          <button
+                                            key={item.id}
+                                            type="button"
+                                            onClick={() => setUndpSelectedIndicatorId(item.id)}
+                                            className={`w-full rounded-xl border px-3 py-2 text-left hover:border-slate-300 ${
+                                              selected
+                                                ? "border-slate-900 bg-slate-900 text-white"
+                                                : "border-slate-200 bg-white text-slate-700"
+                                            }`}
+                                          >
+                                            <p className="text-sm font-semibold">{item.name}</p>
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                  ) : null}
+                                </div>
+                              );
+                            })
+                          ) : (
+                            <p className="px-2 py-2 text-sm text-slate-500">지표 목록이 없습니다.</p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <p className="text-sm font-semibold text-slate-800">2) 지역 선택</p>
+                        <input
+                          value={undpLocationQuery}
+                          onChange={(event) => setUndpLocationQuery(event.target.value)}
+                          placeholder="국가/지역 검색 (예: Korea, KOR, World)"
+                          className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm"
+                        />
+                        <div className="max-h-[38vh] space-y-2 overflow-y-auto rounded-2xl border border-slate-200 bg-slate-50 p-2">
+                          {undpLocationResults.length > 0 ? (
+                            undpLocationResults.map((item) => {
+                              const selected = undpSelectedLocationId === item.id;
+                              return (
+                                <button
+                                  key={item.id}
+                                  type="button"
+                                  onClick={() => setUndpSelectedLocationId(item.id)}
+                                  className={`w-full rounded-xl border px-3 py-2 text-left hover:border-slate-300 ${
+                                    selected
+                                      ? "border-slate-900 bg-slate-900 text-white"
+                                      : "border-slate-200 bg-white text-slate-700"
+                                  }`}
+                                >
+                                  <p className="text-sm font-semibold">{item.name}</p>
+                                  <p className="text-[11px] opacity-80">
+                                    {item.iso3 || "-"} · ID {item.id}
+                                  </p>
+                                </button>
+                              );
+                            })
+                          ) : (
+                            <p className="px-2 py-2 text-sm text-slate-500">지역 검색 결과가 없습니다.</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
+                    선택된 수집대상:{" "}
+                    {selectedUndpIndicator && selectedUndpLocation
+                      ? `${selectedUndpIndicator.name} / ${selectedUndpLocation.name}`
+                      : "지표와 지역을 모두 선택해주세요."}
+                  </div>
+                </div>
               ) : (
                 <>
                   <input
@@ -3437,6 +5179,8 @@ export default function UserApiRegistrationModal({
                         ? "kosisUserStats"
                         : selectedProvider === "datagokr"
                           ? "datagokrSpec"
+                        : selectedProvider === "krx"
+                          ? "krxApiApply"
                         : selectedProvider === "fred"
                           ? "period"
                         : "period",
@@ -3557,12 +5301,66 @@ export default function UserApiRegistrationModal({
               </div>
             </div>
           ) : null}
-
+          {!done && step === "krxApiApply" ? (
+            <div className="space-y-5 py-4">
+              <div>
+                <h4 className="text-2xl font-bold text-slate-900">KRX API 신청을 확인해주세요</h4>
+                <p className="mt-2 text-sm text-slate-600">
+                  KRX는 별도의 사용자 ID 입력 없이, 최초 1회 사이트에서 로그인 후 API 이용신청을
+                  하면 데이터를 수집할 수 있습니다.
+                </p>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600">
+                <p>아직 신청하지 않았다면 아래 순서로 먼저 신청이 필요합니다.</p>
+                <p className="mt-2">
+                  KRX Data Marketplace OPEN API &gt; 회원가입/로그인 &gt; 인증키 신청 &gt;
+                  컨텐츠별 API 이용신청(관리자 승인 후 사용)
+                </p>
+                <a
+                  href={selectedKrxStat?.guide_url?.trim() || KRX_OPENAPI_PORTAL_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-3 inline-flex rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                >
+                  {selectedKrxStat?.guide_url?.trim()
+                    ? `${selectedKrxStat.api_name} 안내 페이지 바로가기`
+                    : "KRX OpenAPI 바로가기"}
+                </a>
+              </div>
+              <label className="flex items-start gap-3 rounded-2xl border border-slate-200 p-4 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={krxApiApplied}
+                  onChange={(event) => setKrxApiApplied(event.target.checked)}
+                  className="mt-0.5 h-4 w-4"
+                />
+                <span>
+                  선택한 API에 대해 KRX 사이트에서 로그인 및 API 이용신청을 완료했습니다.
+                </span>
+              </label>
+              {!canGoNextFromKrxApiApply ? (
+                <p className="text-xs text-rose-600">
+                  API 신청 완료 여부를 확인(체크)해야 다음으로 진행할 수 있습니다.
+                </p>
+              ) : null}
+              <div className="flex justify-end">
+                <button
+                  onClick={() => setStep("period")}
+                  disabled={!canGoNextFromKrxApiApply}
+                  className="rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-slate-300"
+                >
+                  다음
+                </button>
+              </div>
+            </div>
+          ) : null}
           {!done && step === "period" ? (
             <div className="space-y-5 py-4">
               <div>
                 <h4 className="text-2xl font-bold text-slate-900">
-                  {selectedProvider === "kosis" || selectedProvider === "fred"
+                  {selectedProvider === "kosis" ||
+                  selectedProvider === "fred" ||
+                  selectedProvider === "oecd"
                     ? "주기와 기간을 입력해주세요"
                     : "수집할 기간을 입력해주세요"}
                 </h4>
@@ -3599,6 +5397,20 @@ export default function UserApiRegistrationModal({
                     <option value="D">일간 (D)</option>
                   </select>
                 </label>
+              ) : selectedProvider === "oecd" ? (
+                <label className="space-y-2 text-sm text-slate-700">
+                  주기 (선택 지표 기준 고정)
+                  <select
+                    value={(selectedOecdStat?.cycle ?? "M").toUpperCase()}
+                    disabled
+                    className="w-full cursor-not-allowed rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3 text-slate-600"
+                  >
+                    <option value="A">연간 (2020)</option>
+                    <option value="Q">분기 (2020-Q1)</option>
+                    <option value="M">월간 (2020-01)</option>
+                    <option value="D">일간 (2020-01-01)</option>
+                  </select>
+                </label>
               ) : null}
               <div className="grid gap-3 sm:grid-cols-2">
                 <label className="space-y-2 text-sm text-slate-700">
@@ -3606,6 +5418,8 @@ export default function UserApiRegistrationModal({
                   <input
                     type="date"
                     value={startDate}
+                    min="1000-01-01"
+                    max="9999-12-31"
                     onChange={(event) => setStartDate(event.target.value)}
                     className="w-full rounded-2xl border border-slate-200 px-4 py-3"
                   />
@@ -3615,6 +5429,8 @@ export default function UserApiRegistrationModal({
                   <input
                     type="date"
                     value={endDate}
+                    min="1000-01-01"
+                    max="9999-12-31"
                     onChange={(event) => setEndDate(event.target.value)}
                     className="w-full rounded-2xl border border-slate-200 px-4 py-3"
                   />
@@ -3856,6 +5672,69 @@ export default function UserApiRegistrationModal({
                     </p>
                   </>
                 ) : null}
+                {selectedProvider === "oecd" && selectedOecdStat ? (
+                  <>
+                    <p>
+                      <span className="font-semibold">지표:</span> {selectedOecdStat.indicator_name}
+                    </p>
+                    <p>
+                      <span className="font-semibold">데이터플로우(ref):</span>{" "}
+                      {selectedOecdStat.flow_ref}
+                    </p>
+                    <p>
+                      <span className="font-semibold">필터키:</span> {selectedOecdStat.data_key}
+                    </p>
+                    <p>
+                      <span className="font-semibold">주기:</span> {selectedOecdStat.cycle}
+                    </p>
+                  </>
+                ) : null}
+                {selectedProvider === "yfinance" && selectedYfinanceStat ? (
+                  <>
+                    <p>
+                      <span className="font-semibold">종목:</span> {selectedYfinanceStat.item_name}
+                    </p>
+                    <p>
+                      <span className="font-semibold">티커:</span> {selectedYfinanceStat.ticker}
+                    </p>
+                    <p>
+                      <span className="font-semibold">분류:</span> {selectedYfinanceStat.category_name}
+                    </p>
+                    <p>
+                      <span className="font-semibold">수집 항목:</span> 시가·고가·저가·종가·수정종가·거래량(OHLCV) / 일별
+                    </p>
+                  </>
+                ) : null}
+                {selectedProvider === "worldbank" && selectedWorldbankStat ? (
+                  <>
+                    <p>
+                      <span className="font-semibold">지표:</span>{" "}
+                      {selectedWorldbankStat.indicator_name} ({selectedWorldbankStat.indicator_code})
+                    </p>
+                    <p>
+                      <span className="font-semibold">국가:</span> {selectedWorldbankStat.country_name} (
+                      {selectedWorldbankStat.country_code})
+                    </p>
+                    <p>
+                      <span className="font-semibold">주기:</span> 연간
+                    </p>
+                  </>
+                ) : null}
+                {selectedProvider === "undp" && selectedUndpIndicator && selectedUndpLocation ? (
+                  <>
+                    <p>
+                      <span className="font-semibold">지표:</span> {selectedUndpIndicator.name} (ID{" "}
+                      {selectedUndpIndicator.id})
+                    </p>
+                    <p>
+                      <span className="font-semibold">지역:</span> {selectedUndpLocation.name} (
+                      {selectedUndpLocation.iso3 || selectedUndpLocation.id})
+                    </p>
+                    <p>
+                      <span className="font-semibold">주기:</span> 연간
+                    </p>
+                  </>
+                ) : null}
                 <p>
                   <span className="font-semibold">시작일:</span> {startDate || "-"}
                 </p>
@@ -3878,17 +5757,27 @@ export default function UserApiRegistrationModal({
                     <p className="mt-1 text-xs text-slate-500">없음</p>
                   )}
                 </div>
-                <div>
-                  <p className="font-semibold">생성 URL:</p>
-                  <p className="mt-1 break-all rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
-                    {previewUrl || "URL을 생성할 수 없습니다."}
-                  </p>
-                  {!((resolvedSelectedTarget?.source.api_key ?? "").trim()) ? (
-                    <p className="mt-1 text-[11px] text-amber-700">
-                      기관 관리에 등록된 API Key가 없어 호출이 실패할 수 있습니다.
+                {selectedProvider === "yfinance" ? (
+                  <div>
+                    <p className="font-semibold">수집 방식:</p>
+                    <p className="mt-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
+                      URL 호출이 아니라 Python(yfinance)으로 수집합니다. 티커·기간으로 시세를
+                      직접 조회하므로 별도의 API URL/키가 없습니다.
                     </p>
-                  ) : null}
-                </div>
+                  </div>
+                ) : (
+                  <div>
+                    <p className="font-semibold">생성 URL:</p>
+                    <p className="mt-1 break-all rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
+                      {previewUrl || "URL을 생성할 수 없습니다."}
+                    </p>
+                    {!((resolvedSelectedTarget?.source.api_key ?? "").trim()) ? (
+                      <p className="mt-1 text-[11px] text-amber-700">
+                        기관 관리에 등록된 API Key가 없어 호출이 실패할 수 있습니다.
+                      </p>
+                    ) : null}
+                  </div>
+                )}
               </div>
               <div className="rounded-2xl border border-slate-200 bg-white p-4">
                 <div className="mb-2 flex items-center justify-between">
@@ -3942,14 +5831,16 @@ export default function UserApiRegistrationModal({
               </div>
               {submitError ? <p className="text-xs text-rose-600">{submitError}</p> : null}
               <div className="flex justify-end">
-                <button
-                  type="button"
-                  onClick={() => void copyPreviewUrl()}
-                  disabled={!previewUrl}
-                  className="mr-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-400"
-                >
-                  {urlCopied ? "복사됨" : "URL 복사"}
-                </button>
+                {selectedProvider === "yfinance" ? null : (
+                  <button
+                    type="button"
+                    onClick={() => void copyPreviewUrl()}
+                    disabled={!previewUrl}
+                    className="mr-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-400"
+                  >
+                    {urlCopied ? "복사됨" : "URL 복사"}
+                  </button>
+                )}
                 <button
                   onClick={handleSubmit}
                   disabled={submitting}

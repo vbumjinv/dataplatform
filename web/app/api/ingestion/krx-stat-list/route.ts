@@ -92,7 +92,8 @@ export async function GET() {
           cycle,
           srch_yn,
           category_sort,
-          api_sort
+          api_sort,
+          guide_url
         from dp.api_stat_list_krx
         where coalesce(srch_yn, 'Y') = 'Y'
         order by category_sort asc nulls last, api_sort asc nulls last, api_id asc
@@ -115,6 +116,7 @@ export async function GET() {
         api_sort: Number.isFinite(Number(row.api_sort))
           ? Number(row.api_sort)
           : Number.MAX_SAFE_INTEGER,
+        guide_url: isNonEmpty(row.guide_url) ? String(row.guide_url).trim() : "",
       })),
     });
   } catch (error) {

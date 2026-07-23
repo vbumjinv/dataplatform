@@ -5,6 +5,8 @@ import UserApiRegistrationModal from "./components/UserApiRegistrationModal";
 import DataMappingManagerModal from "./components/DataMappingManagerModal";
 import PdfTableIngestPanel from "./components/PdfTableIngestPanel";
 import PdfItemTradePanel from "./components/PdfItemTradePanel";
+import PipelinePanel from "./components/PipelinePanel";
+import DataTransformPanel from "./components/DataTransformPanel";
 
 const pipelineSteps = [
   {
@@ -44,7 +46,12 @@ type DbSettingOption = {
   id: number;
   settingName: string;
 };
-type IngestionTabKey = "apiStatus" | "mappingStatus" | "apiSettings" | "mappingSettings";
+type IngestionTabKey =
+  | "overallStatus"
+  | "apiSettings"
+  | "mappingSettings"
+  | "dataTransform"
+  | "pipeline";
 type IngestionStatusSummary = {
   totalRuns: number;
   successRuns: number;
@@ -119,17 +126,99 @@ type MappingStatusFailure = {
   affectedCount: number;
   errorMessage: string | null;
 };
+type PipelineStatusSummary = {
+  totalRuns: number;
+  successRuns: number;
+  errorRuns: number;
+  successRate: number;
+  lastRunAt: string | null;
+};
+type PipelineStatusDaily = {
+  runDate: string;
+  totalRuns: number;
+  successRuns: number;
+  errorRuns: number;
+};
+type PipelineStepResult = {
+  type: "collect" | "map" | "transform";
+  status: "success" | "error" | "skipped";
+  refId?: number | null;
+  mapLabel?: string;
+  message?: string;
+  affectedCount?: number;
+};
+type PipelineStatusFailure = {
+  runLogId: number;
+  runDate: string;
+  startedAt: string;
+  pipelineName: string;
+  triggerType: "manual" | "schedule";
+  status: "running" | "success" | "error";
+  errorMessage: string | null;
+  stepResults: PipelineStepResult[];
+};
+type StandaloneExecutionRow = {
+  id: string;
+  kind: "ingestion" | "mapping";
+  runDate: string;
+  startedAt: string;
+  targetName: string;
+  triggerType: "manual" | "schedule";
+  status: "success" | "error";
+  count: number;
+  errorMessage: string | null;
+};
 type IngestionChannelFilter = "전체" | "API" | "엑셀" | "기타";
 type IngestionSettingsTab = "API 설정" | "엑셀 설정" | "기타 설정" | "PDF 설정";
 const ingestionTabs: Array<{ key: IngestionTabKey; label: string }> = [
-  { key: "apiStatus", label: "수집 현황" },
-  { key: "mappingStatus", label: "매핑 현황" },
+  { key: "overallStatus", label: "전체 현황" },
   { key: "apiSettings", label: "수집 설정" },
   { key: "mappingSettings", label: "매핑 설정" },
+  { key: "dataTransform", label: "데이터 가공" },
+  { key: "pipeline", label: "파이프라인" },
 ];
 const ingestionChannelFilters: IngestionChannelFilter[] = ["전체", "API", "엑셀", "기타"];
 const ingestionSettingsTabs: IngestionSettingsTab[] = ["API 설정", "엑셀 설정", "기타 설정", "PDF 설정"];
 const formatNumber = (value: number) => new Intl.NumberFormat("ko-KR").format(value);
+const formatDateTime24h = (value: string | Date) => {
+  const date = value instanceof Date ? value : new Date(value);
+  return date.toLocaleString("ko-KR", {
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
+};
+const summarizePipelineSteps = (steps: PipelineStepResult[]) => {
+  const collect = steps.find((step) => step.type === "collect");
+  const maps = steps.filter((step) => step.type === "map");
+  const mapSuccess = maps.filter((step) => step.status === "success").length;
+  const mapError = maps.filter((step) => step.status === "error").length;
+  const mapSkipped = maps.filter((step) => step.status === "skipped").length;
+  const collectLabel =
+    collect?.status === "success"
+      ? "수집 성공"
+      : collect?.status === "error"
+        ? `수집 실패${collect.message ? ` (${collect.message})` : ""}`
+        : collect?.status === "skipped"
+          ? "수집 건너뜀"
+          : "수집 정보 없음";
+  const mapLabel =
+    maps.length === 0
+      ? "매핑 없음"
+      : mapError > 0
+        ? `매핑 실패 ${mapError}건 (성공 ${mapSuccess}건${mapSkipped ? `, 건너뜀 ${mapSkipped}건` : ""})`
+        : `매핑 성공 ${mapSuccess}건${mapSkipped ? ` (건너뜀 ${mapSkipped}건)` : ""}`;
+  return { collectLabel, mapLabel };
+};
+const pipelineStepStatusLabel = (status: PipelineStepResult["status"]) => {
+  if (status === "success") return "성공";
+  if (status === "error") return "실패";
+  return "건너뜀";
+};
 const PARAM_ROLE_LABELS: Record<string, string> = {
   period: "기간 단위",
   start: "조회 시작일",
@@ -190,7 +279,7 @@ const getParamDescription = (paramKey: string, role?: string | null) => {
 };
 
 export default function IngestionPage() {
-  const [activeTab, setActiveTab] = useState<IngestionTabKey>("apiStatus");
+  const [activeTab, setActiveTab] = useState<IngestionTabKey>("overallStatus");
   const [activeSettingsTab, setActiveSettingsTab] = useState<IngestionSettingsTab>("API 설정");
   const [channelFilter, setChannelFilter] = useState<IngestionChannelFilter>("전체");
   const [ingestionLoading, setIngestionLoading] = useState(false);
@@ -209,18 +298,21 @@ export default function IngestionPage() {
   const [mappingDailyDetailRows, setMappingDailyDetailRows] = useState<MappingStatusDailyDetail[]>([]);
   const [selectedMappingDailyDate, setSelectedMappingDailyDate] = useState<string | null>(null);
   const [mappingFailureRows, setMappingFailureRows] = useState<MappingStatusFailure[]>([]);
+  const [pipelineStatusLoaded, setPipelineStatusLoaded] = useState(false);
+  const [pipelineStatusLoading, setPipelineStatusLoading] = useState(false);
+  const [pipelineStatusError, setPipelineStatusError] = useState("");
+  const [pipelineSummary, setPipelineSummary] = useState<PipelineStatusSummary | null>(null);
+  const [pipelineDailyRows, setPipelineDailyRows] = useState<PipelineStatusDaily[]>([]);
+  const [pipelineFailureRows, setPipelineFailureRows] = useState<PipelineStatusFailure[]>([]);
+  const [selectedPipelineDailyDate, setSelectedPipelineDailyDate] = useState<string | null>(null);
+  const [standaloneView, setStandaloneView] = useState<"ingestion" | "mapping">("ingestion");
+  const [standaloneDetailTarget, setStandaloneDetailTarget] = useState<StandaloneExecutionRow | null>(null);
+  const [pipelineRunDetailTarget, setPipelineRunDetailTarget] =
+    useState<PipelineStatusFailure | null>(null);
   const [showApiModal, setShowApiModal] = useState(false);
   const [showUserApiRegisterModal, setShowUserApiRegisterModal] = useState(false);
   const [mappingCreateRequestKey, setMappingCreateRequestKey] = useState(0);
   const [mappingBulkGenerateRequestKey, setMappingBulkGenerateRequestKey] = useState(0);
-  // 수집 그룹별 "데이터 매핑" 팝업(해당 원천 테이블로 스코프)
-  const [dataMapScopeTarget, setDataMapScopeTarget] = useState<{
-    sourceOrg: string;
-    sourceTable: string;
-    apiName: string;
-  } | null>(null);
-  const [scopedMapCreateKey, setScopedMapCreateKey] = useState(0);
-  const [scopedMapBulkKey, setScopedMapBulkKey] = useState(0);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [apiView, setApiView] = useState<"register" | "list">("list");
   const [periodOffset, setPeriodOffset] = useState("3");
@@ -347,12 +439,28 @@ export default function IngestionPage() {
   };
   const shouldUseDailyCompactParamFormat = (paramKey: string) =>
     paramKey.trim().toLowerCase() === "basdd";
+  // OECD(SDMX) startPeriod/endPeriod: 하이픈 표기(YYYY / YYYY-Qn / YYYY-MM / YYYY-MM-DD)
+  const shouldUseOecdPeriodFormat = (paramKey: string) => {
+    const normalized = paramKey.trim().toLowerCase();
+    return normalized === "startperiod" || normalized === "endperiod";
+  };
+  const formatOecdPeriodValue = (date: Date, period: string) => {
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    if (period === "A" || period === "Y") return `${year}`;
+    if (period === "Q") return `${year}-Q${Math.floor((month - 1) / 3) + 1}`;
+    if (period === "D") return `${year}-${padNumber(month)}-${padNumber(date.getDate())}`;
+    return `${year}-${padNumber(month)}`;
+  };
   const formatParamDateValue = (date: Date, period: string, paramKey: string) => {
     if (shouldUseIsoDateParamFormat(paramKey)) {
       return formatIsoDateValue(date);
     }
     if (shouldUseDailyCompactParamFormat(paramKey)) {
       return formatPeriodValue(date, "D");
+    }
+    if (shouldUseOecdPeriodFormat(paramKey)) {
+      return formatOecdPeriodValue(date, period);
     }
     return formatPeriodValue(date, period);
   };
@@ -484,15 +592,22 @@ export default function IngestionPage() {
       ) ?? null);
     const endKey =
       roleKeyMap.get("end") ??
-      (["apiend", "endprdde", "endyymm", "observation_end", "basdd"].find((key) =>
+      (["apiend", "endprdde", "endyymm", "observation_end", "endperiod", "basdd"].find((key) =>
         paramValueByKeyLower.has(key),
       ) ?? null);
     const startKey =
       roleKeyMap.get("start") ??
-      (["apistart", "startprdde", "strtyymm", "observation_start"].find((key) =>
+      (["apistart", "startprdde", "strtyymm", "observation_start", "startperiod"].find((key) =>
         paramValueByKeyLower.has(key),
       ) ?? null);
-    const periodTypeValueRaw = periodTypeKey ? paramValueByKeyLower.get(periodTypeKey) ?? "M" : "M";
+    // roleKeyMap 은 원본 대소문자 키를 저장하므로(예: apiStart), 소문자화한 paramKey 와
+    // 비교하려면 여기서도 소문자로 맞춘다. (서버 load-runner.ts 와 동일한 처리)
+    const periodTypeKeyLower = periodTypeKey?.trim().toLowerCase() ?? null;
+    const startKeyLower = startKey?.trim().toLowerCase() ?? null;
+    const endKeyLower = endKey?.trim().toLowerCase() ?? null;
+    const periodTypeValueRaw = periodTypeKeyLower
+      ? paramValueByKeyLower.get(periodTypeKeyLower) ?? "M"
+      : "M";
     const periodTypeValue = periodTypeValueRaw.trim().toUpperCase();
     const effectivePeriod =
       periodTypeValue && ["D", "M", "Q", "A", "Y"].includes(periodTypeValue)
@@ -500,32 +615,68 @@ export default function IngestionPage() {
         : "M";
     const resolvedParams = rawParams.map((item) => {
       const paramKey = item.key.trim().toLowerCase();
+      // World Bank date=시작:종료 는 한 파라미터에 두 값이 들어있고 연 단위라, 각 구간을
+      // 연도로 해석한다. 콜론이 %3A 로 인코딩되지 않도록 encodeMode 를 none 으로 둔다.
+      if (paramKey === "date" && item.value.includes(":")) {
+        const resolveYear = (raw: string) => {
+          const v = (raw ?? "").trim();
+          if (!v) return v;
+          const now = new Date();
+          if (v === END_LATEST_TOKEN) return String(now.getFullYear());
+          const tokenMatch = START_RELATIVE_TOKEN_REGEX.exec(v);
+          if (tokenMatch) return String(now.getFullYear() - Number(tokenMatch[1]));
+          const koMatch = START_RELATIVE_KO_REGEX.exec(v);
+          if (koMatch) return String(now.getFullYear() - Number(koMatch[1]));
+          const year = v.match(/(\d{4})/);
+          return year ? year[1] : v;
+        };
+        const [startPart, endPart] = item.value.split(":");
+        return {
+          ...item,
+          value: `${resolveYear(startPart)}:${resolveYear(endPart)}`,
+          encodeMode: "none",
+        };
+      }
       const isEndParamByKey = [
         "apiEnd",
         "endPrdDe",
         "endYymm",
         "observation_end",
+        "endPeriod",
         "basDd",
         "BAS_DD",
       ]
         .map((key) => key.toLowerCase())
         .includes(paramKey);
-      const isStartParamByKey = ["apiStart", "startPrdDe", "strtYymm", "observation_start"]
+      const isStartParamByKey = [
+        "apiStart",
+        "startPrdDe",
+        "strtYymm",
+        "observation_start",
+        "startPeriod",
+      ]
         .map((key) => key.toLowerCase())
         .includes(paramKey);
       const shouldResolveLatest =
         item.value === END_LATEST_TOKEN &&
-        (paramKey === "basdd" || (endKey && paramKey === endKey) || (!endKey && isEndParamByKey));
+        (paramKey === "basdd" ||
+          (endKeyLower && paramKey === endKeyLower) ||
+          (!endKeyLower && isEndParamByKey));
       if (shouldResolveLatest) {
         return {
           ...item,
           value: formatParamDateValue(new Date(), effectivePeriod, item.key),
         };
       }
+      const isBasDdParamByKey = paramKey === "basdd" || paramKey === "bas_dd";
       const shouldResolveStartRelative =
-        (startKey && paramKey === startKey) || (!startKey && isStartParamByKey);
+        (startKeyLower && paramKey === startKeyLower) || (!startKeyLower && isStartParamByKey);
+      // basDd(기준일자)는 endKey 가 다른 파라미터(apiEnd 등)로 잡혀도 항상 상대일 토큰을 치환한다.
+      // (__TODAY__ 는 위 shouldResolveLatest 에서 이미 처리)
       const shouldResolveEndRelative =
-        (endKey && paramKey === endKey) || (!endKey && isEndParamByKey);
+        (endKeyLower && paramKey === endKeyLower) ||
+        (!endKeyLower && isEndParamByKey) ||
+        isBasDdParamByKey;
       if (shouldResolveStartRelative) {
         const startValue = resolveRelativeStartValue(item.value, effectivePeriod, item.key);
         if (startValue) return { ...item, value: startValue };
@@ -781,20 +932,28 @@ export default function IngestionPage() {
     }> = [];
     sorted.forEach((group) => {
       const sourceItem = apiList.find((item) => item.id === group.sourceId);
+      const groupProvider = (sourceItem?.provider ?? "").trim().toLowerCase();
+      // yfinance 는 URL 호출이 아니라 Python(yfinance) 실행이라 실제 호출 URL이 없다.
+      // 목록에는 가짜 URL 대신 수집 방식과 티커를 보여준다.
       const endUrl =
-        sourceItem && Array.isArray(group.params)
-          ? buildUrlFromSourceParams(
-              resolveSourceForRequestUrl(sourceItem),
-              group.params.map((param) => ({
-                key: param.param_key,
-                value: param.param_value,
-                location: param.param_location as "path" | "query",
-                order: param.param_order,
-                encodeMode: param.encode_mode ?? "encode",
-                role: param.param_role ?? null,
-              })),
-            )
-          : "";
+        groupProvider === "yfinance"
+          ? `yfinance(Python) · 티커=${
+              group.params?.find((param) => param.param_key.toLowerCase() === "ticker")
+                ?.param_value ?? "-"
+            }`
+          : sourceItem && Array.isArray(group.params)
+            ? buildUrlFromSourceParams(
+                resolveSourceForRequestUrl(sourceItem),
+                group.params.map((param) => ({
+                  key: param.param_key,
+                  value: param.param_value,
+                  location: param.param_location as "path" | "query",
+                  order: param.param_order,
+                  encodeMode: param.encode_mode ?? "encode",
+                  role: param.param_role ?? null,
+                })),
+              )
+            : "";
       const last = grouped[grouped.length - 1];
       if (last && last.sourceId === group.sourceId && last.sourceName === group.sourceName) {
         last.groups.push({
@@ -898,6 +1057,40 @@ export default function IngestionPage() {
     if (!displayedMappingDailyRows.length) return 1;
     return Math.max(...displayedMappingDailyRows.map((row) => row.totalRuns), 1);
   }, [displayedMappingDailyRows]);
+  const displayedPipelineDailyRows = useMemo(
+    () => pipelineDailyRows.slice(-7).reverse(),
+    [pipelineDailyRows],
+  );
+  const displayedPipelineDailyMaxRuns = useMemo(() => {
+    if (!displayedPipelineDailyRows.length) return 1;
+    return Math.max(...displayedPipelineDailyRows.map((row) => row.totalRuns), 1);
+  }, [displayedPipelineDailyRows]);
+  const selectedPipelineDateDetailRows = useMemo(
+    () =>
+      selectedPipelineDailyDate
+        ? pipelineFailureRows.filter((row) => row.runDate === selectedPipelineDailyDate)
+        : [],
+    [pipelineFailureRows, selectedPipelineDailyDate],
+  );
+  const selectedPipelineDateSuccessRows = useMemo(
+    () => selectedPipelineDateDetailRows.filter((row) => row.status === "success"),
+    [selectedPipelineDateDetailRows],
+  );
+  const selectedPipelineDateErrorRows = useMemo(
+    () => selectedPipelineDateDetailRows.filter((row) => row.status !== "success"),
+    [selectedPipelineDateDetailRows],
+  );
+  const pipelineRunDetail = useMemo(() => {
+    if (!pipelineRunDetailTarget) return null;
+    const steps = Array.isArray(pipelineRunDetailTarget.stepResults)
+      ? pipelineRunDetailTarget.stepResults
+      : [];
+    return {
+      collectSteps: steps.filter((step) => step.type === "collect"),
+      mapSteps: steps.filter((step) => step.type === "map"),
+      transformSteps: steps.filter((step) => step.type === "transform"),
+    };
+  }, [pipelineRunDetailTarget]);
   const selectedMappingDateDetailRows = useMemo(
     () =>
       selectedMappingDailyDate
@@ -913,6 +1106,57 @@ export default function IngestionPage() {
     () => selectedMappingDateDetailRows.filter((row) => row.status === "error"),
     [selectedMappingDateDetailRows],
   );
+  const standaloneLabel = standaloneView === "ingestion" ? "수집" : "매핑";
+  const todayIsoDate = useMemo(() => {
+    const now = new Date();
+    const y = String(now.getFullYear());
+    const m = String(now.getMonth() + 1).padStart(2, "0");
+    const d = String(now.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  }, []);
+  const standaloneRows = useMemo(() => {
+    const ingestionRows: StandaloneExecutionRow[] = ingestionDailyDetailRows.map((row) => ({
+      id: `ingestion-${row.loadLogId}`,
+      kind: "ingestion",
+      runDate: row.runDate,
+      startedAt: row.startedAt,
+      targetName: `${row.sourceName}${row.groupName ? ` / ${row.groupName}` : ""}`,
+      triggerType: row.triggerType,
+      status: row.status,
+      count: row.insertedCount,
+      errorMessage: row.errorMessage,
+    }));
+    const mappingRows: StandaloneExecutionRow[] = mappingDailyDetailRows.map((row) => ({
+      id: `mapping-${row.runLogId}`,
+      kind: "mapping",
+      runDate: row.runDate,
+      startedAt: row.startedAt,
+      targetName: row.seriesName,
+      triggerType: row.triggerType,
+      status: row.status,
+      count: row.affectedCount,
+      errorMessage: row.errorMessage,
+    }));
+    return [...ingestionRows, ...mappingRows].sort(
+      (a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime(),
+    );
+  }, [ingestionDailyDetailRows, mappingDailyDetailRows]);
+  const standaloneFilteredRows = useMemo(
+    () => standaloneRows.filter((row) => row.kind === standaloneView).slice(0, 30),
+    [standaloneRows, standaloneView],
+  );
+  const standaloneTodaySummary = useMemo(() => {
+    const rows = standaloneRows.filter(
+      (row) => row.kind === standaloneView && row.runDate === todayIsoDate,
+    );
+    const successRuns = rows.filter((row) => row.status === "success").length;
+    const errorRuns = rows.filter((row) => row.status === "error").length;
+    return {
+      totalRuns: rows.length,
+      successRuns,
+      errorRuns,
+    };
+  }, [standaloneRows, standaloneView, todayIsoDate]);
 
   const resetApiForm = useCallback(() => {
     setSource({
@@ -1152,7 +1396,7 @@ export default function IngestionPage() {
     setIngestionLoading(true);
     setIngestionError("");
     try {
-      const response = await fetch("/api/visualization/ingestion-status");
+      const response = await fetch(withDbSettingQuery("/api/visualization/ingestion-status"));
       const payload = (await response.json()) as {
         ok?: boolean;
         summary?: IngestionStatusSummary;
@@ -1179,7 +1423,7 @@ export default function IngestionPage() {
     } finally {
       setIngestionLoading(false);
     }
-  }, []);
+  }, [withDbSettingQuery]);
   const fetchMappingStatus = useCallback(async () => {
     setMappingStatusLoading(true);
     setMappingStatusError("");
@@ -1212,6 +1456,36 @@ export default function IngestionPage() {
       setMappingStatusLoading(false);
     }
   }, [withDbSettingQuery]);
+  const fetchPipelineStatus = useCallback(async () => {
+    setPipelineStatusLoading(true);
+    setPipelineStatusError("");
+    try {
+      const response = await fetch(withDbSettingQuery("/api/visualization/pipeline-status"));
+      const payload = (await response.json()) as {
+        ok?: boolean;
+        summary?: PipelineStatusSummary;
+        daily?: PipelineStatusDaily[];
+        recentFailures?: PipelineStatusFailure[];
+        error?: string;
+      };
+      if (!response.ok || !payload.ok) {
+        throw new Error(payload.error || "파이프라인 현황을 불러오지 못했습니다.");
+      }
+      setPipelineSummary(payload.summary ?? null);
+      const nextDailyRows = payload.daily ?? [];
+      setPipelineDailyRows(nextDailyRows);
+      setPipelineFailureRows(payload.recentFailures ?? []);
+      setSelectedPipelineDailyDate((prev) => {
+        if (prev && nextDailyRows.some((row) => row.runDate === prev)) return prev;
+        return nextDailyRows[nextDailyRows.length - 1]?.runDate ?? null;
+      });
+      setPipelineStatusLoaded(true);
+    } catch (error) {
+      setPipelineStatusError(error instanceof Error ? error.message : "파이프라인 현황을 불러오지 못했습니다.");
+    } finally {
+      setPipelineStatusLoading(false);
+    }
+  }, [withDbSettingQuery]);
 
   useEffect(() => {
     void fetchDbSettings();
@@ -1230,6 +1504,13 @@ export default function IngestionPage() {
     if (!selectedDbSettingId) return;
     void fetchApiList();
     void fetchApiTemplates();
+    setIngestionStatusLoaded(false);
+    setIngestionSummary(null);
+    setIngestionDailyRows([]);
+    setIngestionDailyDetailRows([]);
+    setSelectedDailyDate(null);
+    setIngestionFailureRows([]);
+    setIngestionError("");
     setMappingStatusLoaded(false);
     setMappingSummary(null);
     setMappingDailyRows([]);
@@ -1237,18 +1518,28 @@ export default function IngestionPage() {
     setSelectedMappingDailyDate(null);
     setMappingFailureRows([]);
     setMappingStatusError("");
+    setPipelineStatusLoaded(false);
+    setPipelineSummary(null);
+    setPipelineDailyRows([]);
+    setPipelineFailureRows([]);
+    setSelectedPipelineDailyDate(null);
+    setPipelineStatusError("");
   }, [fetchApiList, fetchApiTemplates, selectedDbSettingId]);
 
   useEffect(() => {
-    if (activeTab !== "apiStatus") return;
-    if (ingestionStatusLoaded) return;
-    void fetchIngestionStatus();
-  }, [activeTab, fetchIngestionStatus, ingestionStatusLoaded]);
-  useEffect(() => {
-    if (activeTab !== "mappingStatus") return;
-    if (mappingStatusLoaded) return;
-    void fetchMappingStatus();
-  }, [activeTab, fetchMappingStatus, mappingStatusLoaded]);
+    if (activeTab !== "overallStatus") return;
+    if (!ingestionStatusLoaded) void fetchIngestionStatus();
+    if (!mappingStatusLoaded) void fetchMappingStatus();
+    if (!pipelineStatusLoaded) void fetchPipelineStatus();
+  }, [
+    activeTab,
+    fetchIngestionStatus,
+    fetchMappingStatus,
+    fetchPipelineStatus,
+    ingestionStatusLoaded,
+    mappingStatusLoaded,
+    pipelineStatusLoaded,
+  ]);
 
   const handleCreateSource = useCallback(async () => {
     if (
@@ -1943,6 +2234,9 @@ export default function IngestionPage() {
                 value: item.value.trim(),
                 location: item.location,
                 order: Number.isFinite(item.order) ? item.order : 0,
+                // 역할(start/end/period_type 등)을 함께 보내 편집 시 지워지지 않게 한다.
+                // (누락되면 api-config 가 param_role=null 로 저장 → KRX 기간 수집이 basDd 단건으로 깨짐)
+                role: item.role ?? null,
               }))
               .filter((item) => item.key && item.value),
           }),
@@ -2104,7 +2398,342 @@ export default function IngestionPage() {
         </div>
       </div>
 
-      {activeTab === "apiStatus" ? (
+      {activeTab === "overallStatus" ? (
+        <div className="flex flex-col gap-6">
+          <div className="rounded-3xl border border-slate-200 bg-white p-5">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <h3 className="text-base font-semibold leading-6 text-slate-900">전체 현황</h3>
+                <span className="text-xs text-slate-500">(기준 날짜: {kpiBaseDateLabel})</span>
+              </div>
+              <button
+                onClick={() => {
+                  void fetchIngestionStatus();
+                  void fetchMappingStatus();
+                  void fetchPipelineStatus();
+                }}
+                className="inline-flex h-7 items-center rounded-full border border-slate-200 px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                새로고침
+              </button>
+            </div>
+            <p className="mt-3 text-xs text-slate-500">
+              파이프라인 현황을 메인으로 먼저 보여주고, 수집/매핑 개별 실행은 아래에서 보조 지표로 확인합니다.
+            </p>
+            {ingestionLoading || mappingStatusLoading || pipelineStatusLoading ? (
+              <p className="mt-3 text-sm text-slate-500">불러오는 중...</p>
+            ) : null}
+            {ingestionError || mappingStatusError || pipelineStatusError ? (
+              <p className="mt-3 text-sm text-rose-600">
+                {[ingestionError, mappingStatusError, pipelineStatusError].filter(Boolean).join(" / ")}
+              </p>
+            ) : null}
+          </div>
+
+          <section className="order-2 space-y-4">
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-semibold text-slate-900">개별 실행 현황 (수집/매핑)</h4>
+              <div className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white p-1">
+                <button
+                  type="button"
+                  onClick={() => setStandaloneView("ingestion")}
+                  className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                    standaloneView === "ingestion"
+                      ? "bg-slate-900 text-white"
+                      : "text-slate-600 hover:bg-slate-50"
+                  }`}
+                >
+                  수집
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setStandaloneView("mapping")}
+                  className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                    standaloneView === "mapping"
+                      ? "bg-slate-900 text-white"
+                      : "text-slate-600 hover:bg-slate-50"
+                  }`}
+                >
+                  매핑
+                </button>
+              </div>
+            </div>
+            <div className="rounded-3xl border border-slate-200 bg-white p-5">
+              <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+                오늘 기준 {standaloneLabel} {formatNumber(standaloneTodaySummary.totalRuns)}건 (성공{" "}
+                {formatNumber(standaloneTodaySummary.successRuns)} / 실패{" "}
+                {formatNumber(standaloneTodaySummary.errorRuns)})
+              </p>
+              <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200 bg-white">
+                <table className="min-w-full table-fixed text-left text-xs">
+                  <thead className="bg-slate-50 text-center text-slate-600">
+                    <tr>
+                      <th className="w-[165px] px-3 py-2">일시</th>
+                      <th className="w-[90px] px-3 py-2">유형</th>
+                      <th className="px-3 py-2">대상</th>
+                      <th className="w-[90px] px-3 py-2">트리거</th>
+                      <th className="w-[90px] px-3 py-2">상태</th>
+                      <th className="w-[90px] px-3 py-2">결과</th>
+                      <th className="w-[90px] px-3 py-2">상세</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {standaloneFilteredRows.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="px-3 py-8 text-center text-slate-500">
+                          표시할 실행 이력이 없습니다.
+                        </td>
+                      </tr>
+                    ) : (
+                      standaloneFilteredRows.map((row) => (
+                        <tr key={row.id} className="border-t border-slate-100">
+                          <td className="px-3 py-2 text-slate-500">
+                            {formatDateTime24h(row.startedAt)}
+                          </td>
+                          <td className="px-3 py-2">
+                            <span className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] text-slate-600">
+                              {row.kind === "ingestion" ? "수집" : "매핑"}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2 text-slate-700">{row.targetName}</td>
+                          <td className="px-3 py-2 text-slate-600">
+                            {row.triggerType === "schedule" ? "스케줄" : "수동"}
+                          </td>
+                          <td className="px-3 py-2 text-center">
+                            <span
+                              className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                                row.status === "success"
+                                  ? "border border-emerald-300 text-emerald-700"
+                                  : "border border-rose-300 text-rose-700"
+                              }`}
+                            >
+                              {row.status === "success" ? "성공" : "실패"}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2 text-center text-slate-600">{formatNumber(row.count)}건</td>
+                          <td className="px-3 py-2 text-center">
+                            <button
+                              type="button"
+                              onClick={() => setStandaloneDetailTarget(row)}
+                              className="rounded-full border border-slate-300 px-2 py-0.5 text-[10px] font-semibold text-slate-700 hover:bg-slate-50"
+                            >
+                              상세보기
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <section className="order-1 space-y-4">
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-semibold text-slate-900">파이프라인 현황 (메인)</h4>
+              <span className="text-xs text-slate-500">수집 + 매핑 통합 실행</span>
+            </div>
+            <div className="rounded-3xl border border-slate-200 bg-white p-5">
+              <div className="grid gap-3 md:grid-cols-4">
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                  <p className="text-[11px] text-slate-500">파이프라인 실행</p>
+                  <p className="mt-1 text-lg font-semibold text-slate-900">
+                    {formatNumber(pipelineSummary?.totalRuns ?? 0)}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-3">
+                  <p className="text-[11px] text-emerald-700">파이프라인 성공</p>
+                  <p className="mt-1 text-lg font-semibold text-emerald-700">
+                    {formatNumber(pipelineSummary?.successRuns ?? 0)}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-rose-200 bg-rose-50 p-3">
+                  <p className="text-[11px] text-rose-700">파이프라인 실패</p>
+                  <p className="mt-1 text-lg font-semibold text-rose-700">
+                    {formatNumber(pipelineSummary?.errorRuns ?? 0)}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-indigo-200 bg-indigo-50 p-3">
+                  <p className="text-[11px] text-indigo-700">파이프라인 성공률</p>
+                  <p className="mt-1 text-lg font-semibold text-indigo-700">
+                    {(pipelineSummary?.successRate ?? 0).toFixed(1)}%
+                  </p>
+                </div>
+              </div>
+              <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50/60 p-3">
+                <h5 className="text-xs font-semibold text-slate-800">일별 추이 (파이프라인)</h5>
+                <div className="mt-3 grid gap-4 xl:grid-cols-2">
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                    <h6 className="text-sm font-semibold text-slate-900">일별 실행 추이 (최근 7일)</h6>
+                    <div className="mt-3 space-y-2">
+                      {displayedPipelineDailyRows.length === 0 ? (
+                        <p className="text-xs text-slate-500">실행 로그가 없습니다.</p>
+                      ) : (
+                        displayedPipelineDailyRows.map((row) => {
+                          const total = Math.max(row.totalRuns, 1);
+                          const successPercent = Math.round((row.successRuns / total) * 100);
+                          const errorPercent = Math.max(0, 100 - successPercent);
+                          const totalWidth = Math.max(
+                            4,
+                            Math.round((row.totalRuns / displayedPipelineDailyMaxRuns) * 100),
+                          );
+                          const isSelected = row.runDate === selectedPipelineDailyDate;
+                          return (
+                            <button
+                              key={`pipeline-${row.runDate}`}
+                              type="button"
+                              onClick={() => setSelectedPipelineDailyDate(row.runDate)}
+                              className={`grid w-full grid-cols-[88px_1fr_118px] items-center gap-2 rounded-lg px-1 py-1 text-left transition ${
+                                isSelected ? "bg-slate-50" : "hover:bg-slate-50"
+                              }`}
+                            >
+                              <span className="text-[11px] text-slate-600">{row.runDate.slice(5).replace("-", ".")}</span>
+                              <div className="h-2 rounded-full bg-slate-100">
+                                <div className="flex h-2 overflow-hidden rounded-full" style={{ width: `${totalWidth}%` }}>
+                                  <div className="h-2 bg-emerald-500" style={{ width: `${successPercent}%` }} />
+                                  <div className="h-2 bg-rose-400" style={{ width: `${errorPercent}%` }} />
+                                </div>
+                              </div>
+                              <span className="flex items-center justify-end gap-1">
+                                <span className="inline-flex w-8 justify-center rounded-full border border-emerald-200 bg-emerald-50 py-0.5 text-[10px] font-semibold text-emerald-700">
+                                  {row.successRuns}
+                                </span>
+                                <span className="inline-flex w-8 justify-center rounded-full border border-rose-200 bg-rose-50 py-0.5 text-[10px] font-semibold text-rose-700">
+                                  {row.errorRuns}
+                                </span>
+                              </span>
+                            </button>
+                          );
+                        })
+                      )}
+                    </div>
+                    <div className="mt-3 flex items-center gap-3 text-[11px] text-slate-500">
+                      <span className="inline-flex items-center gap-1">
+                        <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
+                        성공
+                      </span>
+                      <span className="inline-flex items-center gap-1">
+                        <span className="inline-block h-2 w-2 rounded-full bg-rose-400" />
+                        실패
+                      </span>
+                      <span>클릭하면 해당 일자 상세를 볼 수 있습니다.</span>
+                    </div>
+                  </div>
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                    <h6 className="text-sm font-semibold text-slate-900">
+                      {selectedPipelineDailyDate
+                        ? `${selectedPipelineDailyDate.replaceAll("-", ".")} 수행 상세`
+                        : "선택 일자 수행 상세"}
+                    </h6>
+                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                      <div className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-3">
+                        <p className="text-xs font-semibold text-emerald-700">
+                          성공 ({selectedPipelineDateSuccessRows.length}건)
+                        </p>
+                        <div className="mt-2 max-h-72 space-y-2 overflow-y-auto pr-1">
+                          {selectedPipelineDateSuccessRows.length === 0 ? (
+                            <p className="text-xs text-emerald-700/80">성공 데이터가 없습니다.</p>
+                          ) : (
+                            selectedPipelineDateSuccessRows.map((row) => (
+                              (() => {
+                                const stepSummary = summarizePipelineSteps(row.stepResults ?? []);
+                                return (
+                                  <div
+                                    key={`pipeline-day-success-${row.runLogId}`}
+                                    className="rounded-lg border border-emerald-200 bg-white px-2 py-1.5 text-[11px] text-slate-700"
+                                  >
+                                    <div className="flex items-center justify-between gap-2">
+                                      <p className="font-semibold text-slate-800">{row.pipelineName}</p>
+                                      <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] text-slate-600">
+                                        {row.triggerType === "schedule" ? "스케줄" : "수동"}
+                                      </span>
+                                    </div>
+                                    <p className="text-slate-500">{new Date(row.startedAt).toLocaleTimeString()}</p>
+                                    <div className="mt-1 flex items-center justify-between gap-2">
+                                      <p className="text-emerald-700">
+                                        {stepSummary.collectLabel} / {stepSummary.mapLabel}
+                                      </p>
+                                      <button
+                                        type="button"
+                                        onClick={() => setPipelineRunDetailTarget(row)}
+                                        className="shrink-0 rounded-full border border-emerald-200 bg-white px-2 py-0.5 text-[10px] font-semibold text-emerald-700 hover:bg-emerald-50"
+                                      >
+                                        상세보기
+                                      </button>
+                                    </div>
+                                  </div>
+                                );
+                              })()
+                            ))
+                          )}
+                        </div>
+                      </div>
+                      <div className="rounded-2xl border border-rose-200 bg-rose-50/50 p-3">
+                        <p className="text-xs font-semibold text-rose-700">
+                          실패/실행중 ({selectedPipelineDateErrorRows.length}건)
+                        </p>
+                        <div className="mt-2 max-h-72 space-y-2 overflow-y-auto pr-1">
+                          {selectedPipelineDateErrorRows.length === 0 ? (
+                            <p className="text-xs text-rose-700/80">실패/실행중 데이터가 없습니다.</p>
+                          ) : (
+                            selectedPipelineDateErrorRows.map((row) => (
+                              (() => {
+                                const stepSummary = summarizePipelineSteps(row.stepResults ?? []);
+                                return (
+                                  <div
+                                    key={`pipeline-day-error-${row.runLogId}`}
+                                    className={`rounded-lg border bg-white px-2 py-1.5 text-[11px] text-slate-700 ${
+                                      row.status === "running" ? "border-amber-200" : "border-rose-200"
+                                    }`}
+                                  >
+                                    <div className="flex items-center justify-between gap-2">
+                                      <p className="font-semibold text-slate-800">{row.pipelineName}</p>
+                                      <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] text-slate-600">
+                                        {row.triggerType === "schedule" ? "스케줄" : "수동"}
+                                      </span>
+                                    </div>
+                                    <p className="text-slate-500">{new Date(row.startedAt).toLocaleTimeString()}</p>
+                                    <p className={row.status === "running" ? "mt-1 text-amber-700" : "mt-1 text-rose-700"}>
+                                      {row.status === "running" ? "실행 중" : row.errorMessage || "에러 메시지 없음"}
+                                    </p>
+                                    <div className="mt-1 flex items-center justify-between gap-2">
+                                      <p className={row.status === "running" ? "text-amber-700" : "text-rose-700"}>
+                                        {stepSummary.collectLabel} / {stepSummary.mapLabel}
+                                      </p>
+                                      <button
+                                        type="button"
+                                        onClick={() => setPipelineRunDetailTarget(row)}
+                                        className={`shrink-0 rounded-full border bg-white px-2 py-0.5 text-[10px] font-semibold ${
+                                          row.status === "running"
+                                            ? "border-amber-200 text-amber-700 hover:bg-amber-50"
+                                            : "border-rose-200 text-rose-700 hover:bg-rose-50"
+                                        }`}
+                                      >
+                                        상세보기
+                                      </button>
+                                    </div>
+                                  </div>
+                                );
+                              })()
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    {!selectedPipelineDailyDate ? (
+                      <p className="mt-3 text-xs text-slate-500">좌측 일별 실행 추이에서 날짜를 선택하세요.</p>
+                    ) : null}
+                    {selectedPipelineDailyDate && selectedPipelineDateDetailRows.length === 0 ? (
+                      <p className="mt-3 text-xs text-slate-500">선택한 일자의 수행 상세 데이터가 없습니다.</p>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      ) : activeTab === "apiStatus" ? (
         <div className="space-y-4">
           <div className="rounded-3xl border border-slate-200 bg-white p-5">
             <div className="flex items-center justify-between gap-3">
@@ -2561,6 +3190,26 @@ export default function IngestionPage() {
             </div>
           </div>
         </div>
+      ) : activeTab === "dataTransform" ? (
+        <div className="space-y-4">
+          <div className="rounded-3xl border border-slate-200 bg-white p-4">
+            <div className="flex min-h-[42px] items-center">
+              <h3 className="text-base font-semibold leading-6 text-slate-900">데이터 가공</h3>
+            </div>
+          </div>
+
+          <DataTransformPanel dbSettingId={selectedDbSettingId} />
+        </div>
+      ) : activeTab === "pipeline" ? (
+        <div className="space-y-4">
+          <div className="rounded-3xl border border-slate-200 bg-white p-4">
+            <div className="flex min-h-[42px] items-center">
+              <h3 className="text-base font-semibold leading-6 text-slate-900">파이프라인 설정</h3>
+            </div>
+          </div>
+
+          <PipelinePanel dbSettingId={selectedDbSettingId} />
+        </div>
       ) : (
         <div className="space-y-4">
           <div className="rounded-3xl border border-slate-200 bg-white p-4">
@@ -2692,29 +3341,6 @@ export default function IngestionPage() {
                           테이블 설정
                         </button>
                         <button
-                          onClick={() => {
-                            const sourceItem = apiList.find(
-                              (item) => item.id === group.sourceId,
-                            );
-                            const tbl = group.targetTable ?? "";
-                            if (!tbl) return;
-                            setDataMapScopeTarget({
-                              sourceOrg: sourceItem?.provider ?? "",
-                              sourceTable: tbl.replace(/_lrd$/i, ""),
-                              apiName: group.name || "API",
-                            });
-                          }}
-                          disabled={!group.targetTable}
-                          title={
-                            group.targetTable
-                              ? "이 수집 원천으로 데이터 매핑 관리"
-                              : "먼저 테이블 매핑 후 적재가 필요합니다"
-                          }
-                          className="rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[10px] font-semibold text-sky-700 hover:bg-sky-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400"
-                        >
-                          데이터 매핑
-                        </button>
-                        <button
                           onClick={() =>
                             void handleRunGroupLoad(
                               group.sourceId,
@@ -2832,56 +3458,6 @@ export default function IngestionPage() {
         </div>
       )}
 
-      {dataMapScopeTarget ? (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-slate-950/40 p-4 sm:items-center sm:p-6">
-          <div className="flex w-full max-w-4xl flex-col rounded-3xl border border-slate-200 bg-white p-6 shadow-xl sm:max-h-[90vh]">
-            <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 pb-3">
-              <div>
-                <h3 className="text-base font-semibold text-slate-900">데이터 매핑</h3>
-                <p className="mt-1 text-xs text-slate-500">
-                  {dataMapScopeTarget.apiName} · 원천 테이블{" "}
-                  <span className="font-mono">{dataMapScopeTarget.sourceTable}</span>
-                </p>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setScopedMapBulkKey((prev) => prev + 1)}
-                  className="inline-flex h-8 items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100"
-                >
-                  전체 데이터 반영
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setScopedMapCreateKey((prev) => prev + 1)}
-                  className="inline-flex h-8 items-center rounded-full bg-slate-900 px-3 text-xs font-semibold text-white transition hover:bg-slate-800"
-                >
-                  신규 매핑 등록
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDataMapScopeTarget(null)}
-                  className="inline-flex h-8 items-center rounded-full border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
-                >
-                  닫기
-                </button>
-              </div>
-            </div>
-            <div className="mt-3 overflow-auto">
-              <DataMappingManagerModal
-                open
-                inline
-                dbSettingId={selectedDbSettingId}
-                scopeSourceTable={dataMapScopeTarget.sourceTable}
-                scopeSourceOrg={dataMapScopeTarget.sourceOrg}
-                scopeApiName={dataMapScopeTarget.apiName}
-                createRequestKey={scopedMapCreateKey}
-                bulkGenerateRequestKey={scopedMapBulkKey}
-              />
-            </div>
-          </div>
-        </div>
-      ) : null}
 
       {showApiModal ? (
         <div className="fixed inset-0 z-50 flex items-start justify-center bg-slate-950/40 p-4 sm:items-center sm:p-6">
@@ -4798,6 +5374,164 @@ export default function IngestionPage() {
                 className="rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800"
               >
                 저장
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+      {standaloneDetailTarget ? (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/40 p-6">
+          <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-5 shadow-xl">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-slate-900">개별 실행 상세</p>
+                <p className="mt-1 text-xs text-slate-500">
+                  {standaloneDetailTarget.kind === "ingestion" ? "수집" : "매핑"} /{" "}
+                  {formatDateTime24h(standaloneDetailTarget.startedAt)}
+                </p>
+              </div>
+              <button
+                onClick={() => setStandaloneDetailTarget(null)}
+                className="text-sm font-semibold text-slate-400 hover:text-slate-600"
+              >
+                ×
+              </button>
+            </div>
+            <div className="mt-4 space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
+              <p>
+                <span className="font-semibold text-slate-900">대상:</span> {standaloneDetailTarget.targetName}
+              </p>
+              <p>
+                <span className="font-semibold text-slate-900">트리거:</span>{" "}
+                {standaloneDetailTarget.triggerType === "schedule" ? "스케줄" : "수동"}
+              </p>
+              <p>
+                <span className="font-semibold text-slate-900">상태:</span>{" "}
+                {standaloneDetailTarget.status === "success" ? "성공" : "실패"}
+              </p>
+              <p>
+                <span className="font-semibold text-slate-900">
+                  {standaloneDetailTarget.kind === "ingestion" ? "적재건수" : "반영건수"}:
+                </span>{" "}
+                {formatNumber(standaloneDetailTarget.count)}건
+              </p>
+              {standaloneDetailTarget.errorMessage ? (
+                <p className="text-rose-700">
+                  <span className="font-semibold">오류:</span> {standaloneDetailTarget.errorMessage}
+                </p>
+              ) : null}
+            </div>
+            <div className="mt-4 flex justify-end">
+              <button
+                onClick={() => setStandaloneDetailTarget(null)}
+                className="rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800"
+              >
+                닫기
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+      {pipelineRunDetailTarget && pipelineRunDetail ? (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/40 p-6">
+          <div className="w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-5 shadow-xl">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-slate-900">파이프라인 수행 상세</p>
+                <p className="mt-1 text-xs text-slate-500">
+                  {pipelineRunDetailTarget.pipelineName} /{" "}
+                  {new Date(pipelineRunDetailTarget.startedAt).toLocaleString("ko-KR")}
+                </p>
+              </div>
+              <button
+                onClick={() => setPipelineRunDetailTarget(null)}
+                className="text-sm font-semibold text-slate-400 hover:text-slate-600"
+              >
+                ×
+              </button>
+            </div>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <div className="rounded-2xl border border-amber-200 bg-amber-50/60 p-3">
+                <p className="text-xs font-semibold text-amber-700">수집 단계</p>
+                <div className="mt-2 space-y-2">
+                  {pipelineRunDetail.collectSteps.length === 0 ? (
+                    <p className="text-xs text-amber-700/80">수집 단계 정보가 없습니다.</p>
+                  ) : (
+                    pipelineRunDetail.collectSteps.map((step, index) => (
+                      <div
+                        key={`pipeline-detail-collect-${index}`}
+                        className="rounded-lg border border-amber-200 bg-white px-2 py-1.5 text-[11px] text-slate-700"
+                      >
+                        <p className="font-semibold text-slate-800">
+                          상태: {pipelineStepStatusLabel(step.status)}
+                        </p>
+                        {step.message ? <p className="mt-1 text-slate-600">{step.message}</p> : null}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+              <div className="rounded-2xl border border-sky-200 bg-sky-50/60 p-3">
+                <p className="text-xs font-semibold text-sky-700">매핑 단계</p>
+                <div className="mt-2 max-h-72 space-y-2 overflow-y-auto pr-1">
+                  {pipelineRunDetail.mapSteps.length === 0 ? (
+                    <p className="text-xs text-sky-700/80">매핑 단계 정보가 없습니다.</p>
+                  ) : (
+                    pipelineRunDetail.mapSteps.map((step, index) => (
+                      <div
+                        key={`pipeline-detail-map-${index}`}
+                        className="rounded-lg border border-sky-200 bg-white px-2 py-1.5 text-[11px] text-slate-700"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="font-semibold text-slate-800">
+                            {step.mapLabel || (step.refId ? `MAP:${step.refId}` : `매핑 ${index + 1}`)} /{" "}
+                            {pipelineStepStatusLabel(step.status)}
+                          </p>
+                          {typeof step.affectedCount === "number" ? (
+                            <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] text-slate-600">
+                              {formatNumber(step.affectedCount)}건
+                            </span>
+                          ) : null}
+                        </div>
+                        {step.message ? <p className="mt-1 text-slate-600">{step.message}</p> : null}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+            {pipelineRunDetail.transformSteps.length > 0 ? (
+              <div className="mt-3 rounded-2xl border border-violet-200 bg-violet-50/60 p-3">
+                <p className="text-xs font-semibold text-violet-700">가공 단계</p>
+                <div className="mt-2 max-h-72 space-y-2 overflow-y-auto pr-1">
+                  {pipelineRunDetail.transformSteps.map((step, index) => (
+                    <div
+                      key={`pipeline-detail-transform-${index}`}
+                      className="rounded-lg border border-violet-200 bg-white px-2 py-1.5 text-[11px] text-slate-700"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="font-semibold text-slate-800">
+                          {step.mapLabel || (step.refId ? `가공:${step.refId}` : `가공 ${index + 1}`)} /{" "}
+                          {pipelineStepStatusLabel(step.status)}
+                        </p>
+                        {typeof step.affectedCount === "number" ? (
+                          <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] text-slate-600">
+                            {formatNumber(step.affectedCount)}건
+                          </span>
+                        ) : null}
+                      </div>
+                      {step.message ? <p className="mt-1 text-rose-600">{step.message}</p> : null}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+            <div className="mt-4 flex justify-end">
+              <button
+                onClick={() => setPipelineRunDetailTarget(null)}
+                className="rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800"
+              >
+                닫기
               </button>
             </div>
           </div>

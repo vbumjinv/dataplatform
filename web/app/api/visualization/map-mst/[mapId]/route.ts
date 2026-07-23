@@ -16,6 +16,8 @@ type MapPayload = {
   whereClause?: string | null;
   unitName?: string | null;
   freq?: string | null;
+  duplicateDatePolicy?: "none" | "sum" | null;
+  fillForward?: boolean | null;
   isActive?: boolean;
 };
 
@@ -31,6 +33,11 @@ const validatePayload = (payload: MapPayload) => {
   if (!isNonEmpty(payload.dateColumn)) return "날짜 컬럼(dateColumn)은 필수입니다.";
   if (!isNonEmpty(payload.valueColumn)) return "값 컬럼(valueColumn)은 필수입니다.";
   return null;
+};
+
+const normalizeDuplicateDatePolicy = (value: unknown): "none" | "sum" => {
+  const text = typeof value === "string" ? value.trim().toLowerCase() : "";
+  return text === "sum" ? "sum" : "none";
 };
 
 export async function PATCH(
@@ -90,7 +97,9 @@ export async function PATCH(
           where_clause = $10,
           unit_name = $11,
           freq = $12,
-          is_active = $13,
+          duplicate_date_policy = $13,
+          fill_forward = $14,
+          is_active = $15,
           updated_at = now()
         where map_id = $1
         returning map_id
@@ -108,6 +117,8 @@ export async function PATCH(
         payload?.whereClause?.trim() || null,
         payload?.unitName?.trim() || null,
         payload?.freq?.trim() || null,
+        normalizeDuplicateDatePolicy(payload?.duplicateDatePolicy),
+        payload?.fillForward ?? true,
         payload?.isActive ?? true,
       ],
     );

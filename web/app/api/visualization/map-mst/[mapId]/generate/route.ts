@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { canUseDb, connectWithTimeout, createDbClientFromRequest } from "../../../_lib/db";
 import { buildMapDataForMapping, fetchMappings } from "../../../_lib/mapping-query";
 import { markMapRunLogError, markMapRunLogSuccess, startMapRunLog } from "../../../_lib/map-run-log";
+import { addRunPid, beginRun, endRun } from "../../../../_shared/cancel-registry";
+
+export const mapCancelKey = (mapId: number) => `map:${mapId}`;
 
 export const runtime = "nodejs";
 
@@ -43,9 +46,17 @@ export async function POST(
   }
   const mode = payload.mode === "regenerate" ? "regenerate" : "generate";
   let runLogId: number | null = null;
+  const cancelKey = mapCancelKey(mapId);
+  beginRun(cancelKey);
 
   try {
     await connectWithTimeout(client);
+    try {
+      const pidRes = await client.query<{ pid: number }>("select pg_backend_pid() as pid");
+      addRunPid(cancelKey, pidRes.rows[0]?.pid);
+    } catch {
+      // ignore
+    }
     const mappings = await fetchMappings(client, [mapId], false);
     const mapping = mappings[0];
     if (!mapping) {
@@ -80,6 +91,7 @@ export async function POST(
     await markMapRunLogError(client, runLogId, message);
     return NextResponse.json({ ok: false, error: message }, { status: 500 });
   } finally {
+    endRun(cancelKey);
     try {
       await client.end();
     } catch {

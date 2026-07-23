@@ -1,7 +1,6 @@
 import cron, { type ScheduledTask } from "node-cron";
 import { Client } from "pg";
 import { executeApiGroupLoad } from "./load-runner";
-import { runMappingsForSourceTable } from "../visualization/_lib/mapping-query";
 
 type IngestionScheduleRow = {
   group_id: number;
@@ -119,40 +118,6 @@ const executeSchedule = async (row: IngestionScheduleRow) => {
       truncate: undefined,
       triggerType: "schedule",
     });
-
-    // 수집 스케줄 = 적재 + 데이터 매핑. 적재 성공 후, 이 그룹의 원천 테이블에
-    // 연결된 활성 데이터 매핑을 모두 이어서 생성 실행한다. (적재는 이미 성공)
-    if (lockClient) {
-      try {
-        const targetResult = await lockClient.query<{ target_table: string | null }>(
-          `select target_table from dp.api_param_group where id = $1`,
-          [row.group_id],
-        );
-        const targetTable = targetResult.rows[0]?.target_table ?? "";
-        if (targetTable) {
-          const sourceTable = targetTable.replace(/_lrd$/i, "");
-          const { ranMapIds, errors } = await runMappingsForSourceTable(
-            lockClient,
-            sourceTable,
-          );
-          if (errors.length) {
-            console.error(
-              `[ingestion-scheduler] group=${row.group_id} mapping errors:`,
-              errors,
-            );
-          } else if (ranMapIds.length) {
-            console.log(
-              `[ingestion-scheduler] group=${row.group_id} mapped ${ranMapIds.length} series`,
-            );
-          }
-        }
-      } catch (mappingError) {
-        console.error(
-          `[ingestion-scheduler] group=${row.group_id} mapping chain failed:`,
-          mappingError instanceof Error ? mappingError.message : String(mappingError),
-        );
-      }
-    }
   } catch (error) {
     // ignore execution errors in background scheduler
     console.error(

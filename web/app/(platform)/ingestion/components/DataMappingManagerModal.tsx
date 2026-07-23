@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import RunStatusModal from "./RunStatusModal";
+import SqlEditor from "./SqlEditor";
 
 type MappingTargetItem = {
   sourceOrg: string;
@@ -25,6 +27,8 @@ type MappingRow = {
   whereClause: string | null;
   unitName: string | null;
   freq: string | null;
+  duplicateDatePolicy: "none" | "sum";
+  fillForward: boolean;
   isActive: boolean;
   dataCount: number;
   dataStartDate: string | null;
@@ -74,6 +78,8 @@ const initialForm = {
   whereClause: "",
   unitName: "",
   freq: "",
+  duplicateDatePolicy: "none" as "none" | "sum",
+  fillForward: true,
   isActive: true,
 };
 
@@ -124,6 +130,7 @@ export default function DataMappingManagerModal({
   const [generateError, setGenerateError] = useState("");
   const [generateStatus, setGenerateStatus] = useState("");
   const [lastGenerateResult, setLastGenerateResult] = useState<{
+    mapId: number;
     affectedCount: number;
     startDate: string | null;
     endDate: string | null;
@@ -142,7 +149,7 @@ export default function DataMappingManagerModal({
   });
   const [generateNotice, setGenerateNotice] = useState<{
     open: boolean;
-    type: "loading" | "success" | "error";
+    type: "loading" | "success" | "error" | "cancelled";
     title: string;
     message: string;
   }>({
@@ -151,6 +158,29 @@ export default function DataMappingManagerModal({
     title: "",
     message: "",
   });
+  const [generateCancelBusy, setGenerateCancelBusy] = useState(false);
+  const generateAbortRef = useRef<AbortController | null>(null);
+  const generatingMapIdRef = useRef<number | null>(null);
+  const bulkCancelRef = useRef(false);
+
+  const cancelGenerate = async () => {
+    if (generateCancelBusy) return;
+    setGenerateCancelBusy(true);
+    bulkCancelRef.current = true;
+    try {
+      generateAbortRef.current?.abort();
+    } catch {
+      // ignore
+    }
+    const mapId = generatingMapIdRef.current;
+    if (mapId != null) {
+      try {
+        await fetch(withDbSettingQuery(`/api/visualization/map-mst/${mapId}/cancel`), { method: "POST" });
+      } catch {
+        // ignore
+      }
+    }
+  };
   const [mapScheduleTarget, setMapScheduleTarget] = useState<{
     mapId: number;
     name: string;
@@ -227,7 +257,10 @@ export default function DataMappingManagerModal({
       if (!response.ok || !payload.ok) {
         throw new Error(payload.error || "매핑 목록을 불러오지 못했습니다.");
       }
-      const items = payload.items ?? [];
+      // 데이터 가공의 출력(파생) 시리즈는 매핑 목록에서 숨긴다.
+      const items = (payload.items ?? []).filter(
+        (item) => (item.sourceOrg ?? "").toLowerCase() !== "derived",
+      );
       setMappings(items);
       setMappingsLoaded(true);
       mappingsCache.set(cacheKey, items);
@@ -380,6 +413,8 @@ export default function DataMappingManagerModal({
       whereClause: item.whereClause ?? "",
       unitName: item.unitName ?? "",
       freq: item.freq ?? "",
+      duplicateDatePolicy: item.duplicateDatePolicy ?? "none",
+      fillForward: item.fillForward ?? true,
       isActive: item.isActive,
     });
     setSelectedTargetKey(getTargetRowKey(item));
@@ -387,6 +422,7 @@ export default function DataMappingManagerModal({
     setLastGenerateResult(
       item.lastGeneratedAt
         ? {
+            mapId: item.mapId,
             affectedCount: item.dataCount,
             startDate: item.dataStartDate,
             endDate: item.dataEndDate,
@@ -412,6 +448,8 @@ export default function DataMappingManagerModal({
       whereClause: "",
       unitName: "",
       freq: "",
+      duplicateDatePolicy: "none",
+      fillForward: true,
       isActive: true,
     }));
     resetFeedback();
@@ -444,6 +482,8 @@ export default function DataMappingManagerModal({
         whereClause: form.whereClause.trim() || null,
         unitName: form.unitName.trim() || null,
         freq: form.freq.trim() || null,
+        duplicateDatePolicy: form.duplicateDatePolicy,
+        fillForward: form.fillForward,
         isActive: form.isActive,
       };
 
@@ -526,11 +566,16 @@ export default function DataMappingManagerModal({
     setGenerateBusy(true);
     setGenerateError("");
     setGenerateStatus("");
+    const controller = new AbortController();
+    generateAbortRef.current = controller;
+    generatingMapIdRef.current = mapId;
+    setGenerateCancelBusy(false);
     try {
       const response = await fetch(withDbSettingQuery(`/api/visualization/map-mst/${mapId}/generate`), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ mode }),
+        signal: controller.signal,
       });
       const payload = (await response.json()) as {
         ok?: boolean;
@@ -558,6 +603,7 @@ export default function DataMappingManagerModal({
         openActionNotice("전체 데이터 생성", successMessage, "success");
       }
       setLastGenerateResult({
+        mapId,
         affectedCount: Number(payload.affectedCount ?? 0),
         startDate: payload.startDate ?? null,
         endDate: payload.endDate ?? null,
@@ -565,19 +611,33 @@ export default function DataMappingManagerModal({
       });
       await fetchMappings();
     } catch (error) {
-      const message = error instanceof Error ? error.message : "데이터 생성에 실패했습니다.";
-      setGenerateError(message);
-      if (isIncrementalMode) {
-        setGenerateNotice({
-          open: true,
-          type: "error",
-          title: "신규 데이터 반영 실패",
-          message,
-        });
+      if (error instanceof DOMException && error.name === "AbortError") {
+        if (isIncrementalMode) {
+          setGenerateNotice({
+            open: true,
+            type: "cancelled",
+            title: "신규 데이터 반영 중단",
+            message: "중단했습니다.",
+          });
+        }
       } else {
-        openActionNotice("전체 데이터 생성", message, "error");
+        const message = error instanceof Error ? error.message : "데이터 생성에 실패했습니다.";
+        setGenerateError(message);
+        if (isIncrementalMode) {
+          setGenerateNotice({
+            open: true,
+            type: "error",
+            title: "신규 데이터 반영 실패",
+            message,
+          });
+        } else {
+          openActionNotice("전체 데이터 생성", message, "error");
+        }
       }
     } finally {
+      generateAbortRef.current = null;
+      generatingMapIdRef.current = null;
+      setGenerateCancelBusy(false);
       setGenerateBusy(false);
     }
   };
@@ -601,6 +661,8 @@ export default function DataMappingManagerModal({
     setGenerateBusy(true);
     setGenerateError("");
     setGenerateStatus("");
+    bulkCancelRef.current = false;
+    setGenerateCancelBusy(false);
     setGenerateNotice({
       open: true,
       type: "loading",
@@ -610,7 +672,12 @@ export default function DataMappingManagerModal({
 
     let successCount = 0;
     let failedCount = 0;
+    let cancelled = false;
     for (let index = 0; index < targetMappings.length; index += 1) {
+      if (bulkCancelRef.current) {
+        cancelled = true;
+        break;
+      }
       const item = targetMappings[index];
       setGenerateNotice({
         open: true,
@@ -618,18 +685,26 @@ export default function DataMappingManagerModal({
         title: "전체 데이터 반영",
         message: `[${index + 1}/${targetMappings.length}] ${item.seriesName} 처리 중...`,
       });
+      const controller = new AbortController();
+      generateAbortRef.current = controller;
+      generatingMapIdRef.current = item.mapId;
       try {
         const response = await fetch(withDbSettingQuery(`/api/visualization/map-mst/${item.mapId}/generate`), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ mode: "generate" }),
+          signal: controller.signal,
         });
         const payload = (await response.json()) as { ok?: boolean; error?: string };
         if (!response.ok || !payload.ok) {
           throw new Error(payload.error || "데이터 생성에 실패했습니다.");
         }
         successCount += 1;
-      } catch {
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          cancelled = true;
+          break;
+        }
         failedCount += 1;
       }
       setGenerateNotice({
@@ -640,8 +715,20 @@ export default function DataMappingManagerModal({
       });
     }
 
+    generateAbortRef.current = null;
+    generatingMapIdRef.current = null;
+    setGenerateCancelBusy(false);
     await fetchMappings();
     setGenerateBusy(false);
+    if (cancelled) {
+      setGenerateNotice({
+        open: true,
+        type: "cancelled",
+        title: "전체 데이터 반영 중단",
+        message: `중단했습니다. (성공 ${successCount} · 실패 ${failedCount})`,
+      });
+      return;
+    }
     if (failedCount === 0) {
       setGenerateNotice({
         open: true,
@@ -1097,13 +1184,49 @@ export default function DataMappingManagerModal({
                     </div>
 
                     <label className="space-y-1">
-                      <span className="text-slate-600">필터 조건 (SQL WHERE)</span>
-                      <textarea
+                      <span className="text-slate-600">조건 처리 방식</span>
+                      <select
+                        value={form.duplicateDatePolicy}
+                        onChange={(e) =>
+                          setForm((prev) => ({
+                            ...prev,
+                            duplicateDatePolicy: e.target.value === "sum" ? "sum" : "none",
+                          }))
+                        }
+                        className="w-full rounded-lg border border-slate-200 px-2 py-2"
+                      >
+                        <option value="none">단순 조건 (1개)</option>
+                        <option value="sum">복합 조건 집계 (여러 건 합산)</option>
+                      </select>
+                    </label>
+
+                    <label className="flex items-start gap-2">
+                      <input
+                        type="checkbox"
+                        checked={form.fillForward}
+                        onChange={(e) => setForm((prev) => ({ ...prev, fillForward: e.target.checked }))}
+                        className="mt-0.5"
+                      />
+                      <span className="text-slate-600">
+                        빈 날짜 채우기 (직전 값)
+                        <span className="mt-0.5 block text-[11px] text-slate-400">
+                          일별(주기 D) 데이터에서 주말·공휴일 등 빠진 날짜를 직전 영업일 값으로 채웁니다.
+                        </span>
+                      </span>
+                    </label>
+
+                    <label className="space-y-1">
+                      <span className="text-slate-600">
+                        필터 조건 (SQL WHERE)
+                        <span className="mt-0.5 block text-[11px] text-slate-400">
+                          <code className="rounded bg-slate-100 px-1">--</code> 로 시작하면 그 줄은 주석(초록색)으로 처리됩니다.
+                        </span>
+                      </span>
+                      <SqlEditor
                         value={form.whereClause}
-                        onChange={(e) => setForm((prev) => ({ ...prev, whereClause: e.target.value }))}
-                        rows={2}
+                        onChange={(next) => setForm((prev) => ({ ...prev, whereClause: next }))}
+                        rows={6}
                         placeholder="예: series_key = '802Y001'"
-                        className="w-full rounded-lg border border-slate-200 px-2 py-2 font-mono"
                       />
                     </label>
 
@@ -1195,6 +1318,7 @@ export default function DataMappingManagerModal({
                     {lastGenerateResult ? (
                       <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
                         <p className="font-semibold text-slate-900">최근 생성 결과</p>
+                        <p className="mt-1">map_id: {lastGenerateResult.mapId}</p>
                         <p className="mt-1">생성 건수: {lastGenerateResult.affectedCount.toLocaleString()}건</p>
                         <p>
                           생성 구간: {lastGenerateResult.startDate ?? "-"} ~ {lastGenerateResult.endDate ?? "-"}
@@ -1238,41 +1362,19 @@ export default function DataMappingManagerModal({
           </div>
         </div>
       ) : null}
-      {generateNotice.open ? (
-        <div className="fixed inset-0 z-[96] flex items-center justify-center bg-slate-900/45 p-4">
-          <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-5 shadow-xl">
-            {generateNotice.type === "loading" ? (
-              <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-slate-300 border-t-slate-800" />
-            ) : (
-              <div
-                className={`mx-auto flex h-8 w-8 items-center justify-center rounded-full text-base font-bold ${
-                  generateNotice.type === "success"
-                    ? "bg-emerald-100 text-emerald-700"
-                    : "bg-rose-100 text-rose-700"
-                }`}
-              >
-                {generateNotice.type === "success" ? "✓" : "!"}
-              </div>
-            )}
-            <p className="mt-4 text-center text-base font-semibold text-slate-900">{generateNotice.title}</p>
-            <p className="mt-1 text-center text-xs text-slate-600">{generateNoticeMainMessage}</p>
-            {generateNoticeProgressText ? (
-              <p className="mt-2 text-center text-[11px] text-slate-500">{generateNoticeProgressText}</p>
-            ) : null}
-            {generateNotice.type !== "loading" ? (
-              <div className="mt-4 flex justify-end">
-                <button
-                  type="button"
-                  onClick={() => setGenerateNotice((prev) => ({ ...prev, open: false }))}
-                  className="rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800"
-                >
-                  확인
-                </button>
-              </div>
-            ) : null}
-          </div>
-        </div>
-      ) : null}
+      <RunStatusModal
+        open={generateNotice.open}
+        state={generateNotice.type}
+        title={generateNotice.title}
+        message={generateNoticeMainMessage}
+        subMessage={generateNoticeProgressText || undefined}
+        onConfirm={() => setGenerateNotice((prev) => ({ ...prev, open: false }))}
+        loadingAction={{
+          label: generateCancelBusy ? "중단 중…" : "닫기(중단)",
+          onClick: cancelGenerate,
+          disabled: generateCancelBusy,
+        }}
+      />
       {mapScheduleTarget ? (
         <div className="fixed inset-0 z-[97] flex items-center justify-center bg-slate-900/45 p-4">
           <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-xl">
