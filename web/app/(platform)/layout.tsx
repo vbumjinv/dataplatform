@@ -130,12 +130,14 @@ export default async function PlatformLayout({
               <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
                 {session.role}
               </span>
-              <Link
+              {/* 일반 <a> 로 둔다. next/link 로 두면 프로덕션에서 자동 프리페치되어
+                  페이지 진입만 해도 로그아웃 GET 이 호출돼 세션이 지워진다. */}
+              <a
                 href="/api/auth/logout"
                 className="rounded-full border border-rose-200 px-3 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-50"
               >
                 로그아웃
-              </Link>
+              </a>
             </div>
           </header>
           <main className="flex-1 px-6 py-6">{children}</main>
