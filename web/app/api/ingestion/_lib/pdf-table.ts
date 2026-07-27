@@ -4,7 +4,9 @@
 //  - 최신월(보고월) 금액 = 행에서 "마지막 비괄호 숫자".
 //  - '전체/합계' 행은 표의 끝 표시 → 제외하고 중단.
 // 품목 수는 PDF 마다 다를 수 있으므로 순번 행을 동적으로 모두 수집한다.
-import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs";
+// pdfjs-dist 는 로드 시 DOMMatrix 등 브라우저 API 를 참조하므로 top-level import 하면
+// next build 의 page-data 수집 단계(Node 컨텍스트)에서 크래시한다. 실제 사용 시점에
+// 동적 import 하여 요청 처리 중에만 로드되도록 한다.
 
 export type ItemTradeRow = { item: string; obsValue: number };
 export type ItemTradeParseResult = { items: ItemTradeRow[]; note: string | null };
@@ -18,6 +20,7 @@ const TOTAL_LABELS = ["전체", "합계", "총계"];
 type TextCell = { x: number; y: number; str: string };
 
 const loadCells = async (buffer: Buffer): Promise<TextCell[][]> => {
+  const { getDocument } = await import("pdfjs-dist/legacy/build/pdf.mjs");
   const loadingTask = getDocument({
     data: new Uint8Array(buffer),
     useSystemFonts: true,
