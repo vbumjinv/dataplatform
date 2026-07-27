@@ -821,6 +821,7 @@ export async function PATCH(request: Request) {
         encodeMode: item.encodeMode?.trim() || "encode",
         role: item.role?.trim() || null,
       }));
+    const statCodeParam = params.find((item) => item.key === "statCode");
 
     if (params.length === 0) {
       await client.query("rollback");

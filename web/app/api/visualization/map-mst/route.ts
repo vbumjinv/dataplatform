@@ -22,7 +22,7 @@ type MapPayload = {
 };
 
 const hasScheduleColumns = async (client: { query: (text: string) => Promise<{ rows: Array<{ column_name: string }> }> }) => {
-  const result = await client.query<{ column_name: string }>(
+  const result = await client.query(
     `
       select c.column_name
       from information_schema.columns c

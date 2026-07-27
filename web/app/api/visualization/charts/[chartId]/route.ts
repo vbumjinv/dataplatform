@@ -94,7 +94,7 @@ const normalizeReferenceLines = (value: unknown) => {
         displayOrder: Number.isFinite(Number(row.displayOrder)) ? Number(row.displayOrder) : index,
       };
     })
-    .filter((item): item is Record<string, unknown> => item !== null);
+    .filter((item): item is NonNullable<typeof item> => item !== null);
 };
 
 export async function GET(
