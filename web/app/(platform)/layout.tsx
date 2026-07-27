@@ -20,6 +20,11 @@ const navItems = [
     description: "DB 연결 정보 저장 및 관리",
   },
   {
+    title: "AI 데이터 에이전트",
+    href: "/data-agent",
+    description: "자연어로 수집·매핑 설정/실행",
+  },
+  {
     title: "데이터 수집",
     href: "/ingestion",
     description: "소스 연결, 파이프라인, 수집 작업",
