@@ -3,6 +3,7 @@ import { compare } from "bcryptjs";
 import { canUseDb, connectWithTimeout, createDbClient } from "@/app/api/ai-forecast/_lib/db";
 import {
   AUTH_COOKIE_NAME,
+  AUTH_COOKIE_SECURE,
   AUTH_SESSION_MAX_AGE_SECONDS,
   createSessionToken,
 } from "@/lib/auth-session";
@@ -194,7 +195,7 @@ export async function POST(request: Request) {
       value: token,
       httpOnly: true,
       sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
+      secure: AUTH_COOKIE_SECURE,
       path: "/",
       maxAge: AUTH_SESSION_MAX_AGE_SECONDS,
     });

@@ -23,6 +23,15 @@ const getSessionMaxAgeSeconds = () => {
 };
 export const AUTH_SESSION_MAX_AGE_SECONDS = getSessionMaxAgeSeconds();
 
+// Secure 쿠키는 HTTPS 에서만 브라우저에 저장된다. HTTP(예: 사내망 TLS 미적용)로
+// 서비스하면 브라우저가 Secure 쿠키를 버려 로그인 직후 세션이 사라진다.
+// 기본은 production 에서 secure=true 이되, HTTP 로 띄우는 서버는
+// AUTH_ALLOW_INSECURE_COOKIE=true 로 끌 수 있게 한다.
+export const AUTH_COOKIE_SECURE =
+  process.env.NODE_ENV === "production" &&
+  String(process.env.AUTH_ALLOW_INSECURE_COOKIE ?? "false").toLowerCase() !==
+    "true";
+
 const base64UrlEncode = (raw: string) =>
   Buffer.from(raw, "utf8").toString("base64url");
 
