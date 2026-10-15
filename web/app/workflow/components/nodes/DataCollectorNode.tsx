@@ -39,7 +39,8 @@ export function DataCollectorNode({ id, data, selected }: NodeProps<DataCollecto
   const showFileSaveHandle = data.kind === "fileSave";
   const showDbQueryHandles = data.kind === "db";
   const showExcelHandle = data.kind === "excel";
-  const showApiHandle = data.kind === "api";
+  const showApiHandle = data.kind === "api" || data.kind === "bok";
+  const showFilterHandles = data.kind === "filter";
 
   return (
     <div
@@ -53,7 +54,7 @@ export function DataCollectorNode({ id, data, selected }: NodeProps<DataCollecto
       }}
       title={data.label ?? "Data Collector"}
     >
-      {showDbSaveHandles || showDbQueryHandles || showFileSaveHandle ? (
+      {showDbSaveHandles || showDbQueryHandles || showFileSaveHandle || showFilterHandles ? (
         <Handle
           type="target"
           position={Position.Left}
@@ -66,7 +67,8 @@ export function DataCollectorNode({ id, data, selected }: NodeProps<DataCollecto
       showDbSaveHandles ||
       showDbQueryHandles ||
       showExcelHandle ||
-      showApiHandle ? (
+      showApiHandle ||
+      showFilterHandles ? (
         <Handle
           type="source"
           position={Position.Right}

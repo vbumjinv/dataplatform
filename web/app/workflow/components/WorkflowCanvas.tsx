@@ -245,7 +245,9 @@ export function WorkflowCanvas({
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         edgesUpdatable
+        defaultViewport={{ x: 0, y: 0, zoom: 0.9 }}
         fitView
+        fitViewOptions={{ maxZoom: 0.9, padding: 0.2 }}
         onNodeClick={(_, node) => onSelectNode(node.id)}
         onNodeDoubleClick={(_, node) => onNodeDoubleClick(node.id)}
         onPaneClick={onPaneClick}
@@ -361,10 +363,16 @@ export function WorkflowCanvas({
                   </tbody>
                 </table>
               </div>
-            ) : selectedNode.data.kind === "api" ? (
+            ) : selectedNode.data.kind === "api" ||
+              selectedNode.data.kind === "bok" ||
+              selectedNode.data.kind === "filter" ? (
               (() => {
                 const table = buildTabularFromApi(selectedNode.data.apiResult);
-                if (table.header.length === 0 || table.dataRows.length === 0) {
+                const shownRows =
+                  selectedNode.data.kind === "filter"
+                    ? table.dataRows.slice(0, 20)
+                    : table.dataRows;
+                if (table.header.length === 0 || shownRows.length === 0) {
                   return selectedNode.data.preview ? (
                     <pre className="max-h-40 overflow-auto rounded-xl bg-slate-50 px-3 py-2 text-[11px] leading-4 text-slate-700">
                       {selectedNode.data.preview}
@@ -389,7 +397,7 @@ export function WorkflowCanvas({
                         </tr>
                       </thead>
                       <tbody>
-                        {table.dataRows.map((row, rowIndex) => (
+                        {shownRows.map((row, rowIndex) => (
                           <tr key={`output-api-${rowIndex}`} className="bg-white">
                             {row.map((cell, cellIndex) => (
                               <td

@@ -829,9 +829,9 @@ export default function DataTransformPanel({ dbSettingId }: { dbSettingId: strin
                         />
                       </label>
                       <p className="flex-1 text-[11px] text-slate-400">
-                        주기(일·월·년)와 무관하게 <b>최근 N개 관측치</b>의 평균을 냅니다.
-                        월 데이터면 60 = 60개월, 일 데이터면 60 = 60일. 윈도우가 다 차기 전(앞쪽 N−1개)은
-                        결과에서 제외됩니다. 출력 주기는 입력과 동일합니다.
+                        주기(일·월·년)와 무관하게 <b>최근 N개 행</b>의 평균을 냅니다.
+                        월 데이터면 60 = 60개월, 일 데이터면 60 = 60일입니다. 주말·공휴일처럼 직전 값으로
+                        채운 날도 포함합니다. 윈도우가 다 차기 전(앞쪽 N−1개)은 결과에서 제외됩니다.
                       </p>
                     </div>
                   ) : null}

@@ -9,6 +9,9 @@ import type {
   WorkflowState,
 } from "@/app/workflow/types";
 import { getSchedule } from "./storage";
+import { fetchBokStatistic } from "@/app/workflow/lib/bok";
+import { applyFilterRows, emptyFilterOptions } from "@/app/workflow/lib/filter-rows";
+import { rowsFromPayload, rowsFromTabular } from "@/app/workflow/lib/source-rows";
 
 type TabularData = {
   header: string[];
@@ -516,6 +519,24 @@ const runNode = async (
     const tabular = buildExcelTabular(rows, excelOptions);
     return { ok: true, tabular };
   }
+  if (node.data.kind === "bok") {
+    const options = node.data.bokOptions;
+    if (
+      !options?.apiKey?.trim() ||
+      !options.statCode.trim() ||
+      !options.startDate.trim() ||
+      !options.endDate.trim()
+    ) {
+      return { ok: false, error: "한국은행 API 설정을 먼저 입력하세요." };
+    }
+    const fetched = await fetchBokStatistic(options);
+    if (!fetched.ok) return { ok: false, error: fetched.error };
+    return {
+      ok: true,
+      apiResult: fetched.rows,
+      tabular: buildTabularFromApi(fetched.rows),
+    };
+  }
   if (node.data.kind === "api") {
     const payload = await fetchApiData(node.data.config);
     return {
@@ -536,6 +557,53 @@ const runNode = async (
     });
     return { ok: true, dbRows: rows, dbColumns: columns };
   }
+  if (node.data.kind === "filter") {
+    const incoming = edges.filter((edge) => edge.target === node.id);
+    const sourceEdge = incoming.find((edge) => {
+      const item = nodes.find((candidate) => candidate.id === edge.source);
+      return item?.data.kind !== "dbSink";
+    });
+    const sourceNode = sourceEdge
+      ? nodes.find((item) => item.id === sourceEdge.source)
+      : null;
+    if (!sourceNode) return { ok: false, error: "입력 노드를 연결하세요." };
+    const sourceResult = results.get(sourceNode.id);
+    if (!sourceResult?.ok) {
+      return { ok: false, error: sourceResult?.error ?? "앞 노드를 먼저 실행하세요." };
+    }
+    const sourceRows =
+      sourceNode.data.kind === "db"
+        ? rowsFromTabular(
+            sourceResult.dbColumns?.length
+              ? sourceResult.dbColumns.map((column) => column.name)
+              : Object.keys(sourceResult.dbRows?.[0] ?? {}),
+            (sourceResult.dbRows ?? []).map((row) =>
+              (sourceResult.dbColumns?.length
+                ? sourceResult.dbColumns.map((column) => column.name)
+                : Object.keys(sourceResult.dbRows?.[0] ?? {})
+              ).map((key) => row[key] ?? null),
+            ),
+          )
+        : sourceResult.tabular
+          ? rowsFromTabular(sourceResult.tabular.header, sourceResult.tabular.dataRows)
+          : rowsFromPayload(sourceResult.apiResult);
+    if (sourceRows.rows.length === 0) {
+      return { ok: false, error: "앞 노드를 먼저 실행하세요." };
+    }
+    const filter = node.data.filterOptions ?? emptyFilterOptions();
+    if (filter.selectedColumns.length === 0) {
+      return { ok: false, error: "표시할 컬럼을 선택해주세요." };
+    }
+    const filtered = applyFilterRows(sourceRows.rows, { ...filter, columnsChosen: true });
+    if (filtered.length === 0) {
+      return { ok: false, error: "조건에 맞는 데이터가 없습니다." };
+    }
+    return {
+      ok: true,
+      apiResult: filtered,
+      tabular: buildTabularFromApi(filtered),
+    };
+  }
   if (node.data.kind === "dbSave") {
     const storageOptions = node.data.storageOptions;
     if (!storageOptions?.tableName) {
@@ -553,7 +621,11 @@ const runNode = async (
       return { ok: false, error: sourceResult?.error ?? "입력 노드 실행 실패" };
     }
     let tabular: TabularData | undefined;
-    if (sourceNode.data.kind === "api") {
+    if (
+      sourceNode.data.kind === "api" ||
+      sourceNode.data.kind === "bok" ||
+      sourceNode.data.kind === "filter"
+    ) {
       tabular = sourceResult.tabular ?? buildTabularFromApi(sourceResult.apiResult);
     } else if (sourceNode.data.kind === "db") {
       tabular = tabularFromDbRows(
@@ -636,7 +708,11 @@ const runNode = async (
       const dataRows = rows.map((row) => headers.map((key) => row[key] ?? null));
       csvRows = includeHeader ? [headers, ...dataRows] : dataRows;
       jsonPayload = rows;
-    } else if (sourceNode.data.kind === "api") {
+    } else if (
+      sourceNode.data.kind === "api" ||
+      sourceNode.data.kind === "bok" ||
+      sourceNode.data.kind === "filter"
+    ) {
       const apiPayload = sourceResult.apiResult ?? null;
       if (apiPayload == null) {
         return { ok: false, error: "API 응답 데이터가 없어 저장할 수 없습니다." };

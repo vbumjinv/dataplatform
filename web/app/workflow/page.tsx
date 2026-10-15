@@ -18,10 +18,13 @@ import { NodeSidebar } from "./components/NodeSidebar";
 import { WorkflowCanvas } from "./components/WorkflowCanvas";
 import { WorkflowProvider } from "./components/WorkflowContext";
 import { NodeConfigModal } from "./components/NodeConfigModal";
+import { applyFilterRows, emptyFilterOptions } from "./lib/filter-rows";
+import { readNodeRows } from "./lib/source-rows";
 import type {
   DataCollectorConfig,
   DataCollectorData,
   DataCollectorNode,
+  FilterNodeOptions,
   IngestionKind,
   StorageKind,
   WorkflowState,
@@ -90,6 +93,8 @@ const defaultConfig: DataCollectorConfig = {
 
 const ingestionLabels: Record<IngestionKind, string> = {
   excel: "엑셀 업로드",
+  bok: "한국은행",
+  filter: "데이터 필터",
   api: "API 수집",
   db: "DB 조회",
 };
@@ -106,8 +111,19 @@ const dataStorageLabels: Record<StorageKind, string> = {
 const defaultEndpointByKind: Record<IngestionKind, string> = {
   api: defaultConfig.endpoint,
   excel: "",
+  bok: "",
+  filter: "",
   db: "/api/mock/db",
 };
+
+const emptyBokOptions = () => ({
+  apiKey: "",
+  statCode: "",
+  statName: "",
+  cycle: "M" as const,
+  startDate: "",
+  endDate: "",
+});
 
 const parseJsonSafe = (value: string) => {
   try {
@@ -685,6 +701,8 @@ const createIngestionNode = (
             sql: "",
           }
         : undefined,
+    bokOptions: kind === "bok" ? emptyBokOptions() : undefined,
+    filterOptions: kind === "filter" ? emptyFilterOptions() : undefined,
     config: { ...defaultConfig, endpoint: defaultEndpointByKind[kind] },
   },
 });
@@ -853,6 +871,16 @@ function WorkflowPageInner() {
     const sourceNode = nodes.find((node) => node.id === inputEdge.source);
     return sourceNode ?? null;
   }, [configNode, edges, nodes]);
+  const connectedSourceNodeForFilter = useMemo(() => {
+    if (!configNode || configNode.data.kind !== "filter") return null;
+    const inputEdge = edges.find((item) => {
+      if (item.target !== configNode.id) return false;
+      const sourceNode = nodes.find((node) => node.id === item.source);
+      return sourceNode?.data.kind !== "dbSink";
+    });
+    if (!inputEdge) return null;
+    return nodes.find((node) => node.id === inputEdge.source) ?? null;
+  }, [configNode, edges, nodes]);
   const connectedSourceNodeForFileSave = useMemo(() => {
     if (!configNode || configNode.data.kind !== "fileSave") return null;
     const inputEdge = edges.find((item) => item.target === configNode.id);
@@ -886,7 +914,13 @@ function WorkflowPageInner() {
       }
       return [];
     }
-    if (sourceNode.data.kind === "api") {
+    if (sourceNode.data.kind === "filter") {
+      const selected = sourceNode.data.filterOptions?.selectedColumns ?? [];
+      if (selected.length > 0) return selected;
+      const tabular = buildTabularFromApi(sourceNode.data.apiResult);
+      return tabular.header;
+    }
+    if (sourceNode.data.kind === "api" || sourceNode.data.kind === "bok") {
       const parsed = sourceNode.data.apiResult ?? parseJsonSafe(sourceNode.data.preview ?? "");
       const tabular = buildTabularFromApi(parsed);
       return tabular.header;
@@ -979,6 +1013,36 @@ function WorkflowPageInner() {
       });
     },
     [setNodes],
+  );
+
+  const handleChangeFilterOptions = useCallback(
+    (nodeId: string, options: FilterNodeOptions) => {
+      updateNodeData(nodeId, (prev) => ({
+        ...prev,
+        filterOptions: options,
+      }));
+    },
+    [updateNodeData],
+  );
+
+  const handleChangeBokOptions = useCallback(
+    (
+      nodeId: string,
+      options: {
+        apiKey: string;
+        statCode: string;
+        statName: string;
+        cycle: "D" | "M" | "Q" | "S" | "A";
+        startDate: string;
+        endDate: string;
+      },
+    ) => {
+      updateNodeData(nodeId, (prev) => ({
+        ...prev,
+        bokOptions: options,
+      }));
+    },
+    [updateNodeData],
   );
 
   const handleChangeConfig = useCallback(
@@ -2015,7 +2079,11 @@ function WorkflowPageInner() {
             if (format === "xls") {
               return;
             }
-          } else if (sourceNode.data.kind === "api") {
+          } else if (
+            sourceNode.data.kind === "api" ||
+            sourceNode.data.kind === "bok" ||
+            sourceNode.data.kind === "filter"
+          ) {
             const apiPayload =
               sourceNode.data.apiResult ?? parseJsonSafe(sourceNode.data.preview ?? "");
             if (apiPayload == null) {
@@ -2432,7 +2500,11 @@ function WorkflowPageInner() {
           dataRows = rows.map((row) =>
             header.map((key) => row[key] ?? null),
           );
-        } else if (sourceNode.data.kind === "api") {
+        } else if (
+          sourceNode.data.kind === "api" ||
+          sourceNode.data.kind === "bok" ||
+          sourceNode.data.kind === "filter"
+        ) {
           const apiPayload =
             sourceNode.data.apiResult ?? parseJsonSafe(sourceNode.data.preview ?? "");
           if (apiPayload == null) {
@@ -2826,6 +2898,140 @@ function WorkflowPageInner() {
         return;
       }
 
+      if (target.data.kind === "filter") {
+        const sourceNode = getSourceNodeForTarget(
+          nodeId,
+          (node) => node.data.kind !== "dbSink",
+        );
+        const failFilter = (message: string) => {
+          updateNodeData(nodeId, (prev) => ({
+            ...prev,
+            status: "error",
+            error: message,
+            preview: "",
+            apiResult: undefined,
+            lastRun: new Date().toISOString(),
+          }));
+          showErrorPopup(message, "데이터 필터");
+        };
+        if (!sourceNode) {
+          failFilter("입력 노드를 연결하세요.");
+          return;
+        }
+        const sourceRows = readNodeRows(sourceNode);
+        if (sourceRows.rows.length === 0) {
+          failFilter("앞 노드를 먼저 실행하세요.");
+          return;
+        }
+        const filter = target.data.filterOptions ?? emptyFilterOptions();
+        if (filter.selectedColumns.length === 0) {
+          failFilter("표시할 컬럼을 선택해주세요.");
+          return;
+        }
+        const filtered = applyFilterRows(sourceRows.rows, {
+          ...filter,
+          columnsChosen: true,
+        });
+        if (filtered.length === 0) {
+          failFilter("조건에 맞는 데이터가 없습니다.");
+          return;
+        }
+        const preview = JSON.stringify(
+          {
+            message: `${filtered.length.toLocaleString("ko-KR")}건이 남았습니다.`,
+            total: filtered.length,
+            sample: filtered.slice(0, 20),
+          },
+          null,
+          2,
+        );
+        updateNodeData(nodeId, (prev) => ({
+          ...prev,
+          status: "success",
+          error: undefined,
+          preview,
+          apiResult: filtered,
+          lastRun: new Date().toISOString(),
+        }));
+        return;
+      }
+
+      if (target.data.kind === "bok") {
+        const options = target.data.bokOptions ?? emptyBokOptions();
+        if (
+          !options.apiKey.trim() ||
+          !options.statCode.trim() ||
+          !options.cycle ||
+          !options.startDate.trim() ||
+          !options.endDate.trim()
+        ) {
+          updateNodeData(nodeId, (prev) => ({
+            ...prev,
+            status: "error",
+            error: "API KEY, 통계코드, 주기, 시작일, 종료일을 입력해주세요.",
+            lastRun: new Date().toISOString(),
+            preview: "",
+          }));
+          showErrorPopup(
+            "API KEY, 통계코드, 주기, 시작일, 종료일을 입력해주세요.",
+            "한국은행 API",
+          );
+          return;
+        }
+
+        updateNodeData(nodeId, (prev) => ({
+          ...prev,
+          status: "running",
+          error: undefined,
+        }));
+
+        try {
+          const response = await fetch("/api/workflow/bok", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(options),
+          });
+          const payload = (await response.json()) as {
+            ok?: boolean;
+            error?: string;
+            rows?: Array<Record<string, string>>;
+            total?: number;
+          };
+          if (!response.ok || !payload.ok || !payload.rows) {
+            throw new Error(payload.error || "한국은행 API 호출에 실패했습니다.");
+          }
+          const preview = JSON.stringify(
+            {
+              message: `${payload.rows.length.toLocaleString("ko-KR")}건을 가져왔습니다.`,
+              total: payload.total ?? payload.rows.length,
+              sample: payload.rows.slice(0, 20),
+            },
+            null,
+            2,
+          );
+          updateNodeData(nodeId, (prev) => ({
+            ...prev,
+            status: "success",
+            error: undefined,
+            preview,
+            apiResult: payload.rows,
+            lastRun: new Date().toISOString(),
+          }));
+        } catch (error) {
+          const message =
+            error instanceof Error ? error.message : "한국은행 API 호출에 실패했습니다.";
+          updateNodeData(nodeId, (prev) => ({
+            ...prev,
+            status: "error",
+            error: message,
+            preview: "",
+            lastRun: new Date().toISOString(),
+          }));
+          showErrorPopup(message, "한국은행 API");
+        }
+        return;
+      }
+
       if (target.data.kind === "api") {
         const apiConfig = target.data.config;
         if (apiConfig.apiListMode) {
@@ -2903,19 +3109,6 @@ function WorkflowPageInner() {
 
       if (target.data.kind === "api" && target.data.config.apiListMode) {
         try {
-          const refreshResponse = await fetch("/api/ingestion/api-config", {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ updateTarget: "refreshPeriods" }),
-          });
-          const refreshPayload = (await refreshResponse.json()) as {
-            ok?: boolean;
-            error?: string;
-          };
-          if (!refreshResponse.ok || !refreshPayload.ok) {
-            throw new Error(refreshPayload.error || "기간 값 갱신에 실패했습니다.");
-          }
-
           const listResponse = await fetch("/api/ingestion/api-config");
           const listPayload = (await listResponse.json()) as {
             ok?: boolean;
@@ -2940,6 +3133,25 @@ function WorkflowPageInner() {
             if (!source.enabled) continue;
             for (const group of source.groups) {
               if (!group.params || group.params.length === 0) continue;
+              const refreshResponse = await fetch("/api/ingestion/api-config", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  updateTarget: "refreshPeriods",
+                  sourceId: source.id,
+                  groupId: group.id,
+                }),
+              });
+              const refreshPayload = (await refreshResponse.json()) as {
+                ok?: boolean;
+                error?: string;
+              };
+              if (!refreshResponse.ok || !refreshPayload.ok) {
+                throw new Error(
+                  refreshPayload.error ||
+                    `${source.name} / ${group.name ?? group.id} 기간 값 갱신에 실패했습니다.`,
+                );
+              }
               const url = buildApiUrlFromGroup(source, group);
               const requestUrl = `/api/collect?url=${encodeURIComponent(
                 url,
@@ -4684,6 +4896,9 @@ function WorkflowPageInner() {
         sourceColumnsForDbSave={sourceColumnsForDbSaveMemo}
         onClose={() => setConfigNodeId(null)}
         onChangeConfig={handleChangeConfig}
+        onChangeBokOptions={handleChangeBokOptions}
+        onChangeFilterOptions={handleChangeFilterOptions}
+        connectedSourceNode={connectedSourceNodeForFilter}
         onRun={runNode}
         onUploadExcel={handleExcelUpload}
         onRemoveExcelFile={(nodeId) => {

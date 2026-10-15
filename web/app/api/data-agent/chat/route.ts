@@ -7,6 +7,10 @@ import {
   insertMessage,
   withChatDb,
 } from "@/app/api/ai-forecast-agent/_lib/chat-db";
+import {
+  DATA_READINESS_WORKER_ID,
+  WORKER_CONTRACT_VERSION,
+} from "@/app/api/ai-orchestrator/_lib/worker-contract";
 import { requireAdminSession } from "../_lib/auth";
 import {
   OLLAMA_MODEL,
@@ -15,7 +19,8 @@ import {
   type OpenAiMessage,
 } from "../_lib/llm";
 import { SYSTEM_PROMPT } from "../_lib/system-prompt";
-import { runToolLoop } from "../_lib/tool-loop";
+import { dataReadinessAnswer } from "../_lib/worker";
+import { runDataAgentSessionWorker } from "../_lib/session-worker";
 
 export const runtime = "nodejs";
 
@@ -96,9 +101,22 @@ export async function POST(request: Request) {
           sessionId,
           role: "assistant",
           content: text,
-          metadata: { app: "data-agent" },
+          metadata: {
+            app: "data-agent",
+            workerId: DATA_READINESS_WORKER_ID,
+            contractVersion: WORKER_CONTRACT_VERSION,
+          },
         });
-        return NextResponse.json({ ok: true, sessionId, mode: "answer", text });
+        const workerResponse = dataReadinessAnswer(text);
+        return NextResponse.json({
+          ok: true,
+          sessionId,
+          mode: "answer",
+          text,
+          workerId: DATA_READINESS_WORKER_ID,
+          contractVersion: WORKER_CONTRACT_VERSION,
+          workerResponse,
+        });
       }
 
       const model =
@@ -108,22 +126,25 @@ export async function POST(request: Request) {
         ...priorMsgs,
       ];
 
-      const result = await runToolLoop({
+      const workerResponse = await runDataAgentSessionWorker({
         model,
         messages,
         ctx: { request, dbSettingId },
         newToken: () => randomUUID(),
       });
 
-      if (result.pendingAction) {
+      if (workerResponse.mode === "proposal") {
+        const { pendingAction } = workerResponse;
         await insertMessage(client, {
           sessionId,
           role: "assistant",
-          content: result.pendingAction.summary,
+          content: pendingAction.summary,
           metadata: {
             app: "data-agent",
+            workerId: pendingAction.workerId,
+            contractVersion: WORKER_CONTRACT_VERSION,
             pendingAction: {
-              ...result.pendingAction,
+              ...pendingAction,
               status: "pending",
               createdAt: new Date().toISOString(),
             },
@@ -133,18 +154,36 @@ export async function POST(request: Request) {
           ok: true,
           sessionId,
           mode: "proposal",
-          pendingAction: result.pendingAction,
+          pendingAction,
+          workerId: pendingAction.workerId,
+          contractVersion: WORKER_CONTRACT_VERSION,
+          workerResponse,
         });
       }
 
-      const text = result.answerText ?? "무엇을 도와드릴까요?";
+      const text =
+        workerResponse.mode === "answer"
+          ? workerResponse.text
+          : "무엇을 도와드릴까요?";
       await insertMessage(client, {
         sessionId,
         role: "assistant",
         content: text,
-        metadata: { app: "data-agent" },
+        metadata: {
+          app: "data-agent",
+          workerId: DATA_READINESS_WORKER_ID,
+          contractVersion: WORKER_CONTRACT_VERSION,
+        },
       });
-      return NextResponse.json({ ok: true, sessionId, mode: "answer", text });
+      return NextResponse.json({
+        ok: true,
+        sessionId,
+        mode: "answer",
+        text,
+        workerId: DATA_READINESS_WORKER_ID,
+        contractVersion: WORKER_CONTRACT_VERSION,
+        workerResponse,
+      });
     });
   } catch (error) {
     const msg = error instanceof Error ? error.message : "처리 중 오류가 발생했습니다.";

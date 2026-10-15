@@ -17,6 +17,8 @@ type JobHandle = {
 };
 
 const CONNECT_TIMEOUT_MS = 5000;
+const CRON_TIMEZONE = "Asia/Seoul";
+const CRON_MAX_RANDOM_DELAY_MS = 5 * 60 * 1000;
 const DB_CONFIG = {
   url: process.env.DP_DB_URL,
   database: process.env.DP_DB_NAME,
@@ -24,10 +26,21 @@ const DB_CONFIG = {
   password: process.env.DP_DB_PASSWORD,
 };
 
-const state = {
+type SchedulerState = {
+  initialized: boolean;
+  jobs: Map<number, JobHandle>;
+};
+
+const globalForScheduler = globalThis as typeof globalThis & {
+  __ingestionSchedulerState?: SchedulerState;
+};
+
+const state =
+  globalForScheduler.__ingestionSchedulerState ??
+  (globalForScheduler.__ingestionSchedulerState = {
   initialized: false,
   jobs: new Map<number, JobHandle>(),
-};
+});
 const SCHEDULE_LOCK_NS = 8101;
 
 const isNonEmpty = (value: unknown): value is string =>
@@ -152,6 +165,11 @@ const registerJob = (row: IngestionScheduleRow) => {
   if (row.schedule_type === "cron" && row.schedule_cron_expr?.trim()) {
     const task = cron.schedule(row.schedule_cron_expr.trim(), () => {
       void executeSchedule(row);
+    }, {
+      name: `ingestion-${row.group_id}`,
+      timezone: CRON_TIMEZONE,
+      noOverlap: true,
+      maxRandomDelay: CRON_MAX_RANDOM_DELAY_MS,
     });
     state.jobs.set(row.group_id, { type: "cron", handle: task });
     return;

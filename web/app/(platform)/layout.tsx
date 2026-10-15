@@ -20,6 +20,11 @@ const navItems = [
     description: "DB 연결 정보 저장 및 관리",
   },
   {
+    title: "AI 통합 어시스턴트",
+    href: "/ai-assistant",
+    description: "수집·전처리 오케스트레이션",
+  },
+  {
     title: "AI 데이터 에이전트",
     href: "/data-agent",
     description: "자연어로 수집·매핑 설정/실행",

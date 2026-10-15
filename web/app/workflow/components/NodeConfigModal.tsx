@@ -1,8 +1,11 @@
 'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-import type { DataCollectorConfig, DataCollectorNode } from "../types";
+import { BokNodeForm } from "./BokNodeForm";
+import { FilterNodeForm } from "./FilterNodeForm";
+import { emptyFilterOptions } from "../lib/filter-rows";
+import type { BokNodeOptions, DataCollectorConfig, DataCollectorNode, FilterNodeOptions } from "../types";
 
 interface NodeConfigModalProps {
   node?: DataCollectorNode;
@@ -13,6 +16,9 @@ interface NodeConfigModalProps {
   connectedDbNodeForQuery?: DataCollectorNode | null;
   onClose: () => void;
   onChangeConfig: (nodeId: string, config: Partial<DataCollectorConfig>) => void;
+  onChangeBokOptions: (nodeId: string, options: BokNodeOptions) => void;
+  onChangeFilterOptions: (nodeId: string, options: FilterNodeOptions) => void;
+  connectedSourceNode?: DataCollectorNode | null;
   onRun: (nodeId: string) => void;
   onUploadExcel: (nodeId: string, file: File) => void;
   onRemoveExcelFile: (nodeId: string) => void;
@@ -329,6 +335,9 @@ export function NodeConfigModal({
   connectedDbNodeForQuery,
   onClose,
   onChangeConfig,
+  onChangeBokOptions,
+  onChangeFilterOptions,
+  connectedSourceNode,
   onRun,
   onUploadExcel,
   onRemoveExcelFile,
@@ -352,6 +361,14 @@ export function NodeConfigModal({
     sources: ApiSource[];
   }>({ status: "idle", message: "", sources: [] });
   const [apiListRefreshKey, setApiListRefreshKey] = useState(0);
+  const [bokTest, setBokTest] = useState<{
+    status: "idle" | "loading" | "success" | "error";
+    message?: string;
+    rows?: Record<string, string>[];
+    total?: number;
+  }>({ status: "idle" });
+  const bokTestSeq = useRef(0);
+  const bokOptionsKey = JSON.stringify(node?.data.bokOptions ?? null);
   const nodeKind = node?.data?.kind;
   const nodeStorageOptions = node?.data?.storageOptions;
   const isApiListMode = node?.data?.config?.apiListMode ?? false;
@@ -402,7 +419,70 @@ export function NodeConfigModal({
     nodeStorageOptions?.apiListMode,
   ]);
 
+  useEffect(() => {
+    bokTestSeq.current += 1;
+    setBokTest({ status: "idle" });
+  }, [node?.id, node?.data.lastRun, bokOptionsKey]);
+
   if (!node) return null;
+
+  const runBokConnectionTest = async () => {
+    if (node.data.kind !== "bok") return;
+    const options = node.data.bokOptions ?? {
+      apiKey: "",
+      statCode: "",
+      statName: "",
+      cycle: "M" as const,
+      startDate: "",
+      endDate: "",
+    };
+    if (
+      !options.apiKey.trim() ||
+      !options.statCode.trim() ||
+      !options.cycle ||
+      !options.startDate.trim() ||
+      !options.endDate.trim()
+    ) {
+      setBokTest({
+        status: "error",
+        message: "API KEY, 통계코드, 주기, 시작일, 종료일을 입력해주세요.",
+      });
+      return;
+    }
+    const seq = ++bokTestSeq.current;
+    setBokTest({ status: "loading" });
+    try {
+      const response = await fetch("/api/workflow/bok", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...options, preview: true }),
+      });
+      const result = (await response.json()) as {
+        ok?: boolean;
+        error?: string;
+        rows?: Record<string, string>[];
+        total?: number;
+      };
+      if (seq !== bokTestSeq.current) return;
+      if (!response.ok || !result.ok) {
+        throw new Error(result.error ?? "한국은행 API 연결 테스트에 실패했습니다.");
+      }
+      setBokTest({
+        status: "success",
+        rows: (result.rows ?? []).slice(0, 10),
+        total: result.total ?? result.rows?.length ?? 0,
+      });
+    } catch (testError) {
+      if (seq !== bokTestSeq.current) return;
+      setBokTest({
+        status: "error",
+        message:
+          testError instanceof Error
+            ? testError.message
+            : "한국은행 API 연결 테스트에 실패했습니다.",
+      });
+    }
+  };
 
   const {
     config,
@@ -449,7 +529,11 @@ export function NodeConfigModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-6">
-      <div className="w-full max-w-xl h-[80vh] overflow-y-auto rounded-3xl border border-slate-200 bg-white p-6 shadow-xl">
+      <div
+        className={`h-[80vh] w-full overflow-y-auto rounded-3xl border border-slate-200 bg-white p-6 shadow-xl ${
+          kind === "bok" || kind === "filter" ? "max-w-3xl" : "max-w-xl"
+        }`}
+      >
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
@@ -1201,6 +1285,26 @@ export function NodeConfigModal({
                 TODO: 실제 DB 설정/연결 테스트는 서버 연동으로 구현합니다.
               </p>
             </>
+          ) : kind === "filter" ? (
+            <FilterNodeForm
+              options={node.data.filterOptions ?? emptyFilterOptions()}
+              source={connectedSourceNode ?? null}
+              onChange={(options) => onChangeFilterOptions(node.id, options)}
+            />
+          ) : kind === "bok" ? (
+            <BokNodeForm
+              options={
+                node.data.bokOptions ?? {
+                  apiKey: "",
+                  statCode: "",
+                  statName: "",
+                  cycle: "M",
+                  startDate: "",
+                  endDate: "",
+                }
+              }
+              onChange={(options) => onChangeBokOptions(node.id, options)}
+            />
           ) : (
             <>
               {node.data.kind === "api" ? (
@@ -1763,7 +1867,15 @@ export function NodeConfigModal({
         </div>
 
         <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4 text-xs text-slate-700">
-          {error ? (
+          {kind === "bok" && bokTest.status === "loading" ? (
+            <div className="max-h-40 overflow-auto rounded-lg bg-slate-50 px-3 py-2">
+              <span className="text-slate-400">연결 테스트 중입니다.</span>
+            </div>
+          ) : kind === "bok" && bokTest.status === "error" ? (
+            <div className="rounded-lg bg-rose-50 px-3 py-2 text-rose-700">
+              {bokTest.message}
+            </div>
+          ) : error ? (
             <div className="rounded-lg bg-rose-50 px-3 py-2 text-rose-700">
               {error}
             </div>
@@ -1863,11 +1975,70 @@ export function NodeConfigModal({
                 </div>
               );
             })()
-          ) : kind === "api" ? (
+          ) : kind === "filter" ? (
             (() => {
-              const table = buildTabularFromApi(
-                apiResult ?? parseJsonSafe(preview),
+              const table = buildTabularFromApi(apiResult ?? parseJsonSafe(preview));
+              const shown = table.dataRows.slice(0, 20);
+              if (table.header.length === 0 || shown.length === 0) {
+                return (
+                  <div className="max-h-40 overflow-auto rounded-lg bg-slate-50 px-3 py-2">
+                    <span className="text-slate-400">응답 미리보기 없음</span>
+                  </div>
+                );
+              }
+              return (
+                <div className="space-y-2">
+                  <div className="text-xs text-slate-500">
+                    미리보기 {shown.length.toLocaleString("ko-KR")}건 / 전체{" "}
+                    {table.dataRows.length.toLocaleString("ko-KR")}건
+                  </div>
+                  <div className="max-h-56 overflow-auto rounded-lg border border-slate-200">
+                    <table className="w-full border-collapse text-[11px]">
+                      <thead className="bg-slate-100 text-slate-700">
+                        <tr>
+                          {table.header.map((key) => (
+                            <th
+                              key={`filter-header-${key}`}
+                              className="whitespace-nowrap border border-slate-200 px-2 py-1 text-left font-semibold"
+                            >
+                              {key}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {shown.map((row, rowIndex) => (
+                          <tr key={`filter-row-${rowIndex}`} className="bg-white">
+                            {row.map((cell, cellIndex) => (
+                              <td
+                                key={`filter-cell-${rowIndex}-${cellIndex}`}
+                                className="whitespace-nowrap border border-slate-200 px-2 py-1"
+                              >
+                                {cell == null ? "" : String(cell)}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               );
+            })()
+          ) : kind === "api" || kind === "bok" ? (
+            (() => {
+              const testRows =
+                kind === "bok" && bokTest.status === "success" ? bokTest.rows ?? [] : null;
+              const table = buildTabularFromApi(
+                testRows ?? apiResult ?? parseJsonSafe(preview),
+              );
+              if (testRows && (table.header.length === 0 || table.dataRows.length === 0)) {
+                return (
+                  <div className="max-h-40 overflow-auto rounded-lg bg-slate-50 px-3 py-2">
+                    <span className="text-slate-400">조회된 데이터가 없습니다.</span>
+                  </div>
+                );
+              }
               if (table.header.length === 0 || table.dataRows.length === 0) {
                 return (
                   <div className="max-h-40 overflow-auto rounded-lg bg-slate-50 px-3 py-2">
@@ -1882,6 +2053,13 @@ export function NodeConfigModal({
                 );
               }
               return (
+                <div className="space-y-2">
+                  {testRows ? (
+                    <div className="text-xs text-slate-500">
+                      미리보기 {table.dataRows.length.toLocaleString("ko-KR")}건 / 전체{" "}
+                      {(bokTest.total ?? table.dataRows.length).toLocaleString("ko-KR")}건
+                    </div>
+                  ) : null}
                 <div className="max-h-56 overflow-auto rounded-lg border border-slate-200">
                   <table className="w-full border-collapse text-[11px]">
                     <thead className="bg-slate-100 text-slate-700">
@@ -1912,6 +2090,7 @@ export function NodeConfigModal({
                     </tbody>
                   </table>
                 </div>
+                </div>
               );
             })()
           ) : (
@@ -1932,6 +2111,16 @@ export function NodeConfigModal({
             더블 클릭으로 언제든 설정을 수정할 수 있어요.
           </p>
           <div className="flex items-center gap-2">
+            {kind === "bok" ? (
+              <button
+                type="button"
+                onClick={() => void runBokConnectionTest()}
+                disabled={bokTest.status === "loading" || status === "running"}
+                className="cursor-pointer rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-semibold text-blue-700 transition hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {bokTest.status === "loading" ? "테스트 중..." : "연결 테스트"}
+              </button>
+            ) : null}
             <button
               onClick={() => onRun(node.id)}
               className="cursor-pointer rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"

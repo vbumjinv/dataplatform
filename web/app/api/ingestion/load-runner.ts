@@ -1864,3 +1864,383 @@ options?: {
     }
   }
 };
+
+// [추가] AI 데이터 에이전트용: API 를 1회 호출해 응답 헤더에서 컬럼을 추론하고,
+// (dryRun 이 아니면) _LRD 적재 테이블을 생성한다. executeApiGroupLoad 는 전혀 수정하지
+// 않고, 같은 파일의 헬퍼(buildUrlFromSourceParams / fetchApiBodyWithRetry /
+// parseApiBodyToRows / escapeIdentifier 등)를 그대로 재사용해 실제 수집과 동일한 URL·응답을
+// 기준으로 컬럼을 맞춘다. 표준(평면) JSON/XML 응답만 지원하며 특수 provider 는 안내 후 중단한다.
+export const createTargetTableFromApiPreview = async (payload: {
+  sourceId: number;
+  groupId: number;
+  schema?: string;
+  table: string;
+  dryRun?: boolean;
+  dbSettingId?: number | null;
+}): Promise<{
+  ok: boolean;
+  created: boolean;
+  schema: string;
+  table: string;
+  columns: Array<{ name: string; type: string }>;
+  header: string[];
+  sample: Array<Record<string, unknown>>;
+}> => {
+  // 기존 수집이 _LRD 테이블을 dp 스키마에 두는 관례를 따른다.
+  const schema = (payload.schema ?? "dp").trim() || "dp";
+  const table = (payload.table ?? "").trim();
+  if (!table) throw new Error("테이블명이 필요합니다.");
+  if (!table.toLowerCase().endsWith("_lrd")) {
+    throw new Error("임시 적재 테이블명은 _LRD 로 끝나야 합니다.");
+  }
+
+  const resolvedDb = await resolveDbConfig({ settingId: payload.dbSettingId ?? null });
+  if (!resolvedDb) throw new Error("DB 연결 설정을 찾을 수 없습니다.");
+  const connectionString = buildConnectionString(resolvedDb);
+  if (!connectionString) throw new Error("DB 접속 URL 형식이 올바르지 않습니다.");
+
+  const client = new Client({
+    connectionString,
+    connectionTimeoutMillis: CONNECT_TIMEOUT_MS,
+  });
+  await client.connect();
+  try {
+    const rows = await client.query(
+      `
+        select
+          s.base_url,
+          s.provider,
+          s.api_key,
+          s.api_key_param_key,
+          s.api_key_location,
+          s.api_key_order,
+          s.api_key_encode_mode,
+          p.param_key,
+          p.param_value,
+          p.param_location,
+          p.param_order,
+          p.encode_mode,
+          p.param_role
+        from dp.api_param_group g
+        join dp.api_source s on s.id = g.source_id
+        join dp.api_param p on p.group_id = g.id
+        where g.id = $1
+          and g.source_id = $2
+          and g.is_template = false
+        order by p.param_order asc, p.id asc
+      `,
+      [payload.groupId, payload.sourceId],
+    );
+    if (!rows.rowCount) throw new Error("API 파라미터가 존재하지 않습니다.");
+    const first = rows.rows[0];
+    const sourceProvider = String(first.provider ?? "").trim().toLowerCase();
+    if (["oecd", "krx", "undp", "worldbank", "yfinance"].includes(sourceProvider)) {
+      throw new Error(
+        `'${sourceProvider}' provider 는 자동 테이블 생성을 아직 지원하지 않습니다. 데이터 수집 화면에서 테이블을 먼저 설정해 주세요.`,
+      );
+    }
+
+    // executeApiGroupLoad 와 동일한 파라미터 전처리 규칙 (역할/상대일 토큰/KOSIS 제거)
+    const resolvedParamRows = rows.rows.map((row) => ({
+      key: String(row.param_key ?? ""),
+      value: String(row.param_value ?? ""),
+      location: (row.param_location as "path" | "query") ?? "query",
+      order: Number.isFinite(row.param_order) ? Number(row.param_order) : 0,
+      encodeMode: (row.encode_mode as string | null) ?? "encode",
+      role: (row.param_role as string | null) ?? null,
+    }));
+    const roleKeyMap = new Map<string, string>();
+    resolvedParamRows.forEach((param) => {
+      if (!param.role || roleKeyMap.has(param.role)) return;
+      roleKeyMap.set(param.role, param.key);
+    });
+    const paramValueByKeyLower = new Map<string, string>(
+      resolvedParamRows.map((param) => [param.key.trim().toLowerCase(), param.value]),
+    );
+    const periodTypeKey =
+      roleKeyMap.get("period_type") ??
+      (["period", "prdse", "periodtype", "frequency", "freq"].find((key) =>
+        paramValueByKeyLower.has(key),
+      ) ?? null);
+    const endKey =
+      roleKeyMap.get("end") ??
+      (["apiend", "endprdde", "endyymm", "observation_end", "endperiod", "basdd"].find((key) =>
+        paramValueByKeyLower.has(key),
+      ) ?? null);
+    const startKey =
+      roleKeyMap.get("start") ??
+      (["apistart", "startprdde", "strtyymm", "observation_start", "startperiod"].find((key) =>
+        paramValueByKeyLower.has(key),
+      ) ?? null);
+    const periodTypeKeyLower = periodTypeKey?.trim().toLowerCase() ?? null;
+    const startKeyLower = startKey?.trim().toLowerCase() ?? null;
+    const endKeyLower = endKey?.trim().toLowerCase() ?? null;
+    const periodTypeValueRaw = periodTypeKeyLower
+      ? paramValueByKeyLower.get(periodTypeKeyLower) ?? "M"
+      : "M";
+    const periodTypeValue = periodTypeValueRaw.trim().toUpperCase();
+    const effectivePeriod = ["D", "M", "Q", "A", "Y"].includes(periodTypeValue)
+      ? periodTypeValue
+      : "M";
+    const requestParams = resolvedParamRows.map((param) => {
+      const paramKey = param.key.trim().toLowerCase();
+      const isEndParamByKey = [
+        "apiend",
+        "endprdde",
+        "endyymm",
+        "observation_end",
+        "endperiod",
+        "basdd",
+      ].includes(paramKey);
+      const isStartParamByKey = [
+        "apistart",
+        "startprdde",
+        "strtyymm",
+        "observation_start",
+        "startperiod",
+      ].includes(paramKey);
+      const shouldResolveLatest =
+        param.value === END_LATEST_TOKEN &&
+        (paramKey === "basdd" ||
+          (endKeyLower && paramKey === endKeyLower) ||
+          (!endKeyLower && isEndParamByKey));
+      if (shouldResolveLatest) {
+        return { ...param, value: toParamDateValue(new Date(), effectivePeriod, param.key) };
+      }
+      const shouldResolveStartRelative =
+        (startKeyLower && paramKey === startKeyLower) || (!startKeyLower && isStartParamByKey);
+      const shouldResolveEndRelative =
+        (endKeyLower && paramKey === endKeyLower) || (!endKeyLower && isEndParamByKey);
+      if (shouldResolveStartRelative) {
+        const v = resolveRelativeStartValue(param.value, effectivePeriod, param.key);
+        if (v) return { ...param, value: v };
+      }
+      if (shouldResolveEndRelative) {
+        const v = resolveRelativeStartValue(param.value, effectivePeriod, param.key);
+        if (v) return { ...param, value: v };
+      }
+      return param;
+    });
+    const requestParamsForFetch =
+      sourceProvider === "kosis"
+        ? requestParams.filter((param) => {
+            const key = param.key.trim().toLowerCase();
+            return key !== "vwcd" && key !== "statid" && key !== "sendde";
+          })
+        : requestParams;
+    const url = buildUrlFromSourceParams(
+      {
+        baseUrl: String(first.base_url ?? ""),
+        apiKey: (first.api_key as string | null) ?? "",
+        apiKeyParamKey: (first.api_key_param_key as string | null) ?? "",
+        apiKeyLocation: (first.api_key_location as string | null) ?? "query",
+        apiKeyOrder: Number.isFinite(first.api_key_order) ? Number(first.api_key_order) : 0,
+        apiKeyEncodeMode: (first.api_key_encode_mode as string | null) ?? "encode",
+      },
+      requestParamsForFetch,
+    );
+
+    const { body } = await fetchApiBodyWithRetry(url, null);
+    const { header, dataRows } = parseApiBodyToRows(body);
+
+    // 상위 5행 샘플(에이전트가 사용자에게 컬럼·값을 보여주기 위함)
+    const sample: Array<Record<string, unknown>> = (dataRows ?? [])
+      .slice(0, 5)
+      .map((row) => {
+        const obj: Record<string, unknown> = {};
+        header.forEach((h, i) => {
+          obj[String(h)] = (row as unknown[])[i] ?? null;
+        });
+        return obj;
+      });
+
+    const seen = new Set<string>();
+    const columns: Array<{ name: string; type: string }> = [];
+    for (const raw of header) {
+      const name = String(raw ?? "").trim().slice(0, 63);
+      if (!name) continue;
+      const norm = name.toLowerCase().replace(/[^a-z0-9]/g, "");
+      if (!norm || seen.has(norm)) continue;
+      seen.add(norm);
+      columns.push({ name, type: "text" });
+    }
+    if (!columns.length) {
+      throw new Error(
+        "API 응답에서 컬럼(헤더)을 추론하지 못했습니다. API 키·파라미터가 올바른지 확인하세요.",
+      );
+    }
+
+    if (payload.dryRun) {
+      return { ok: true, created: false, schema, table, columns, header, sample };
+    }
+
+    const schemaExists = await client.query(
+      `select 1 from information_schema.schemata where schema_name = $1 limit 1`,
+      [schema],
+    );
+    if (!schemaExists.rowCount) {
+      await client.query(`create schema ${escapeIdentifier(schema)}`);
+    }
+    const colDefs = columns.map((c) => `${escapeIdentifier(c.name)} text`).join(", ");
+    await client.query(
+      `create table if not exists ${escapeIdentifier(schema)}.${escapeIdentifier(table)} (${colDefs})`,
+    );
+    return { ok: true, created: true, schema, table, columns, header, sample };
+  } finally {
+    try {
+      await client.end();
+    } catch {
+      // ignore cleanup errors
+    }
+  }
+};
+
+type DraftPreviewParam = {
+  key: string;
+  value: string;
+  location: "path" | "query";
+  order: number;
+  role?: string | null;
+  encodeMode?: string;
+};
+
+const DRAFT_PREVIEW_HOSTS: Record<string, string[]> = {
+  bok: ["ecos.bok.or.kr"],
+  kosis: ["kosis.kr"],
+  fred: ["api.stlouisfed.org"],
+};
+
+export const previewDraftApi = async (payload: {
+  sourceId: number;
+  params: DraftPreviewParam[];
+  dbSettingId?: number | null;
+}): Promise<{
+  ok: true;
+  provider: string;
+  header: string[];
+  columns: Array<{ name: string; type: string }>;
+  sample: Array<Record<string, unknown>>;
+}> => {
+  const resolvedDb = await resolveDbConfig({
+    settingId: payload.dbSettingId ?? null,
+  });
+  if (!resolvedDb) throw new Error("DB 연결 설정을 찾을 수 없습니다.");
+  const connectionString = buildConnectionString(resolvedDb);
+  if (!connectionString) throw new Error("DB 접속 URL 형식이 올바르지 않습니다.");
+
+  const client = new Client({
+    connectionString,
+    connectionTimeoutMillis: CONNECT_TIMEOUT_MS,
+  });
+  await client.connect();
+  try {
+    const sourceResult = await client.query(
+      `select
+         id, provider, base_url, api_key, api_key_param_key,
+         api_key_location, api_key_order, api_key_encode_mode
+       from dp.api_source
+       where id = $1 and is_template = false and enabled = true
+       limit 1`,
+      [payload.sourceId],
+    );
+    if (!sourceResult.rowCount) {
+      throw new Error("활성 기관 설정을 찾을 수 없습니다.");
+    }
+    const source = sourceResult.rows[0];
+    const provider = String(source.provider ?? "").trim().toLowerCase();
+    const baseUrl = String(source.base_url ?? "").trim();
+    const parsedUrl = new URL(baseUrl);
+    const allowedHosts = DRAFT_PREVIEW_HOSTS[provider] ?? [];
+    if (
+      parsedUrl.protocol !== "https:" ||
+      !allowedHosts.some(
+        (host) =>
+          parsedUrl.hostname === host ||
+          parsedUrl.hostname.endsWith(`.${host}`),
+      )
+    ) {
+      throw new Error(
+        `'${provider}' provider의 draft preview 호스트가 허용되지 않았습니다.`,
+      );
+    }
+
+    const templateResult = await client.query(
+      `select
+         p.param_key, p.param_value, p.param_location, p.param_order,
+         p.encode_mode, p.param_role
+       from dp.api_source s
+       join dp.api_param_group g on g.source_id = s.id and g.is_template = true
+       join dp.api_param p on p.group_id = g.id
+       where lower(s.provider) = $1
+         and s.is_template = true
+       order by p.param_order asc, p.id asc`,
+      [provider],
+    );
+    const merged = new Map<string, DraftPreviewParam>();
+    for (const row of templateResult.rows) {
+      const key = String(row.param_key ?? "").trim();
+      if (!key) continue;
+      merged.set(key.toLowerCase(), {
+        key,
+        value: String(row.param_value ?? ""),
+        location: (row.param_location as "path" | "query") ?? "query",
+        order: Number(row.param_order) || 0,
+        role: (row.param_role as string | null) ?? null,
+        encodeMode: String(row.encode_mode ?? "encode"),
+      });
+    }
+    for (const param of payload.params) {
+      const key = String(param.key ?? "").trim();
+      if (!key || !String(param.value ?? "").trim()) continue;
+      merged.set(key.toLowerCase(), {
+        key,
+        value: String(param.value),
+        location: param.location === "path" ? "path" : "query",
+        order: Number(param.order) || 0,
+        role: param.role ?? null,
+        encodeMode: param.encodeMode ?? "encode",
+      });
+    }
+    const requestParams = [...merged.values()].sort(
+      (a, b) => a.order - b.order,
+    );
+    const url = buildUrlFromSourceParams(
+      {
+        baseUrl,
+        apiKey: (source.api_key as string | null) ?? "",
+        apiKeyParamKey:
+          (source.api_key_param_key as string | null) ?? "",
+        apiKeyLocation:
+          (source.api_key_location as string | null) ?? "query",
+        apiKeyOrder: Number(source.api_key_order) || 0,
+        apiKeyEncodeMode:
+          (source.api_key_encode_mode as string | null) ?? "encode",
+      },
+      requestParams,
+    );
+    const { body } = await fetchApiBodyWithRetry(url, null);
+    const { header, dataRows } = parseApiBodyToRows(body);
+    if (!header.length || !dataRows.length) {
+      throw new Error(
+        "draft API 응답에서 표 형태의 샘플 데이터를 찾지 못했습니다.",
+      );
+    }
+    const sample = dataRows.slice(0, 5).map((row) =>
+      Object.fromEntries(
+        header.map((column, index) => [
+          String(column),
+          (row as unknown[])[index] ?? null,
+        ]),
+      ),
+    );
+    return {
+      ok: true,
+      provider,
+      header: header.map(String),
+      columns: header.map((name) => ({ name: String(name), type: "text" })),
+      sample,
+    };
+  } finally {
+    await client.end().catch(() => undefined);
+  }
+};

@@ -16,6 +16,8 @@ const ingestionItems: Array<{
   description: string;
 }> = [
   { kind: "excel", title: "엑셀 업로드", description: "파일 기반 업로드" },
+  { kind: "bok", title: "한국은행 API", description: "통계코드로 시계열 조회" },
+  { kind: "filter", title: "데이터 필터", description: "조건과 컬럼으로 행을 남김" },
   { kind: "api", title: "API 수집", description: "HTTP 엔드포인트 호출" },
   { kind: "db", title: "DB 조회", description: "데이터베이스 조회" },
 ];

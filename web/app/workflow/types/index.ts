@@ -4,7 +4,43 @@ export type NodeStatus = "idle" | "running" | "success" | "error";
 
 export type HttpMethod = "GET";
 
-export type IngestionKind = "excel" | "api" | "db";
+export type IngestionKind = "excel" | "api" | "db" | "bok" | "filter";
+
+export type BokCycle = "D" | "M" | "Q" | "S" | "A";
+
+export type BokNodeOptions = {
+  apiKey: string;
+  statCode: string;
+  statName: string;
+  cycle: BokCycle;
+  startDate: string;
+  endDate: string;
+};
+
+export type FilterOperator =
+  | "eq"
+  | "neq"
+  | "contains"
+  | "starts"
+  | "gt"
+  | "gte"
+  | "lt"
+  | "lte"
+  | "empty"
+  | "notEmpty";
+
+export type FilterCondition = {
+  id: string;
+  column: string;
+  operator: FilterOperator;
+  value: string;
+};
+
+export type FilterNodeOptions = {
+  columnsChosen: boolean;
+  selectedColumns: string[];
+  conditions: FilterCondition[];
+};
 
 export type StorageKind = "dbSave" | "fileSave";
 
@@ -141,6 +177,8 @@ export interface DataCollectorData {
     rows: Array<Array<string | number | boolean | null>>;
     header?: Array<string | number | boolean | null>;
   };
+  bokOptions?: BokNodeOptions;
+  filterOptions?: FilterNodeOptions;
   dbQueryRows?: Array<Record<string, unknown>>;
   dbQueryColumns?: Array<{ name: string; dataType: string }>;
   config: DataCollectorConfig;

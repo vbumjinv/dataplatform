@@ -5,6 +5,12 @@ import {
   insertMessage,
   withChatDb,
 } from "@/app/api/ai-forecast-agent/_lib/chat-db";
+import {
+  DATA_READINESS_WORKER_ID,
+  WORKER_CONTRACT_VERSION,
+  type ConfirmResponse,
+  type WorkerId,
+} from "@/app/api/ai-orchestrator/_lib/worker-contract";
 import { requireAdminSession } from "../_lib/auth";
 import { executeAction } from "../_lib/tools";
 
@@ -23,6 +29,7 @@ type PendingActionMeta = {
   type?: string;
   args?: Record<string, unknown>;
   summary?: string;
+  workerId?: WorkerId;
 };
 
 const toId = (value: unknown): number | null => {
@@ -94,13 +101,28 @@ export async function POST(request: Request) {
 
       if (decision === "cancel") {
         await setStatus(client, target.messageId, "cancelled");
+        const confirmResponse: ConfirmResponse = {
+          ok: true,
+          status: "cancelled",
+          message: "요청을 취소했습니다.",
+        };
         await insertMessage(client, {
           sessionId,
           role: "assistant",
-          content: "요청을 취소했습니다.",
-          metadata: { app: "data-agent" },
+          content: confirmResponse.message,
+          metadata: {
+            app: "data-agent",
+            workerId: pa.workerId ?? DATA_READINESS_WORKER_ID,
+            contractVersion: WORKER_CONTRACT_VERSION,
+          },
         });
-        return NextResponse.json({ ok: true, cancelled: true });
+        return NextResponse.json({
+          ok: true,
+          cancelled: true,
+          workerId: pa.workerId ?? DATA_READINESS_WORKER_ID,
+          contractVersion: WORKER_CONTRACT_VERSION,
+          confirmResponse,
+        });
       }
 
       const result = await executeAction(pa.type ?? "", pa.args ?? {}, {
@@ -111,12 +133,20 @@ export async function POST(request: Request) {
       const summary = result.ok
         ? `✅ ${result.message ?? "실행 완료"}`
         : `❌ 실행 실패: ${result.error ?? "알 수 없는 오류"}`;
+      const confirmResponse: ConfirmResponse = {
+        ok: result.ok,
+        status: result.ok ? "executed" : "failed",
+        message: summary,
+        result,
+      };
       await insertMessage(client, {
         sessionId,
         role: "assistant",
         content: summary,
         metadata: {
           app: "data-agent",
+          workerId: pa.workerId ?? DATA_READINESS_WORKER_ID,
+          contractVersion: WORKER_CONTRACT_VERSION,
           executionResult: result as unknown as Record<string, unknown>,
         },
       });
@@ -125,6 +155,9 @@ export async function POST(request: Request) {
         executed: result.ok,
         message: summary,
         result,
+        workerId: pa.workerId ?? DATA_READINESS_WORKER_ID,
+        contractVersion: WORKER_CONTRACT_VERSION,
+        confirmResponse,
       });
     });
   } catch (error) {

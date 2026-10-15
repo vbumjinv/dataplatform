@@ -222,21 +222,16 @@ export const buildTransformSelect = (
   }
 
   if (type === "movavg") {
-    // 이동평균: 주기(일/월/년)와 무관하게 "관측치 N개" 단위로 평균.
+    // 이동평균: 주기(일/월/년)와 무관하게 "저장된 행 N개" 단위로 평균.
     // 날짜 오름차순 정렬 후 직전 N-1개 + 현재 행으로 윈도우를 잡는다.
     // 윈도우가 다 차기 전(앞쪽 N-1개)은 결과에서 제외한다.
-    // 채워넣은(fill-forward) 행(is_filled)은 제외 → 실제 관측치만으로 N개를 센다.
+    // 주말·공휴일처럼 직전 값으로 채운 행(is_filled)도 구간에 포함한다.
     const w = Math.trunc(Number(config.window));
     if (!Number.isFinite(w) || w < MOVAVG_MIN || w > MOVAVG_MAX) {
       throw new Error(`이동평균 구간은 ${MOVAVG_MIN}~${MOVAVG_MAX} 사이의 정수여야 합니다.`);
     }
     const frame = `order by obs_date rows between ${w - 1} preceding and current row`;
-    // 공유 src CTE 대신 is_filled 까지 읽는 전용 CTE 사용 (SQL 가공에 노출되는 src 스키마는 유지)
-    return `with src as (
-        select obs_date, obs_value::numeric as obs_value,
-               coalesce(is_filled, false) as is_filled
-        from dp.viz_map_data where map_id = ${Math.trunc(sourceMapId)}
-      )
+    return `${cte}
       select obs_date, obs_value
       from (
         select obs_date,
@@ -244,7 +239,6 @@ export const buildTransformSelect = (
           count(*) over (${frame}) as cnt
         from src
         where obs_date is not null and obs_value is not null
-          and not is_filled
       ) q
       where cnt >= ${w}
       order by obs_date`;

@@ -271,6 +271,7 @@ export async function POST(request: Request) {
       [sourceName],
     );
     let sourceId: number;
+    let createdGroupId: number | null = null;
     if (sourceLookup.rowCount && sourceLookup.rows[0]) {
       sourceId = sourceLookup.rows[0].id as number;
     } else {
@@ -404,11 +405,6 @@ export async function POST(request: Request) {
       (item) => item.key.length > 0 && item.value.length > 0,
     );
 
-    const valueByKey = new Map(params.map((item) => [item.key, item.value]));
-    const hasParamValue = (key: string) => {
-      const value = valueByKey.get(key);
-      return typeof value === "string" && value.length > 0;
-    };
     if (params.length === 0) {
       await client.query("rollback");
       return NextResponse.json(
@@ -431,14 +427,14 @@ export async function POST(request: Request) {
         `,
         [sourceId, groupName],
       );
-      const groupId = groupResult.rows[0]?.id as number;
+      createdGroupId = groupResult.rows[0]?.id as number;
 
       const values: Array<string | number | null> = [];
       const rows = params
         .map((item, index) => {
           const base = index * 7;
           values.push(
-            groupId,
+            createdGroupId,
             item.key,
             item.value,
             item.location,
@@ -470,7 +466,7 @@ export async function POST(request: Request) {
     }
 
     await client.query("commit");
-    return NextResponse.json({ ok: true, sourceId });
+    return NextResponse.json({ ok: true, sourceId, groupId: createdGroupId });
   } catch (error) {
     await client.query("rollback");
     const message =
@@ -501,24 +497,23 @@ export async function PATCH(request: Request) {
   const updateTarget = payload.updateTarget ?? "group";
   const sourceId = toValidId(payload.sourceId);
   const groupId = toValidId(payload.groupId);
-  if (updateTarget !== "refreshPeriods") {
-    if (!sourceId) {
-      return NextResponse.json(
-        { ok: false, error: "수정 대상이 올바르지 않습니다." },
-        { status: 400 },
-      );
-    }
-    if (
-      (updateTarget === "group" ||
-        updateTarget === "groupSchedule" ||
-        updateTarget === "groupTargetTable") &&
-      !groupId
-    ) {
-      return NextResponse.json(
-        { ok: false, error: "그룹 정보가 올바르지 않습니다." },
-        { status: 400 },
-      );
-    }
+  if (!sourceId) {
+    return NextResponse.json(
+      { ok: false, error: "수정 대상이 올바르지 않습니다." },
+      { status: 400 },
+    );
+  }
+  if (
+    (updateTarget === "group" ||
+      updateTarget === "groupSchedule" ||
+      updateTarget === "groupTargetTable" ||
+      updateTarget === "refreshPeriods") &&
+    !groupId
+  ) {
+    return NextResponse.json(
+      { ok: false, error: "그룹 정보가 올바르지 않습니다." },
+      { status: 400 },
+    );
   }
 
   const dbConnection = await resolveRequestConnectionString(payload.dbSettingId);
@@ -561,8 +556,11 @@ export async function PATCH(request: Request) {
           join dp.api_param_group g on p.group_id = g.id
           join dp.api_source s on g.source_id = s.id
           where g.is_template = false
+            and s.id = $1
+            and g.id = $2
           order by s.id, g.id, p.param_order asc
         `,
+        [sourceId, groupId],
       );
       const groups = new Map<
         number,
