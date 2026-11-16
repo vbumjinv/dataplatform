@@ -74,6 +74,7 @@ const runPoint = async (point: PointSchedule) => {
           status: "failure",
           startedAt,
           output: message,
+          dbSettingId: point.dbSettingId,
         });
         return;
       }
@@ -93,6 +94,7 @@ const runPoint = async (point: PointSchedule) => {
       status: "success",
       startedAt,
       output: result.output,
+      dbSettingId: point.dbSettingId,
     });
     console.log(`[kospi-forecast] ${point.timePoint} 스케줄 실행 완료`);
   } catch (error) {
@@ -106,6 +108,7 @@ const runPoint = async (point: PointSchedule) => {
       status: "failure",
       startedAt,
       output: message.slice(-12000),
+      dbSettingId: point.dbSettingId,
     });
     console.error(`[kospi-forecast] ${point.timePoint} 스케줄 실패:`, message.slice(-500));
   } finally {

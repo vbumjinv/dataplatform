@@ -45,7 +45,7 @@ export async function POST(request: Request) {
       dbSettingId: Math.trunc(settingId),
       llm,
     });
-    await appendForecastLog({
+    const saved = await appendForecastLog({
       timePoint,
       trigger: "manual",
       target: result.target,
@@ -53,11 +53,12 @@ export async function POST(request: Request) {
       status: "success",
       startedAt,
       output: result.output,
+      dbSettingId: Math.trunc(settingId),
     });
-    return NextResponse.json({ ok: true, ...result });
+    return NextResponse.json({ ok: true, ...result, logError: saved.dbError });
   } catch (error) {
     const message = error instanceof Error ? error.message : "코스피 예측 실행에 실패했습니다.";
-    await appendForecastLog({
+    const saved = await appendForecastLog({
       timePoint,
       trigger: "manual",
       target: requestedTarget,
@@ -65,7 +66,9 @@ export async function POST(request: Request) {
       status: "failure",
       startedAt,
       output: message.slice(-12000),
+      dbSettingId: Math.trunc(settingId),
     });
-    return NextResponse.json({ ok: false, error: message.slice(-4000) }, { status: 500 });
+    if (saved.dbError) console.error("[kospi-forecast] 실패 로그 DB 저장:", saved.dbError);
+    return NextResponse.json({ ok: false, error: message.slice(-4000), logError: saved.dbError }, { status: 500 });
   }
 }

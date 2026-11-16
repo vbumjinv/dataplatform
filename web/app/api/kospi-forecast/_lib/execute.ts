@@ -24,6 +24,58 @@ const pythonExecutable = () => {
   return "python";
 };
 
+export type ForecastPythonStatus = {
+  command: string;
+  executable: string;
+  venv: boolean;
+  exchangeCalendars: boolean;
+  error: string;
+};
+
+export const inspectForecastPython = () =>
+  new Promise<ForecastPythonStatus>((resolve) => {
+    const command = pythonExecutable();
+    const child = spawn(
+      command,
+      [
+        "-c",
+        "import sys,importlib.util; print(sys.executable); print('yes' if sys.prefix != sys.base_prefix else 'no'); print('yes' if importlib.util.find_spec('exchange_calendars') else 'no')",
+      ],
+      { cwd: SCRIPT_DIR, env: process.env, windowsHide: true },
+    );
+    const chunks: string[] = [];
+    child.stdout.setEncoding("utf8");
+    child.stderr.setEncoding("utf8");
+    child.stdout.on("data", (chunk) => chunks.push(String(chunk)));
+    child.stderr.on("data", (chunk) => chunks.push(String(chunk)));
+    const timer = setTimeout(() => {
+      child.kill();
+      resolve({ command, executable: "", venv: false, exchangeCalendars: false, error: "파이썬 확인 시간이 초과되었습니다." });
+    }, 8000);
+    child.on("error", (error) => {
+      clearTimeout(timer);
+      resolve({ command, executable: "", venv: false, exchangeCalendars: false, error: error.message });
+    });
+    child.on("close", (code) => {
+      clearTimeout(timer);
+      const lines = chunks.join("").trim().split(/\r?\n/).filter(Boolean);
+      const executable = lines[0] ?? "";
+      const venv = lines[1] === "yes";
+      const exchangeCalendars = lines[2] === "yes";
+      if (code !== 0 || !executable) {
+        resolve({
+          command,
+          executable,
+          venv,
+          exchangeCalendars,
+          error: lines.slice(executable ? 1 : 0).join("\n") || `파이썬 확인 실패 (${code})`,
+        });
+        return;
+      }
+      resolve({ command, executable, venv, exchangeCalendars, error: "" });
+    });
+  });
+
 const seoulStamp = () => {
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Seoul",

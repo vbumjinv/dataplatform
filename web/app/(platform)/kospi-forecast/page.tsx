@@ -90,7 +90,9 @@ export default function KospiForecastPage() {
   const [runningKey, setRunningKey] = useState<TimeKey | null>(null);
   const [errors, setErrors] = useState<Partial<Record<TimeKey, string>>>({});
   const [logs, setLogs] = useState<RunLog[]>([]);
+  const [logError, setLogError] = useState("");
   const [logFilter, setLogFilter] = useState<TimeKey | "ALL">("ALL");
+  const [pythonStatus, setPythonStatus] = useState("");
   const [selectedLogId, setSelectedLogId] = useState("");
 
   const fetchDbSettings = useCallback(async () => {
@@ -122,14 +124,37 @@ export default function KospiForecastPage() {
   }, []);
 
   const fetchLogs = useCallback(async (selectLatest = false) => {
-    const response = await fetch("/api/kospi-forecast/logs", { cache: "no-store" });
-    const payload = (await response.json()) as { ok?: boolean; logs?: RunLog[] };
-    if (!response.ok || !payload.ok) return;
+    if (!dbSettingId) return;
+    const response = await fetch(`/api/kospi-forecast/logs?dbSettingId=${dbSettingId}`, { cache: "no-store" });
+    const payload = (await response.json()) as { ok?: boolean; logs?: RunLog[]; error?: string };
+    if (!response.ok || !payload.ok) {
+      setLogError(payload.error || "수행 로그를 불러오지 못했습니다.");
+      return;
+    }
+    setLogError("");
     const next = payload.logs ?? [];
     setLogs(next);
     setSelectedLogId((prev) =>
       selectLatest || !prev || !next.some((item) => item.id === prev) ? next[0]?.id ?? "" : prev,
     );
+  }, [dbSettingId]);
+
+  const fetchPythonStatus = useCallback(async () => {
+    const response = await fetch("/api/kospi-forecast/python", { cache: "no-store" });
+    const payload = (await response.json()) as {
+      executable?: string;
+      command?: string;
+      venv?: boolean;
+      exchangeCalendars?: boolean;
+      error?: string;
+    };
+    if (!response.ok || payload.error) {
+      setPythonStatus(payload.error || "예측 파이썬을 확인하지 못했습니다.");
+      return;
+    }
+    const where = payload.venv ? "가상환경" : "시스템 파이썬";
+    const calendar = payload.exchangeCalendars ? "exchange_calendars 있음" : "exchange_calendars 없음";
+    setPythonStatus(`${where} · ${payload.executable || payload.command || ""} · ${calendar}`);
   }, []);
 
   const fetchSchedules = useCallback(async () => {
@@ -141,11 +166,15 @@ export default function KospiForecastPage() {
 
   useEffect(() => {
     void fetchDbSettings();
-    void fetchLogs();
+    void fetchPythonStatus();
     void fetchSchedules().catch((error: unknown) => {
       setDbSettingsError(error instanceof Error ? error.message : "스케줄을 불러오지 못했습니다.");
     });
-  }, [fetchDbSettings, fetchLogs, fetchSchedules]);
+  }, [fetchDbSettings, fetchPythonStatus, fetchSchedules]);
+
+  useEffect(() => {
+    void fetchLogs();
+  }, [fetchLogs]);
 
   useEffect(() => {
     if (!dbSettingId) return;
@@ -186,6 +215,7 @@ export default function KospiForecastPage() {
   const refreshTargets = () => {
     setDateState(initialDates());
     void fetchLogs();
+    void fetchPythonStatus();
     void fetchSchedules().catch((error: unknown) => {
       setDbSettingsError(error instanceof Error ? error.message : "스케줄을 불러오지 못했습니다.");
     });
@@ -208,7 +238,8 @@ export default function KospiForecastPage() {
           llm,
         }),
       });
-      const payload = (await response.json()) as { ok?: boolean; error?: string; output?: string };
+      const payload = (await response.json()) as { ok?: boolean; error?: string; output?: string; logError?: string | null };
+      if (payload.logError) setLogError(payload.logError);
       if (!response.ok || !payload.ok) throw new Error(payload.error || "예측 실행에 실패했습니다.");
       await fetchLogs(true);
     } catch (runError) {
@@ -251,6 +282,7 @@ export default function KospiForecastPage() {
           </label>
         </div>
         {dbSettingsError ? <p className="mt-3 text-xs text-rose-600">{dbSettingsError}</p> : null}
+        {pythonStatus ? <p className="mt-3 text-xs text-slate-500">예측 실행: {pythonStatus}</p> : null}
         <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-slate-500">화면을 연 뒤 시각이 지나면 새로고침으로 세 대상일을 현재 시각에 맞춥니다.</p>
           <button
@@ -411,7 +443,7 @@ export default function KospiForecastPage() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 className="text-lg font-semibold text-slate-900">수행 로그</h3>
-            <p className="mt-1 text-sm text-slate-500">수동 실행과 매일 자동 실행이 이 화면에 시간순으로 남습니다.</p>
+            <p className="mt-1 text-sm text-slate-500">수동 실행과 매일 자동 실행이 선택한 DB에 시간순으로 남습니다.</p>
           </div>
           <div className="flex items-center gap-2">
             {(["ALL", "T0", "T1", "T2"] as const).map((key) => (
@@ -435,6 +467,7 @@ export default function KospiForecastPage() {
             </button>
           </div>
         </div>
+        {logError ? <p className="mt-4 text-sm text-rose-600">{logError}</p> : null}
         {visibleLogs.length === 0 ? (
           <p className="mt-6 text-sm text-slate-400">아직 수행 로그가 없습니다.</p>
         ) : (
