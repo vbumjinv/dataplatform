@@ -11,6 +11,8 @@ export type ScheduleInput = {
 export type PipelineInput = {
   name?: string;
   description?: string | null;
+  collectionType?: "api" | "news";
+  newsSourceKey?: "naver-pay" | null;
   groupId?: number | string | null;
   mapIds?: Array<number | string>;
   transformIds?: Array<number | string>;
@@ -30,6 +32,31 @@ const normalizeSchedule = (schedule?: ScheduleInput) => {
   const intervalMinutes = toInt(schedule?.intervalMinutes ?? 60) ?? 60;
   const cronExpr = (schedule?.cronExpr ?? "").trim() || null;
   return { enabled, type, intervalMinutes: Math.max(1, intervalMinutes), cronExpr };
+};
+
+export const ensurePipelineCollectionSchema = async (client: Client) => {
+  await client.query(`
+    create table if not exists dp.api_pipeline_collection (
+      pipeline_id bigint primary key references dp.api_pipeline(pipeline_id) on delete cascade,
+      collection_type text not null,
+      news_source_key text,
+      updated_at timestamptz not null default now(),
+      constraint api_pipeline_collection_type_check check (collection_type in ('news')),
+      constraint api_pipeline_collection_news_key_check check (
+        news_source_key is null or news_source_key in ('naver-pay')
+      )
+    )
+  `);
+};
+
+const replaceCollectionMeta = async (client: Client, pipelineId: number, body: PipelineInput) => {
+  await client.query(`delete from dp.api_pipeline_collection where pipeline_id = $1`, [pipelineId]);
+  if (body.collectionType !== "news") return;
+  await client.query(
+    `insert into dp.api_pipeline_collection (pipeline_id, collection_type, news_source_key, updated_at)
+     values ($1, 'news', $2, now())`,
+    [pipelineId, body.newsSourceKey === "naver-pay" ? "naver-pay" : "naver-pay"],
+  );
 };
 
 const replaceMaps = async (client: Client, pipelineId: number, mapIds?: Array<number | string>) => {
@@ -67,8 +94,9 @@ const replaceTransforms = async (
 export const createPipeline = async (client: Client, body: PipelineInput): Promise<number> => {
   const name = (body.name ?? "").trim() || "새 파이프라인";
   const schedule = normalizeSchedule(body.schedule);
-  const groupId = toInt(body.groupId);
+  const groupId = body.collectionType === "news" ? null : toInt(body.groupId);
   const dbSettingId = toInt(body.dbSettingId);
+  await ensurePipelineCollectionSchema(client);
   await client.query("begin");
   try {
     const result = await client.query<{ pipeline_id: number }>(
@@ -89,6 +117,7 @@ export const createPipeline = async (client: Client, body: PipelineInput): Promi
       ],
     );
     const pipelineId = result.rows[0].pipeline_id;
+    await replaceCollectionMeta(client, pipelineId, body);
     await replaceMaps(client, pipelineId, body.mapIds);
     await replaceTransforms(client, pipelineId, body.transformIds);
     await client.query("commit");
@@ -109,8 +138,9 @@ export const updatePipeline = async (
   body: PipelineInput,
 ): Promise<void> => {
   const schedule = normalizeSchedule(body.schedule);
-  const groupId = toInt(body.groupId);
+  const groupId = body.collectionType === "news" ? null : toInt(body.groupId);
   const dbSettingId = toInt(body.dbSettingId);
+  await ensurePipelineCollectionSchema(client);
   await client.query("begin");
   try {
     await client.query(
@@ -139,6 +169,7 @@ export const updatePipeline = async (
         body.isActive ?? true,
       ],
     );
+    await replaceCollectionMeta(client, pipelineId, body);
     if (body.mapIds !== undefined) {
       await replaceMaps(client, pipelineId, body.mapIds);
     }

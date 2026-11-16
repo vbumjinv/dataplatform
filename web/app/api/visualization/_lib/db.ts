@@ -77,8 +77,9 @@ export const parseDbSettingIdFromRequest = (request: Request) => {
 export const createDbClientFromRequest = async (request: Request) => {
   const settingId = parseDbSettingIdFromRequest(request);
   const resolvedDb = await resolveDbConfig({ settingId });
-  if (!resolvedDb) return null;
-  const connectionString = buildConnectionStringFromPayload(resolvedDb);
+  const connectionString = resolvedDb
+    ? buildConnectionStringFromPayload(resolvedDb)
+    : buildConnectionString();
   if (!connectionString) return null;
   return new Client({
     connectionString,

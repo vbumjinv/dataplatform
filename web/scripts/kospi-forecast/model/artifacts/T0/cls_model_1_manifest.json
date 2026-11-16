@@ -1,0 +1,107 @@
+{
+  "format_version": 1,
+  "objective": "cls",
+  "checkpoint": "T0_1600",
+  "target_month": "2026-11",
+  "features": [
+    "EU_DAX_ret_5d",
+    "K_close_location",
+    "K_intraday",
+    "K_log_volume_change",
+    "K_open_gap",
+    "K_range",
+    "K_ret_1d",
+    "MACRO_DXY_ret_10d",
+    "SECTOR_AUTO_ma_gap_20",
+    "SECTOR_FASHION_ret_20d",
+    "SECTOR_INTERNET_ma_gap_5",
+    "SECTOR_LIVING_ma_gap_5",
+    "TA_SMA10_gap",
+    "US_SOX_ret_1d"
+  ],
+  "combine": "mean",
+  "threshold": 0.5,
+  "train_start": "2010-01-05",
+  "train_end": "2026-10-29",
+  "train_rows": 4139,
+  "excluded_gap_date": "2026-10-30",
+  "param_policy": "fixed_no_grid",
+  "artifact": "cls_model_1.joblib",
+  "artifact_sha256": "cbef36a4a60d9545c720141665251aa2e26f329a79d76db8d5b5efb787335ab2",
+  "members": {
+    "CatBoost_cls": {
+      "params": {
+        "iterations": 400,
+        "depth": 8,
+        "learning_rate": 0.03
+      },
+      "inner_score": -0.01373632242752671,
+      "tuned": false
+    },
+    "HistGradientBoosting_cls": {
+      "params": {
+        "max_iter": 1000,
+        "max_leaf_nodes": 31,
+        "learning_rate": 0.01,
+        "l2_regularization": 30.0,
+        "min_samples_leaf": 10
+      },
+      "inner_score": 0.15633123372967322,
+      "tuned": false
+    },
+    "LightGBM_cls": {
+      "params": {
+        "num_leaves": 7,
+        "n_estimators": 100,
+        "learning_rate": 0.01
+      },
+      "inner_score": 0.09017969720628227,
+      "tuned": false
+    },
+    "RollingLogisticL1_cls": {
+      "params": {
+        "C": 0.1,
+        "window": 750
+      },
+      "inner_score": 0.0,
+      "tuned": false
+    },
+    "SVC_cls": {
+      "params": {
+        "C": 1.0
+      },
+      "inner_score": 0.025805147386888844,
+      "tuned": false
+    }
+  },
+  "selection": "outputs/test/f0_fixed_params/selected.json (구성 모델 설정 조합을 시점별 서비스 최종 출력(T0·T1 F0 분류 / F0 회귀 + K1, T2 로짓융합 / X3 스태킹 + K1)으로 평가해 min(검증 백분위, 홀드아웃 백분위) 최대 → 검증 점수(잠정: 홀드아웃을 선택에 씀))",
+  "member_selection": "구성 모델 = outputs/test/ml_t0/f0m_selected.json",
+  "grid": "service/train/estimators.py F0_GRID",
+  "code": "service/train/f0_trainer.py",
+  "grid_search": false,
+  "next_grid_month": null,
+  "created": "2026-11-09T09:50:46.725816+00:00",
+  "model_version": "model_1_t0_cls_2026_11_cbef36a4a60d",
+  "pipeline": "predict/engine.py",
+  "pipeline_sha256": "7ce834bafd3053b0ed0cf766900e6a9c0c8f9b78b8196ab72b0756f7f6c94e8f",
+  "refit": {
+    "source_snapshot_at": "2026-11-09 14:30:14.677965+09:00",
+    "source_table": "dp.news_feature_orig",
+    "input_manifest_sha256": "a34be11e10359311683a89b97f5459e336f0c75cbc56e08ad9d3b870bf466d04",
+    "news_start_requested": "2010-01-01",
+    "script": "experiments\\daily\\test\\service_refit_20261109\\train_refit.py",
+    "monthly_grid": [
+      1,
+      4,
+      7,
+      10
+    ],
+    "final_grid_override": true,
+    "missing_policy": "skip",
+    "evaluation_is_retrospective": true
+  },
+  "news_feature_source": null,
+  "shap_pool_start": "2010-01-01",
+  "param_policy_note": "파라미터 고정(2026-10 첫 학습본 값). 월간 재학습은 grid search 없이 재적합만(--grid on 일 때만 격자).",
+  "selection_evidence": "experiments/daily/test/model_reselect_20261109 (evaluate.py, 사용자 요청 2026-11-09)"
+}

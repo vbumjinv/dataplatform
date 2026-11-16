@@ -1,12 +1,14 @@
 import type { Client } from "pg";
 import {
   buildTransformSelect,
+  isNewsFeatureTransform,
   isPythonTransform,
   normalizeTransformType,
   resolveOutputFreq,
   validateUserPython,
   type TransformConfig,
 } from "./sql-builder";
+import { resolveNewsDateToken } from "../../ingestion/_lib/news-date-token";
 
 export type TransformInput = {
   name?: string;
@@ -33,12 +35,38 @@ const fetchSourceFreq = async (client: Client, sourceMapId: number): Promise<str
 const normalizeInput = async (client: Client, input: TransformInput) => {
   const name = (input.name ?? "").trim();
   if (!name) throw new Error("이름을 입력하세요.");
+  const transformType = normalizeTransformType(input.transformType);
+  const config = input.config ?? {};
+  if (isNewsFeatureTransform(transformType)) {
+    if ((config.newsSource ?? "naver_pay") !== "naver_pay") {
+      throw new Error("뉴스 변수 추출은 네이버페이 증권뉴스만 지원합니다.");
+    }
+    const newsStartExpr = (config.newsStartExpr ?? "").trim();
+    const newsEndExpr = (config.newsEndExpr ?? "").trim();
+    if (!resolveNewsDateToken(newsStartExpr) || !resolveNewsDateToken(newsEndExpr)) {
+      throw new Error("뉴스 시작일/종료일을 확인하세요.");
+    }
+    const outputName = (input.outputName ?? "").trim() || name;
+    const outputUnit = (input.outputUnit ?? "")?.toString().trim() || null;
+    return {
+      name,
+      sourceMapId: null,
+      transformType,
+      config: {
+        newsFeature: true,
+        newsSource: "naver_pay",
+        newsStartExpr,
+        newsEndExpr,
+      },
+      outputFreq: "D",
+      outputName,
+      outputUnit,
+    };
+  }
   const sourceMapId = Number(input.sourceMapId);
   if (!Number.isFinite(sourceMapId) || sourceMapId <= 0) {
     throw new Error("입력 시리즈를 선택하세요.");
   }
-  const transformType = normalizeTransformType(input.transformType);
-  const config = input.config ?? {};
   // 원본 주기는 검증(보간 앵커)에도 필요하므로 SELECT 생성 전에 먼저 읽는다.
   const sourceFreq = await fetchSourceFreq(client, sourceMapId);
   // config 유효성 검증: python 은 코드 검증, 그 외는 변환 SELECT 생성으로 안전성까지 확인
@@ -71,7 +99,7 @@ export const createTransform = async (
        returning transform_id`,
       [
         n.name,
-        n.transformType,
+        isNewsFeatureTransform(n.transformType) ? "python" : n.transformType,
         n.sourceMapId,
         JSON.stringify(n.config),
         n.outputName,
@@ -83,20 +111,23 @@ export const createTransform = async (
     );
     const transformId = Number(insertRes.rows[0]?.transform_id);
 
-    // 출력 파생 시리즈 (viz_map_mst 행) 생성 → 차트에서 map:<id> 로 사용
-    const mapRes = await client.query<{ map_id: number }>(
-      `insert into dp.viz_map_mst (
-         source_org, api_name, source_table, series_name, series_key,
-         date_column, date_format, value_column, where_clause,
-         unit_name, freq, duplicate_date_policy, is_active
-       )
-       values ('derived', $1, $2, $3, null,
-         'obs_date', null, 'obs_value', null,
-         $4, $5, 'none', true)
-       returning map_id`,
-      [n.outputName, `transform:${transformId}`, n.outputName, n.outputUnit, n.outputFreq],
-    );
-    const outputMapId = Number(mapRes.rows[0]?.map_id);
+    let outputMapId: number | null = null;
+    if (!isNewsFeatureTransform(n.transformType)) {
+      // 출력 파생 시리즈 (viz_map_mst 행) 생성 → 차트에서 map:<id> 로 사용
+      const mapRes = await client.query<{ map_id: number }>(
+        `insert into dp.viz_map_mst (
+           source_org, api_name, source_table, series_name, series_key,
+           date_column, date_format, value_column, where_clause,
+           unit_name, freq, duplicate_date_policy, is_active
+         )
+         values ('derived', $1, $2, $3, null,
+           'obs_date', null, 'obs_value', null,
+           $4, $5, 'none', true)
+         returning map_id`,
+        [n.outputName, `transform:${transformId}`, n.outputName, n.outputUnit, n.outputFreq],
+      );
+      outputMapId = Number(mapRes.rows[0]?.map_id);
+    }
 
     await client.query(
       `update dp.api_transform set output_map_id = $2, updated_at = now() where transform_id = $1`,
@@ -137,7 +168,7 @@ export const updateTransform = async (
       [
         transformId,
         n.name,
-        n.transformType,
+        isNewsFeatureTransform(n.transformType) ? "python" : n.transformType,
         n.sourceMapId,
         JSON.stringify(n.config),
         n.outputName,
@@ -149,7 +180,7 @@ export const updateTransform = async (
     );
 
     const outputMapId = cur.rows[0]?.output_map_id;
-    if (outputMapId) {
+    if (outputMapId && !isNewsFeatureTransform(n.transformType)) {
       // 출력 파생 시리즈 메타 동기화
       await client.query(
         `update dp.viz_map_mst

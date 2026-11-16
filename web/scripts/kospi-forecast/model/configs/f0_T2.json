@@ -1,0 +1,164 @@
+{
+  "source": "experiments/daily/test/f0_fixed_params/02_select.py (outputs/test/f0_fixed_params/selected.json, 2026-11-04)",
+  "note": "운영 월간 재학습의 정형 F0 구성·파라미터. 세 시점 공통 규칙(사용자 결정 2026-11-04): 구성 모델별 격자 설정을 고정해 85개월 월별 재학습 OOS 를 만들고 검증·홀드아웃 백분위 중 낮은 쪽이 가장 높은 설정을 고른다(잠정). 매달 다시 고르지 않고 이 값으로 재적합만 한다.",
+  "ensembles": {
+    "T2_0830/cls": {
+      "checkpoint": "T2_0830",
+      "objective": "cls",
+      "metric": "MCC",
+      "members": [
+        "ExtraTrees_cls",
+        "SVC_cls",
+        "XGBoost_cls"
+      ],
+      "params": {
+        "ExtraTrees_cls": {
+          "n_estimators": 400,
+          "max_depth": 12,
+          "min_samples_leaf": 3,
+          "max_features": 1.0
+        },
+        "SVC_cls": {
+          "C": 0.03
+        },
+        "XGBoost_cls": {
+          "n_estimators": 100,
+          "max_depth": 3,
+          "learning_rate": 0.1
+        }
+      },
+      "params_before_20261104": {
+        "ExtraTrees_cls": {
+          "n_estimators": 400,
+          "max_depth": 12,
+          "min_samples_leaf": 10,
+          "max_features": 0.75
+        },
+        "SVC_cls": {
+          "C": 1.0
+        },
+        "XGBoost_cls": {
+          "n_estimators": 50,
+          "max_depth": 3,
+          "learning_rate": 0.1
+        }
+      },
+      "selection": {
+        "ExtraTrees_cls": {
+          "gi": 9,
+          "val": 0.30149280344108903,
+          "holdout": 0.339803802543201,
+          "all": 0.3018187480098143,
+          "pct_val": 0.6666666666666666,
+          "pct_holdout": 0.5555555555555556,
+          "grid_size": 18
+        },
+        "SVC_cls": {
+          "gi": 3,
+          "val": 0.32741852883438666,
+          "holdout": 0.2144842955185231,
+          "all": 0.30084812975545916,
+          "pct_val": 1.0,
+          "pct_holdout": 0.5714285714285714,
+          "grid_size": 7
+        },
+        "XGBoost_cls": {
+          "gi": 11,
+          "val": 0.285570090566189,
+          "holdout": 0.2712105863645065,
+          "all": 0.28109073888063113,
+          "pct_val": 0.2222222222222222,
+          "pct_holdout": 0.2777777777777778,
+          "grid_size": 18
+        }
+      }
+    },
+    "T2_0830/reg": {
+      "checkpoint": "T2_0830",
+      "objective": "reg",
+      "metric": "MAESkillVsZero",
+      "members": [
+        "CatBoost_reg",
+        "ExtraTrees_reg",
+        "LASSO_reg",
+        "Ridge_reg"
+      ],
+      "params": {
+        "CatBoost_reg": {
+          "iterations": 200,
+          "depth": 8,
+          "learning_rate": 0.03
+        },
+        "ExtraTrees_reg": {
+          "n_estimators": 400,
+          "max_depth": null,
+          "min_samples_leaf": 1,
+          "max_features": 0.75
+        },
+        "LASSO_reg": {
+          "alpha": 1e-05
+        },
+        "Ridge_reg": {
+          "alpha": 3000.0
+        }
+      },
+      "params_before_20261104": {
+        "CatBoost_reg": {
+          "iterations": 200,
+          "depth": 6,
+          "learning_rate": 0.03
+        },
+        "ExtraTrees_reg": {
+          "n_estimators": 800,
+          "max_depth": 12,
+          "min_samples_leaf": 3,
+          "max_features": 0.5
+        },
+        "LASSO_reg": {
+          "alpha": 0.0003
+        },
+        "Ridge_reg": {
+          "alpha": 300.0
+        }
+      },
+      "selection": {
+        "CatBoost_reg": {
+          "gi": 4,
+          "val": 0.10601244873779547,
+          "holdout": 0.0432435416766177,
+          "all": 0.07759397192912387,
+          "pct_val": 1.0,
+          "pct_holdout": 0.5,
+          "grid_size": 6
+        },
+        "ExtraTrees_reg": {
+          "gi": 12,
+          "val": 0.10066127230628841,
+          "holdout": 0.055788563372956346,
+          "all": 0.08032922702029077,
+          "pct_val": 0.3888888888888889,
+          "pct_holdout": 1.0,
+          "grid_size": 18
+        },
+        "LASSO_reg": {
+          "gi": 0,
+          "val": 0.10895490259575413,
+          "holdout": 0.05213098923183457,
+          "all": 0.0850279170911864,
+          "pct_val": 0.8571428571428571,
+          "pct_holdout": 1.0,
+          "grid_size": 7
+        },
+        "Ridge_reg": {
+          "gi": 8,
+          "val": 0.08809096985572251,
+          "holdout": 0.044830534712736236,
+          "all": 0.0704233581489545,
+          "pct_val": 0.2,
+          "pct_holdout": 0.2,
+          "grid_size": 10
+        }
+      }
+    }
+  }
+}

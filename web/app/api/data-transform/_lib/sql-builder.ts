@@ -9,6 +9,7 @@ export type TransformType =
   | "combine"
   | "interpolate"
   | "movavg"
+  | "news_feature"
   | "python";
 export type ResampleUnit = "day" | "week" | "month" | "quarter" | "year";
 export type ResampleAgg = "avg" | "sum" | "max" | "min" | "last" | "first";
@@ -25,10 +26,15 @@ export type TransformConfig = {
   divToPercent?: boolean; // combine(div): 나누기 결과에 x100 적용(%)
   window?: number; // movavg: 이동평균 구간(관측치 개수)
   code?: string; // python: 사용자 작성 코드 (df 입력 → result 출력)
+  newsFeature?: boolean;
+  newsSource?: "naver_pay" | "nyt"; // news_feature: 현재 실행 대상은 naver_pay
+  newsStartExpr?: string;
+  newsEndExpr?: string;
 };
 
 // python 가공은 SQL이 아니라 외부 Python 서비스(/transform)에서 실행된다.
 export const isPythonTransform = (type: TransformType): boolean => type === "python";
+export const isNewsFeatureTransform = (type: TransformType): boolean => type === "news_feature";
 
 // 사용자 Python 코드 검증: 비어있지 않고 result 변수를 설정해야 한다.
 export const validateUserPython = (raw: string | undefined | null): string => {
@@ -326,6 +332,7 @@ export const resolveOutputFreq = (
 export const transformTypeLabel = (type: TransformType, config: TransformConfig): string => {
   if (type === "sql") return "SQL";
   if (type === "python") return "Python";
+  if (type === "news_feature") return "뉴스 변수 추출";
   const unitLabel: Record<ResampleUnit, string> = {
     day: "일",
     week: "주",
@@ -372,6 +379,7 @@ export const normalizeTransformType = (value: unknown): TransformType => {
     v === "combine" ||
     v === "interpolate" ||
     v === "movavg" ||
+    v === "news_feature" ||
     v === "python"
   )
     return v;

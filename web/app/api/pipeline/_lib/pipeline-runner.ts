@@ -6,6 +6,9 @@ import {
   buildMapDataForMapping,
   fetchMappings,
 } from "../../visualization/_lib/mapping-query";
+import { resolveNewsDateToken } from "../../ingestion/_lib/news-date-token";
+import { crawlStockNewsRange } from "../../ingestion/_lib/naver-stock-news";
+import { readNewsStockSource } from "../../ingestion/_lib/news-stock-source";
 import {
   markMapRunLogError,
   markMapRunLogSuccess,
@@ -13,6 +16,7 @@ import {
 } from "../../visualization/_lib/map-run-log";
 import { runTransform } from "../../data-transform/_lib/transform-runner";
 import { addRunPid, beginRun, endRun, setRunProgress } from "../../_shared/cancel-registry";
+import { ensurePipelineCollectionSchema } from "./persist";
 
 const LOCK_NS = 8104;
 
@@ -112,8 +116,17 @@ export const runPipeline = async (
       // ignore
     }
 
-    const pipelineRes = await client.query<{ name: string; group_id: number | null }>(
-      `select name, group_id from dp.api_pipeline where pipeline_id = $1`,
+    await ensurePipelineCollectionSchema(client);
+    const pipelineRes = await client.query<{
+      name: string;
+      group_id: number | null;
+      collection_type: string | null;
+      news_source_key: string | null;
+    }>(
+      `select p.name, p.group_id, pc.collection_type, pc.news_source_key
+       from dp.api_pipeline p
+       left join dp.api_pipeline_collection pc on pc.pipeline_id = p.pipeline_id
+       where p.pipeline_id = $1`,
       [pipelineId],
     );
     const pipeline = pipelineRes.rows[0];
@@ -134,7 +147,44 @@ export const runPipeline = async (
 
     // 1) 수집(적재)
     let collectOk = false;
-    if (!pipeline.group_id) {
+    if (pipeline.collection_type === "news") {
+      try {
+        if (pipeline.news_source_key !== "naver-pay") throw new Error("지원하지 않는 뉴스 수집입니다.");
+        const setting = await readNewsStockSource(dbSettingId);
+        const startDate = resolveNewsDateToken(setting.startExpr) ?? setting.startExpr;
+        const endDate = resolveNewsDateToken(setting.endExpr) ?? setting.endExpr;
+        setRunProgress(cancelKey, { phase: "collect", label: "네이버페이 증권뉴스 수집" });
+        const result = await crawlStockNewsRange({
+          startDate,
+          endDate,
+          dbSettingId,
+          onProgress: (progress) =>
+            setRunProgress(cancelKey, {
+              phase: "collect",
+              label: `네이버페이 증권뉴스 · ${progress.message}`,
+            }),
+        });
+        if (result.phase === "error") throw new Error(result.error || result.message);
+        stepResults.push({
+          type: "collect",
+          refId: null,
+          status: "success",
+          mapLabel: "네이버페이 증권뉴스",
+          affectedCount: result.bodyOk,
+          message: result.message,
+        });
+        collectOk = true;
+      } catch (collectError) {
+        const message = collectError instanceof Error ? collectError.message : String(collectError);
+        stepResults.push({
+          type: "collect",
+          refId: null,
+          status: "error",
+          mapLabel: "네이버페이 증권뉴스",
+          message,
+        });
+      }
+    } else if (!pipeline.group_id) {
       stepResults.push({ type: "collect", refId: null, status: "error", message: "수집이 지정되지 않았습니다." });
     } else {
       try {

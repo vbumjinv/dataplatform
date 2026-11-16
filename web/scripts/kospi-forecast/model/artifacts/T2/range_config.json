@@ -1,0 +1,84 @@
+{
+ "time_point": "T2",
+ "error_model": "E5",
+ "taus": [
+  0.025,
+  0.1,
+  0.5,
+  0.9,
+  0.975
+ ],
+ "gamma": 0.05,
+ "miss_k": 2,
+ "window": 10,
+ "hold": 3,
+ "state_start": "2018-10-01",
+ "history_end": "2026-10-30",
+ "config_name": "E5+trig_0.05_m2_h3",
+ "selection_rule": "새 분할 검증·홀드아웃 둘 다 Winkler(80)+Winkler(95) 감소·적중률 오차 비증가, 선택 구간 밖(2012-02~2018-09) Winkler 비악화 중 검증 Winkler 최소",
+ "source": "fresh_db_monthly_oos",
+ "history_sha256": "868bdd0af7cb2f1ba73f0d79fdc9a2a05f733454da16b2f6b8a46419f132b5da",
+ "model_version": "model_1_reg_2026_11_dbfull_46f3fa517955",
+ "range_month": "2026-11",
+ "error_model_train_rows": 3868,
+ "refreshed_utc": "2026-11-10T05:08:50.007897+00:00",
+ "refreshed_by": "experiments/daily/test/range_improve_20261110/deploy_range.py",
+ "evaluation_split": {
+  "validation": [
+   "2018-10-01",
+   "2025-09-30"
+  ],
+  "holdout": [
+   "2025-10-01",
+   "2026-10-31"
+  ],
+  "all_periods": [
+   "2018-10-01",
+   "2026-10-31"
+  ],
+  "fold1": [
+   "2018-10-01",
+   "2019-09-30"
+  ],
+  "fold2": [
+   "2019-10-01",
+   "2020-09-30"
+  ],
+  "fold3": [
+   "2020-10-01",
+   "2021-09-30"
+  ],
+  "fold4": [
+   "2021-10-01",
+   "2022-09-30"
+  ],
+  "fold5": [
+   "2022-10-01",
+   "2023-09-30"
+  ],
+  "fold6": [
+   "2023-10-01",
+   "2024-09-30"
+  ],
+  "fold7": [
+   "2024-10-01",
+   "2025-09-30"
+  ]
+ },
+ "selection_evidence": "experiments/daily/test/range_improve_20261110 (run_range.py candidates.csv, 사용자 요청 2026-11-10)",
+ "previous_adjust": {
+  "gamma": 0.1,
+  "miss_k": 3,
+  "hold": 5,
+  "config_name": "E5+trig_0.1_m3_r0"
+ },
+ "selection_metrics": {
+  "validation_cov80": 80.6039,
+  "validation_cov95": 94.5993,
+  "validation_wink": 9.2538,
+  "holdout_cov80": 76.6284,
+  "holdout_cov95": 93.4866,
+  "holdout_wink": 27.9006,
+  "pre_wink": 6.1625
+ }
+}

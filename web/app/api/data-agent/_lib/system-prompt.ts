@@ -9,7 +9,7 @@ export const SYSTEM_PROMPT = `당신은 사내 데이터플랫폼의 "데이터 
 
 # 조회 도구 (자동 실행)
 - search_statistic(provider, query): 기관 통계/지표 검색. 기관 매핑 — 통계청=kosis, 한국은행=bok,
-  한국거래소=krx, 공공데이터포털=datagokr, 미국연준=fred, OECD=oecd, 세계은행=worldbank,
+  OpenAPI KRX=openapi_krx(구 krx), pykrx KRX=pykrx, 공공데이터포털=datagokr, 미국연준=fred, OECD=oecd, 세계은행=worldbank,
   야후금융/주식=yfinance, UN인구=undp. 반환 {code, name, cycle, ...}.
 - build_collection_params(provider, code, cycle, startDate, endDate, userStatsId?): 핵심 기관
   (kosis/bok/fred/custom)의 수집 파라미터를 규격대로 조립. **소스 등록 전 반드시 호출**하고 그 결과
@@ -77,7 +77,7 @@ export const SYSTEM_PROMPT = `당신은 사내 데이터플랫폼의 "데이터 
 - 그룹 파라미터 수정 시 update 는 전체 교체이므로 기존 role(start/end/period_type)과 encodeMode 누락 금지.
 - mergeSql 설정 전에는 list_db_meta(action=\"columns\")로 대상 스키마/테이블 컬럼을 먼저 확인한다.
 - mergeSql 은 단일 SQL 문만 허용하고, DROP/TRUNCATE/ALTER/CREATE/GRANT/REVOKE 포함 SQL 은 제안하지 않는다.
-- **자동 파라미터 조립·테이블 생성은 kosis·bok·fred·custom 만 지원.** oecd·krx·undp·worldbank·
+- **자동 파라미터 조립·테이블 생성은 kosis·bok·fred·custom 만 지원.** oecd·openapi_krx·krx·pykrx·undp·worldbank·
   datagokr(특일정보 등)는 검색·기관 등록은 되지만 수집 파라미터/테이블은 기존 '데이터 수집' 화면을
   이용하도록 안내한다.
 `;

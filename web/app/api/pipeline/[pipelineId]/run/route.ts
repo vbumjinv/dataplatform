@@ -3,8 +3,8 @@ import { parseDbSettingIdFromRequest } from "../../_lib/db";
 import { runPipeline } from "../../_lib/pipeline-runner";
 
 export const runtime = "nodejs";
-// 적재+매핑이 길어질 수 있어 여유 있게
-export const maxDuration = 300;
+// 뉴스 수집+LLM 가공까지 한 번에 돌릴 수 있어 여유 있게
+export const maxDuration = 3600;
 
 export async function POST(
   request: Request,

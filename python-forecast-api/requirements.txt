@@ -6,6 +6,7 @@ prophet==1.1.6
 statsmodels==0.14.4
 pydantic==2.11.7
 yfinance==0.2.65
+pykrx==1.2.5
 torch
 chronos-forecasting>=2.0.0
 transformers>=4.57.0,<5

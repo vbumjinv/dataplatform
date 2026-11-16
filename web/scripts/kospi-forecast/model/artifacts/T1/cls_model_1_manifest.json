@@ -1,0 +1,172 @@
+{
+  "format_version": 2,
+  "objective": "cls",
+  "checkpoint": "T1_EU_CLOSE",
+  "target_month": "2026-11",
+  "features": [
+    "EU_DAX_ma_gap_20",
+    "EU_STOXX600_ret_1d",
+    "K_close_location",
+    "K_intraday",
+    "K_log_volume_change",
+    "K_open_gap",
+    "K_range",
+    "K_ret_1d",
+    "MACRO_GOLD_ret_3d",
+    "SECTOR_AUTO_ma_gap_20",
+    "SECTOR_FASHION_ret_20d",
+    "SECTOR_INTERNET_ma_gap_5",
+    "SECTOR_LIVING_ma_gap_5",
+    "TA_SMA10_gap",
+    "US_SOX_ret_3d"
+  ],
+  "combine": "mean",
+  "threshold": 0.5,
+  "train_start": "2010-01-05",
+  "train_end": "2026-10-29",
+  "train_rows": 4139,
+  "excluded_gap_date": "2026-10-30",
+  "model": "N3",
+  "artifact": "cls_model_1.joblib",
+  "artifact_sha256": "83cad497684ea16c8b737825fb8b0a892e37dbf9ce895b1423884b18f0960493",
+  "members": {
+    "CatBoost_cls": {
+      "params": {
+        "iterations": 200,
+        "depth": 8,
+        "learning_rate": 0.1
+      },
+      "inner_score": 0.2561275185113222,
+      "tuned": true
+    },
+    "SVC_cls": {
+      "params": {
+        "C": 1.0
+      },
+      "inner_score": 0.13349085565566024,
+      "tuned": true
+    }
+  },
+  "news": {
+    "columns": [
+      "t1_impact",
+      "t1_impact_std",
+      "t1_pos_share",
+      "t1_neg_share",
+      "t1_mix_share",
+      "t1_strength",
+      "t1_impact_kor",
+      "t1_impact_usa",
+      "t1_surprise",
+      "t1_unexpected"
+    ],
+    "method": "X4",
+    "lam": 0.5,
+    "train_start": "2011-02-01",
+    "train_end": "2026-10-29",
+    "train_rows": 3868,
+    "resid": {
+      "rf": {
+        "model": "rf",
+        "params": {
+          "max_depth": 6,
+          "min_samples_leaf": 5
+        },
+        "gamma": 1.0,
+        "filt": "none"
+      },
+      "et": {
+        "model": "et",
+        "params": {
+          "max_depth": 8,
+          "min_samples_leaf": 3
+        },
+        "gamma": 1.0,
+        "filt": "none"
+      },
+      "ridge": {
+        "model": "ridge",
+        "params": {
+          "alpha": 300.0
+        },
+        "gamma": 1.0,
+        "filt": "none"
+      },
+      "lgbm": {
+        "model": "lgbm",
+        "params": {
+          "num_leaves": 8,
+          "learning_rate": 0.03
+        },
+        "gamma": 1.0,
+        "filt": "none"
+      }
+    }
+  },
+  "condition": {
+    "name": "cond_sector_hi10",
+    "column": "sec_market",
+    "q": 0.9,
+    "side": "gt",
+    "min_hist": 60,
+    "label": "시장 전체 업종 영향 점수가 어제까지 분포의 상위 10%",
+    "history_rows": 4140,
+    "history_end": "2026-10-30"
+  },
+  "input_columns": [
+    "EU_DAX_ma_gap_20",
+    "EU_STOXX600_ret_1d",
+    "K_close_location",
+    "K_intraday",
+    "K_log_volume_change",
+    "K_open_gap",
+    "K_range",
+    "K_ret_1d",
+    "MACRO_GOLD_ret_3d",
+    "SECTOR_AUTO_ma_gap_20",
+    "SECTOR_FASHION_ret_20d",
+    "SECTOR_INTERNET_ma_gap_5",
+    "SECTOR_LIVING_ma_gap_5",
+    "TA_SMA10_gap",
+    "US_SOX_ret_3d",
+    "t1_impact",
+    "t1_impact_std",
+    "t1_pos_share",
+    "t1_neg_share",
+    "t1_mix_share",
+    "t1_strength",
+    "t1_impact_kor",
+    "t1_impact_usa",
+    "t1_surprise",
+    "t1_unexpected",
+    "cond_sector_hi10"
+  ],
+  "selection": "outputs/test/f0_fixed_params/selected.json (구성 모델 설정 조합을 시점별 서비스 최종 출력(T0·T1 F0 분류 / F0 회귀 + K1, T2 로짓융합 / X3 스태킹 + K1)으로 평가해 min(검증 백분위, 홀드아웃 백분위) 최대 → 검증 점수(잠정: 홀드아웃을 선택에 씀))",
+  "member_selection": "구성 모델 = outputs/test/ml_t1fixed/f0m_selected.json",
+  "grid": "service/train/estimators.py F0_GRID·SMALL_GRIDS",
+  "code": "service/train/retrain_t1.py",
+  "grid_search": true,
+  "next_grid_month": "2027-01",
+  "created": "2026-11-10T03:42:55.323133+00:00",
+  "model_version": "model_1_t1_cls_2026_11_83cad497684e",
+  "pipeline": "predict/engine.py",
+  "pipeline_sha256": "73ed9a314dd2156c231c26de41b2bb3607278cc0e658bf32d7171f992e43c3b4",
+  "refit": {
+    "source_snapshot_at": "2026-11-09 14:30:14.677965+09:00",
+    "source_table": "dp.news_feature_orig",
+    "input_manifest_sha256": "a34be11e10359311683a89b97f5459e336f0c75cbc56e08ad9d3b870bf466d04",
+    "news_start_requested": "2010-01-01",
+    "script": "experiments\\daily\\test\\service_refit_20261109\\train_refit.py",
+    "monthly_grid": [
+      1,
+      4,
+      7,
+      10
+    ],
+    "final_grid_override": true,
+    "missing_policy": "skip",
+    "evaluation_is_retrospective": true
+  },
+  "news_feature_source": "dp.news_feature_orig",
+  "shap_pool_start": "2011-02-01"
+}

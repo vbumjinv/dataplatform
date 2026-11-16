@@ -1,5 +1,6 @@
 import { Client } from "pg";
 import { resolveDbConfig } from "../db/_lib/connection";
+import { runPykrxCollect } from "./_lib/pykrx-run";
 
 const CONNECT_TIMEOUT_MS = 5000;
 const MAX_BIND_PARAMS_PER_QUERY = 30000;
@@ -32,6 +33,8 @@ const UNDP_MAX_PAGES = parsePositiveInt(process.env.INGESTION_UNDP_MAX_PAGES, 20
 const UNDP_DATA_BASE_URL = "https://population.un.org/dataportalapi/api/v1/data";
 // yfinance 수집은 HTTP API 가 아니라 python-forecast-api(/yfinance) 실행으로 처리한다.
 const PY_YFINANCE_API_URL = process.env.PY_YFINANCE_API_URL ?? "http://127.0.0.1:8001/yfinance";
+const isOpenApiKrxProvider = (provider: string) =>
+  provider === "krx" || provider === "openapi_krx";
 const PY_YFINANCE_TIMEOUT_MS = Math.max(
   5000,
   Number(process.env.PY_YFINANCE_TIMEOUT_MS ?? 120000) || 120000,
@@ -260,6 +263,10 @@ const shouldUseIsoDateParamFormat = (paramKey: string) => {
 };
 const shouldUseDailyCompactParamFormat = (paramKey: string) =>
   paramKey.trim().toLowerCase() === "basdd";
+const shouldUseYearOnlyParamFormat = (paramKey: string) => {
+  const normalized = paramKey.trim().toLowerCase();
+  return normalized === "startyear" || normalized === "endyear";
+};
 // OECD(SDMX) startPeriod/endPeriod 는 하이픈 표기(YYYY / YYYY-Qn / YYYY-MM / YYYY-MM-DD)를 쓴다.
 const shouldUseOecdPeriodFormat = (paramKey: string) => {
   const normalized = paramKey.trim().toLowerCase();
@@ -280,6 +287,9 @@ const toParamDateValue = (date: Date, period: string, paramKey: string) => {
   }
   if (shouldUseDailyCompactParamFormat(paramKey)) {
     return toPeriodValue(date, "D");
+  }
+  if (shouldUseYearOnlyParamFormat(paramKey)) {
+    return toPeriodValue(date, "Y");
   }
   if (shouldUseOecdPeriodFormat(paramKey)) {
     return toOecdPeriodValue(date, period);
@@ -1008,12 +1018,12 @@ options?: {
       ) ?? null);
     const endKey =
       roleKeyMap.get("end") ??
-      (["apiend", "endprdde", "endyymm", "observation_end", "endperiod", "basdd"].find((key) =>
+      (["apiend", "endprdde", "endyymm", "observation_end", "endperiod", "endyear", "basdd"].find((key) =>
         paramValueByKeyLower.has(key),
       ) ?? null);
     const startKey =
       roleKeyMap.get("start") ??
-      (["apistart", "startprdde", "strtyymm", "observation_start", "startperiod"].find((key) =>
+      (["apistart", "startprdde", "strtyymm", "observation_start", "startperiod", "startyear"].find((key) =>
         paramValueByKeyLower.has(key),
       ) ?? null);
     const periodTypeKeyLower = periodTypeKey?.trim().toLowerCase() ?? null;
@@ -1035,6 +1045,7 @@ options?: {
         "endyymm",
         "observation_end",
         "endperiod",
+        "endyear",
         "basdd",
       ].includes(paramKey);
       const isStartParamByKey = [
@@ -1043,6 +1054,7 @@ options?: {
         "strtyymm",
         "observation_start",
         "startperiod",
+        "startyear",
       ].includes(paramKey);
       const shouldResolveLatest =
         param.value === END_LATEST_TOKEN &&
@@ -1131,7 +1143,7 @@ options?: {
     errorStage = "api_fetch";
     const sourceInfo = {
       baseUrl:
-        sourceProvider === "krx"
+        isOpenApiKrxProvider(sourceProvider)
           ? normalizeKrxEndpointUrl(String(first.base_url ?? ""))
           : sourceProvider === "undp"
             ? UNDP_DATA_BASE_URL
@@ -1269,7 +1281,50 @@ options?: {
         row.ticker ?? ticker,
       ]);
       if (!dataRows.length) throw new Error("적재할 데이터가 없습니다.");
-    } else if (sourceProvider === "krx") {
+    } else if (sourceProvider === "pykrx") {
+      const valueByLower = new Map(
+        requestParams.map((param) => [param.key.trim().toLowerCase(), param.value]),
+      );
+      const lookup = (key: string | null) =>
+        !key ? "" : valueByLower.get(key.trim().toLowerCase()) ?? "";
+      const dataset = (lookup("dataset") || "").trim();
+      const startDateObj = parseDateText(lookup(startKey));
+      const endDateObj = parseDateText(lookup(endKey));
+      if (!dataset) throw new Error("pykrx 데이터셋(dataset)이 지정되지 않았습니다.");
+      if (!startDateObj || !endDateObj) {
+        throw new Error("pykrx 수집 시작일/종료일을 해석하지 못했습니다.");
+      }
+      const toIso = (d: Date) =>
+        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+          d.getDate(),
+        ).padStart(2, "0")}`;
+      const startIso = toIso(startDateObj <= endDateObj ? startDateObj : endDateObj);
+      const endIso = toIso(startDateObj <= endDateObj ? endDateObj : startDateObj);
+      const rows = await runPykrxCollect({ dataset, start: startIso, end: endIso, sample: false });
+      header = [
+        "DATE",
+        "INDEX_NAME",
+        "INDEX_TICKER",
+        "OPEN",
+        "HIGH",
+        "LOW",
+        "CLOSE",
+        "VOLUME",
+        "TRADING_VALUE",
+      ];
+      dataRows = rows.map((row) => [
+        row.date ?? null,
+        row.index_name ?? null,
+        row.index_ticker ?? null,
+        row.open ?? null,
+        row.high ?? null,
+        row.low ?? null,
+        row.close ?? null,
+        row.volume ?? null,
+        row.trading_value ?? null,
+      ]);
+      if (!dataRows.length) throw new Error("적재할 데이터가 없습니다.");
+    } else if (isOpenApiKrxProvider(sourceProvider)) {
       const krxParamValueMapRaw = new Map(requestParams.map((param) => [param.key, param.value]));
       // param_role 이 없으면 startKey/endKey 가 소문자 후보키(apistart/apiend)로 잡히는데,
       // 값 맵은 원본 대소문자 키(apiStart/apiEnd)라 대소문자 무시 조회로 값을 찾는다.
@@ -1934,7 +1989,7 @@ export const createTargetTableFromApiPreview = async (payload: {
     if (!rows.rowCount) throw new Error("API 파라미터가 존재하지 않습니다.");
     const first = rows.rows[0];
     const sourceProvider = String(first.provider ?? "").trim().toLowerCase();
-    if (["oecd", "krx", "undp", "worldbank", "yfinance"].includes(sourceProvider)) {
+    if (["oecd", "krx", "openapi_krx", "pykrx", "undp", "worldbank", "yfinance"].includes(sourceProvider)) {
       throw new Error(
         `'${sourceProvider}' provider 는 자동 테이블 생성을 아직 지원하지 않습니다. 데이터 수집 화면에서 테이블을 먼저 설정해 주세요.`,
       );
@@ -1964,12 +2019,12 @@ export const createTargetTableFromApiPreview = async (payload: {
       ) ?? null);
     const endKey =
       roleKeyMap.get("end") ??
-      (["apiend", "endprdde", "endyymm", "observation_end", "endperiod", "basdd"].find((key) =>
+      (["apiend", "endprdde", "endyymm", "observation_end", "endperiod", "endyear", "basdd"].find((key) =>
         paramValueByKeyLower.has(key),
       ) ?? null);
     const startKey =
       roleKeyMap.get("start") ??
-      (["apistart", "startprdde", "strtyymm", "observation_start", "startperiod"].find((key) =>
+      (["apistart", "startprdde", "strtyymm", "observation_start", "startperiod", "startyear"].find((key) =>
         paramValueByKeyLower.has(key),
       ) ?? null);
     const periodTypeKeyLower = periodTypeKey?.trim().toLowerCase() ?? null;
@@ -1990,6 +2045,7 @@ export const createTargetTableFromApiPreview = async (payload: {
         "endyymm",
         "observation_end",
         "endperiod",
+        "endyear",
         "basdd",
       ].includes(paramKey);
       const isStartParamByKey = [
@@ -1998,6 +2054,7 @@ export const createTargetTableFromApiPreview = async (payload: {
         "strtyymm",
         "observation_start",
         "startperiod",
+        "startyear",
       ].includes(paramKey);
       const shouldResolveLatest =
         param.value === END_LATEST_TOKEN &&

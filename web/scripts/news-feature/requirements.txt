@@ -1,0 +1,14 @@
+pandas
+numpy
+scipy
+pyarrow
+scikit-learn
+xgboost
+catboost
+joblib
+exchange_calendars
+sqlalchemy>=2.0
+psycopg2-binary
+python-dotenv
+pydantic>=2.8,<3
+typesafe-sdk

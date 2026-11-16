@@ -29,7 +29,9 @@ export async function GET(
   try {
     await connectWithTimeout(client);
     const res = await client.query(
-      `select transform_id, name, transform_type, source_map_id, output_map_id,
+      `select transform_id, name,
+              case when config->>'newsFeature' = 'true' then 'news_feature' else transform_type end as transform_type,
+              source_map_id, output_map_id,
               config, output_name, output_unit, output_freq, is_active
        from dp.api_transform where transform_id = $1`,
       [transformId],

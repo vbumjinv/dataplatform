@@ -40,6 +40,13 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# 코스피 예측 전용 파이썬 환경
+/scripts/kospi-forecast/.venv/
+
+# GitHub 파일 한도(100MB)를 넘는 이전 통합본. 화면 예측은 시점별 joblib을 쓴다.
+/scripts/kospi-forecast/model/artifacts/bundle/kospi_models_target_202610.joblib
+
 # 런타임 상태(캐시된 API 응답 + DB 접속정보 포함) — 추적 제외
 /data/schedules/
+/data/kospi-forecast/
 /app/api/schedules/data/

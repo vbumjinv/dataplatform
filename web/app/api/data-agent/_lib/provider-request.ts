@@ -150,6 +150,6 @@ export const buildCollectionParams = (input: BuildInput): BuildResult => {
     notes: [],
     error: `'${provider}' 는 자동 파라미터 조립 미지원입니다. 지원: ${SUPPORTED_BUILD_PROVIDERS.join(
       ", ",
-    )}. 그 외 기관(oecd·krx·undp·worldbank·datagokr 특수)은 기존 '데이터 수집' 화면을 이용하세요.`,
+    )}. 그 외 기관(oecd·openapi_krx·krx·pykrx·undp·worldbank·datagokr 특수)은 기존 '데이터 수집' 화면을 이용하세요.`,
   };
 };

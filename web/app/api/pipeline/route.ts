@@ -5,7 +5,7 @@ import {
   createPipelineClientFromRequest,
   parseDbSettingIdFromRequest,
 } from "./_lib/db";
-import { createPipeline, type PipelineInput } from "./_lib/persist";
+import { createPipeline, ensurePipelineCollectionSchema, type PipelineInput } from "./_lib/persist";
 import {
   initializePipelineScheduler,
   refreshPipelineSchedule,
@@ -23,6 +23,8 @@ type PipelineListRow = {
   schedule_cron_expr: string | null;
   is_active: boolean;
   group_id: number | null;
+  collection_type: "api" | "news";
+  news_source_key: string | null;
   collection_label: string | null;
   map_count: number;
   mappings: string[];
@@ -43,11 +45,17 @@ export async function GET(request: Request) {
   }
   try {
     await connectWithTimeout(client);
+    await ensurePipelineCollectionSchema(client);
     const result = await client.query<PipelineListRow>(
       `select
          p.pipeline_id, p.name, p.description, p.schedule_enabled, p.schedule_type,
          p.schedule_interval_minutes, p.schedule_cron_expr, p.is_active, p.group_id,
-         coalesce(nullif(g.name, ''), s.name) as collection_label,
+         case when pc.collection_type = 'news' then 'news' else 'api' end as collection_type,
+         pc.news_source_key,
+         case
+           when pc.collection_type = 'news' and pc.news_source_key = 'naver-pay' then '네이버페이 증권뉴스'
+           else coalesce(nullif(g.name, ''), s.name)
+         end as collection_label,
          (select count(*)::int from dp.api_pipeline_map m where m.pipeline_id = p.pipeline_id) as map_count,
          (select coalesce(json_agg(vm.series_name order by mm.sort_order, mm.id), '[]'::json)
             from dp.api_pipeline_map mm
@@ -61,6 +69,7 @@ export async function GET(request: Request) {
          (select status from dp.api_pipeline_run_log r where r.pipeline_id = p.pipeline_id order by started_at desc limit 1) as last_status,
          (select started_at from dp.api_pipeline_run_log r where r.pipeline_id = p.pipeline_id order by started_at desc limit 1) as last_run_at
        from dp.api_pipeline p
+       left join dp.api_pipeline_collection pc on pc.pipeline_id = p.pipeline_id
        left join dp.api_param_group g on g.id = p.group_id
        left join dp.api_source s on s.id = g.source_id
        order by p.pipeline_id desc`,

@@ -6,6 +6,8 @@ import RunStatusModal, { type RunState } from "./RunStatusModal";
 type PipelineListItem = {
   pipeline_id: number;
   name: string;
+  collection_type?: "api" | "news";
+  news_source_key?: string | null;
   schedule_enabled: boolean;
   schedule_type: "interval" | "cron";
   schedule_interval_minutes: number | null;
@@ -22,6 +24,8 @@ type Draft = {
   pipelineId: number | null;
   name: string;
   description: string;
+  collectionType: "api" | "news";
+  newsSourceKey: "naver-pay";
   groupId: number | null;
   mapIds: number[];
   transformIds: number[];
@@ -51,15 +55,19 @@ type MapOption = { mapId: number; label: string; sourceTable: string };
 type TransformOption = {
   transformId: number;
   label: string;
-  sourceMapId: number;
+  sourceMapId: number | null;
   outputMapId: number | null;
   outputName: string;
+  transformType: string;
+  config: Record<string, unknown>;
 };
 
 const emptyDraft = (): Draft => ({
   pipelineId: null,
   name: "",
   description: "",
+  collectionType: "api",
+  newsSourceKey: "naver-pay",
   groupId: null,
   mapIds: [],
   transformIds: [],
@@ -75,6 +83,9 @@ const scheduleLabel = (p: PipelineListItem) => {
   return `${p.schedule_interval_minutes ?? 0}분 간격`;
 };
 
+const isNewsTransform = (t: TransformOption) =>
+  t.transformType === "news_feature" || t.config.newsFeature === true;
+
 export default function PipelinePanel({ dbSettingId }: { dbSettingId: string }) {
   const [pipelines, setPipelines] = useState<PipelineListItem[]>([]);
   const [listError, setListError] = useState("");
@@ -84,6 +95,8 @@ export default function PipelinePanel({ dbSettingId }: { dbSettingId: string }) 
   const [runProgressText, setRunProgressText] = useState("");
   const runAbortRef = useRef<AbortController | null>(null);
   const runPipelineIdRef = useRef<number | null>(null);
+  const runAllAbortRef = useRef(false);
+  const [runningAll, setRunningAll] = useState(false);
   const [collectOptions, setCollectOptions] = useState<CollectOption[]>([]);
   const [mapOptions, setMapOptions] = useState<MapOption[]>([]);
   const [transformOptions, setTransformOptions] = useState<TransformOption[]>([]);
@@ -177,21 +190,24 @@ export default function PipelinePanel({ dbSettingId }: { dbSettingId: string }) 
         items?: Array<{
           transform_id: number | string;
           name: string;
+          transform_type?: string;
           source_map_id: number | string | null;
           output_map_id: number | string | null;
           output_name: string | null;
+          config?: Record<string, unknown> | null;
         }>;
       };
       setTransformOptions(
         tx.ok
           ? (tx.items ?? [])
-              .filter((t) => t.source_map_id != null)
               .map((t) => ({
                 transformId: Number(t.transform_id),
                 label: t.name,
-                sourceMapId: Number(t.source_map_id),
+                sourceMapId: t.source_map_id == null ? null : Number(t.source_map_id),
                 outputMapId: t.output_map_id == null ? null : Number(t.output_map_id),
                 outputName: t.output_name ?? t.name,
+                transformType: t.transform_type ?? "",
+                config: t.config ?? {},
               }))
           : [],
       );
@@ -208,10 +224,10 @@ export default function PipelinePanel({ dbSettingId }: { dbSettingId: string }) 
   // 실행 중 현재 단계(수집/매핑·시리즈) 폴링
   useEffect(() => {
     if (!runNotice.open || runNotice.state !== "loading") return;
-    const id = runPipelineIdRef.current;
-    if (id == null) return;
     let active = true;
     const poll = async () => {
+      const id = runPipelineIdRef.current;
+      if (id == null) return;
       try {
         const res = await fetch(withDb(`/api/pipeline/${id}/progress`));
         const payload = (await res.json()) as {
@@ -268,6 +284,8 @@ export default function PipelinePanel({ dbSettingId }: { dbSettingId: string }) 
             pipeline_id: number;
             name: string;
             description: string | null;
+            collection_type?: "api" | "news";
+            news_source_key?: string | null;
             group_id: number | null;
             schedule_enabled: boolean;
             schedule_type: "interval" | "cron";
@@ -286,6 +304,8 @@ export default function PipelinePanel({ dbSettingId }: { dbSettingId: string }) 
           pipelineId: p.pipeline_id,
           name: p.name,
           description: p.description ?? "",
+          collectionType: p.collection_type === "news" ? "news" : "api",
+          newsSourceKey: "naver-pay",
           groupId: p.group_id == null ? null : Number(p.group_id),
           mapIds: (payload.mapIds ?? []).map((id) => Number(id)),
           transformIds: (payload.transformIds ?? []).map((id) => Number(id)),
@@ -321,13 +341,18 @@ export default function PipelinePanel({ dbSettingId }: { dbSettingId: string }) 
     void fetchPipelines();
   };
 
-  const runPipelineRequest = async (pipelineId: number, name: string) => {
+  const runPipelineRequest = async (pipelineId: number, name: string, progressLabel?: string) => {
     const controller = new AbortController();
     runAbortRef.current = controller;
     runPipelineIdRef.current = pipelineId;
     setCancelBusy(false);
     setRunProgressText("준비 중…");
-    setRunNotice({ open: true, state: "loading", title: "실행 중", message: name });
+    setRunNotice({
+      open: true,
+      state: "loading",
+      title: progressLabel ? "전체 실행 중" : "실행 중",
+      message: progressLabel ? `${progressLabel} ${name}` : name,
+    });
     try {
       const res = await fetch(withDb(`/api/pipeline/${pipelineId}/run`), {
         method: "POST",
@@ -335,18 +360,23 @@ export default function PipelinePanel({ dbSettingId }: { dbSettingId: string }) 
       });
       const payload = (await res.json()) as { ok?: boolean; error?: string };
       if (!res.ok) throw new Error(payload.error || "실행에 실패했습니다.");
-      setRunNotice({
-        open: true,
-        state: payload.ok ? "success" : "error",
-        title: payload.ok ? "실행 완료" : "일부 실패",
-        message: payload.ok
-          ? "파이프라인 실행이 완료되었습니다."
-          : "일부 단계가 실패했습니다. 실행 이력에서 확인하세요.",
-      });
+      if (!progressLabel) {
+        setRunNotice({
+          open: true,
+          state: payload.ok ? "success" : "error",
+          title: payload.ok ? "실행 완료" : "일부 실패",
+          message: payload.ok
+            ? "파이프라인 실행이 완료되었습니다."
+            : "일부 단계가 실패했습니다. 실행 이력에서 확인하세요.",
+        });
+      }
+      return payload.ok ? "ok" : "partial";
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") {
         setRunNotice({ open: true, state: "cancelled", title: "실행 중단", message: "실행을 중단했습니다." });
-      } else {
+        return "cancelled";
+      }
+      if (!progressLabel) {
         setRunNotice({
           open: true,
           state: "error",
@@ -354,6 +384,7 @@ export default function PipelinePanel({ dbSettingId }: { dbSettingId: string }) 
           message: error instanceof Error ? error.message : "실행 오류",
         });
       }
+      return "error";
     } finally {
       runAbortRef.current = null;
       runPipelineIdRef.current = null;
@@ -363,6 +394,7 @@ export default function PipelinePanel({ dbSettingId }: { dbSettingId: string }) 
 
   const cancelRun = async () => {
     if (cancelBusy) return;
+    runAllAbortRef.current = true;
     setCancelBusy(true);
     const id = runPipelineIdRef.current;
     try {
@@ -387,6 +419,41 @@ export default function PipelinePanel({ dbSettingId }: { dbSettingId: string }) 
     setRunningId(null);
   };
 
+  const handleRunAll = async () => {
+    if (pipelines.length === 0 || runningId != null || runningAll) return;
+    runAllAbortRef.current = false;
+    setRunningAll(true);
+    setListMsg("");
+    let success = 0;
+    let failed = 0;
+    let stopped = false;
+    for (let index = 0; index < pipelines.length; index += 1) {
+      if (runAllAbortRef.current) {
+        stopped = true;
+        break;
+      }
+      const item = pipelines[index];
+      setRunningId(item.pipeline_id);
+      const result = await runPipelineRequest(item.pipeline_id, item.name, `${index + 1}/${pipelines.length}`);
+      if (result === "cancelled") {
+        stopped = true;
+        break;
+      }
+      if (result === "ok") success += 1;
+      else failed += 1;
+    }
+    setRunningId(null);
+    setRunningAll(false);
+    await fetchPipelines();
+    if (stopped) return;
+    setRunNotice({
+      open: true,
+      state: failed > 0 ? "error" : "success",
+      title: "전체 실행 완료",
+      message: `성공 ${success}건${failed > 0 ? `, 실패 ${failed}건` : ""}. ${pipelines.length}건을 순서대로 실행했습니다.`,
+    });
+  };
+
 
   const handleDeleteById = async (pipelineId: number, name: string) => {
     if (!window.confirm(`'${name}' 파이프라인을 삭제할까요?`)) return;
@@ -403,9 +470,14 @@ export default function PipelinePanel({ dbSettingId }: { dbSettingId: string }) 
 
   // ===== 편집 모드 구성 로직 =====
   const selectedCollection = useMemo(
-    () => (draft?.groupId ? collectOptions.find((o) => o.groupId === draft.groupId) ?? null : null),
-    [draft?.groupId, collectOptions],
+    () =>
+      draft?.collectionType === "api" && draft.groupId
+        ? collectOptions.find((o) => o.groupId === draft.groupId) ?? null
+        : null,
+    [draft?.collectionType, draft?.groupId, collectOptions],
   );
+
+  const selectedNewsCollection = draft?.collectionType === "news" ? "네이버페이 증권뉴스" : null;
 
   const providerTabs = useMemo(() => {
     const set = new Set<string>();
@@ -422,15 +494,24 @@ export default function PipelinePanel({ dbSettingId }: { dbSettingId: string }) 
   );
 
   const availableMaps = useMemo(() => {
-    if (!selectedCollection) return [];
+    if (!selectedCollection || draft?.collectionType === "news") return [];
     const key = selectedCollection.sourceTable.trim().toLowerCase();
     return mapOptions.filter((m) => (m.sourceTable ?? "").trim().toLowerCase() === key);
-  }, [selectedCollection, mapOptions]);
+  }, [selectedCollection, mapOptions, draft?.collectionType]);
+
+  const newsTransforms = useMemo(
+    () => transformOptions.filter(isNewsTransform).sort((a, b) => a.transformId - b.transformId),
+    [transformOptions],
+  );
 
   // 의존성이 충족되는 가공만 "위상 정렬(상위 가공 먼저)" 순서로 정리.
   // 가공의 입력(sourceMapId)은 선택한 매핑이거나, 이미 선택된 다른 가공의 출력이어야 한다.
   const resolveValidTransforms = useCallback(
-    (mapIds: number[], transformIds: number[]): number[] => {
+    (mapIds: number[], transformIds: number[], collectionType: "api" | "news" = draft?.collectionType ?? "api"): number[] => {
+      if (collectionType === "news") {
+        const wanted = new Set(transformIds);
+        return newsTransforms.filter((t) => wanted.has(t.transformId)).map((t) => t.transformId);
+      }
       const produced = new Set<number>(mapIds);
       const wanted = new Set(transformIds);
       const ordered: number[] = [];
@@ -439,7 +520,12 @@ export default function PipelinePanel({ dbSettingId }: { dbSettingId: string }) 
       while (changed) {
         changed = false;
         for (const t of transformOptions) {
-          if (wanted.has(t.transformId) && !done.has(t.transformId) && produced.has(t.sourceMapId)) {
+          if (
+            t.sourceMapId != null &&
+            wanted.has(t.transformId) &&
+            !done.has(t.transformId) &&
+            produced.has(t.sourceMapId)
+          ) {
             done.add(t.transformId);
             ordered.push(t.transformId);
             if (t.outputMapId != null) produced.add(t.outputMapId);
@@ -449,7 +535,7 @@ export default function PipelinePanel({ dbSettingId }: { dbSettingId: string }) 
       }
       return ordered;
     },
-    [transformOptions],
+    [draft?.collectionType, newsTransforms, transformOptions],
   );
 
   // 후보 노출: 선택한 매핑에서 (모든 가공의 출력을 따라) "도달 가능한" 가공을 전부 보여준다.
@@ -457,6 +543,10 @@ export default function PipelinePanel({ dbSettingId }: { dbSettingId: string }) 
   // 부모 → 자식 순서로 들여쓰기(depth) 한 트리 순서로 정렬한다.
   // enabled 기준: 입력(sourceMapId)이 (선택한 매핑) 또는 (이미 선택된 가공의 출력) 인 경우만 선택 가능.
   const availableTransforms = useMemo(() => {
+    if (draft?.collectionType === "news") {
+      const selected = new Set(draft.transformIds);
+      return newsTransforms.map((t) => ({ t, depth: 0, enabled: true, selected: selected.has(t.transformId) }));
+    }
     const mapSet = new Set<number>(draft?.mapIds ?? []);
     const wanted = new Set(draft?.transformIds ?? []);
 
@@ -466,7 +556,7 @@ export default function PipelinePanel({ dbSettingId }: { dbSettingId: string }) 
     while (changed) {
       changed = false;
       for (const t of transformOptions) {
-        if (t.outputMapId != null && reachable.has(t.sourceMapId) && !reachable.has(t.outputMapId)) {
+        if (t.sourceMapId != null && t.outputMapId != null && reachable.has(t.sourceMapId) && !reachable.has(t.outputMapId)) {
           reachable.add(t.outputMapId);
           changed = true;
         }
@@ -482,6 +572,7 @@ export default function PipelinePanel({ dbSettingId }: { dbSettingId: string }) 
         if (
           wanted.has(t.transformId) &&
           t.outputMapId != null &&
+          t.sourceMapId != null &&
           produced.has(t.sourceMapId) &&
           !produced.has(t.outputMapId)
         ) {
@@ -492,7 +583,7 @@ export default function PipelinePanel({ dbSettingId }: { dbSettingId: string }) 
     }
 
     // (3) 트리 순서로 펼치기: 입력(sourceMapId) 별로 자식을 묶어 부모 바로 아래에 배치
-    const candidates = transformOptions.filter((t) => reachable.has(t.sourceMapId));
+    const candidates = transformOptions.filter((t) => t.sourceMapId != null && reachable.has(t.sourceMapId));
     const childrenBySource = new Map<number, TransformOption[]>();
     for (const c of candidates) {
       const arr = childrenBySource.get(c.sourceMapId) ?? [];
@@ -514,7 +605,7 @@ export default function PipelinePanel({ dbSettingId }: { dbSettingId: string }) 
     };
     for (const mid of [...mapSet].sort((a, b) => a - b)) walk(mid, 0);
     return result;
-  }, [transformOptions, draft?.mapIds, draft?.transformIds]);
+  }, [newsTransforms, transformOptions, draft?.collectionType, draft?.mapIds, draft?.transformIds]);
 
   const changeCollection = (groupId: number | null) => {
     setDraft((d) => {
@@ -525,7 +616,27 @@ export default function PipelinePanel({ dbSettingId }: { dbSettingId: string }) 
         mapOptions.filter((m) => (m.sourceTable ?? "").trim().toLowerCase() === key).map((m) => m.mapId),
       );
       const mapIds = d.mapIds.filter((id) => allowed.has(id));
-      return { ...d, groupId, mapIds, transformIds: resolveValidTransforms(mapIds, d.transformIds) };
+      return {
+        ...d,
+        collectionType: "api",
+        groupId,
+        mapIds,
+        transformIds: resolveValidTransforms(mapIds, d.transformIds, "api"),
+      };
+    });
+  };
+
+  const changeNewsCollection = () => {
+    setDraft((d) => {
+      if (!d) return d;
+      return {
+        ...d,
+        collectionType: "news",
+        newsSourceKey: "naver-pay",
+        groupId: null,
+        mapIds: [],
+        transformIds: resolveValidTransforms([], d.transformIds, "news"),
+      };
     });
   };
 
@@ -536,7 +647,7 @@ export default function PipelinePanel({ dbSettingId }: { dbSettingId: string }) 
         ? d.mapIds.filter((x) => x !== mapId)
         : [...d.mapIds, mapId];
       // 매핑 해제 시 그 매핑(및 그에 의존하는 가공 체인)도 함께 정리
-      return { ...d, mapIds: nextMapIds, transformIds: resolveValidTransforms(nextMapIds, d.transformIds) };
+      return { ...d, mapIds: nextMapIds, transformIds: resolveValidTransforms(nextMapIds, d.transformIds, d.collectionType) };
     });
 
   const toggleTransform = (transformId: number) =>
@@ -546,10 +657,11 @@ export default function PipelinePanel({ dbSettingId }: { dbSettingId: string }) 
         ? d.transformIds.filter((x) => x !== transformId)
         : [...d.transformIds, transformId];
       // 해제 시 그 출력을 입력으로 쓰던 하위 가공도 함께 정리하고, 위상 정렬 순서로 저장
-      return { ...d, transformIds: resolveValidTransforms(d.mapIds, next) };
+      return { ...d, transformIds: resolveValidTransforms(d.mapIds, next, d.collectionType) };
     });
 
   const allMapsSelected =
+    draft?.collectionType === "api" &&
     !!selectedCollection &&
     availableMaps.length > 0 &&
     availableMaps.every((m) => draft?.mapIds.includes(m.mapId));
@@ -560,14 +672,28 @@ export default function PipelinePanel({ dbSettingId }: { dbSettingId: string }) 
       const ids = availableMaps.map((m) => m.mapId);
       const all = ids.length > 0 && ids.every((id) => d.mapIds.includes(id));
       return all
-        ? { ...d, mapIds: d.mapIds.filter((id) => !ids.includes(id)) }
-        : { ...d, mapIds: Array.from(new Set([...d.mapIds, ...ids])) };
+        ? {
+            ...d,
+            mapIds: d.mapIds.filter((id) => !ids.includes(id)),
+            transformIds: resolveValidTransforms(
+              d.mapIds.filter((id) => !ids.includes(id)),
+              d.transformIds,
+              d.collectionType,
+            ),
+          }
+        : {
+            ...d,
+            mapIds: Array.from(new Set([...d.mapIds, ...ids])),
+            transformIds: resolveValidTransforms(Array.from(new Set([...d.mapIds, ...ids])), d.transformIds, d.collectionType),
+          };
     });
 
   const buildBody = (d: Draft) => ({
     name: d.name,
     description: d.description,
-    groupId: d.groupId,
+    collectionType: d.collectionType,
+    newsSourceKey: d.collectionType === "news" ? d.newsSourceKey : null,
+    groupId: d.collectionType === "api" ? d.groupId : null,
     mapIds: d.mapIds,
     transformIds: d.transformIds,
     schedule: {
@@ -581,7 +707,8 @@ export default function PipelinePanel({ dbSettingId }: { dbSettingId: string }) 
   const handleSave = async () => {
     if (!draft) return;
     if (!draft.name.trim()) return setSaveError("파이프라인 이름을 입력하세요.");
-    if (!draft.groupId) return setSaveError("수집을 선택하세요.");
+    if (draft.collectionType === "api" && !draft.groupId) return setSaveError("수집을 선택하세요.");
+    if (draft.collectionType === "news" && !draft.newsSourceKey) return setSaveError("뉴스를 선택하세요.");
     setSaving(true);
     setSaveError("");
     setSaveMsg("");
@@ -626,6 +753,7 @@ export default function PipelinePanel({ dbSettingId }: { dbSettingId: string }) 
             <h4 className="text-base font-semibold leading-6 text-slate-900">파이프라인 관리</h4>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            {listMsg ? <span className="text-xs text-slate-600">{listMsg}</span> : null}
             <button
               type="button"
               onClick={startCreate}
@@ -637,9 +765,19 @@ export default function PipelinePanel({ dbSettingId }: { dbSettingId: string }) 
         </div>
         <div className="mt-4 flex items-center justify-between gap-3">
           <h3 className="text-base font-semibold leading-6 text-slate-900">파이프라인 목록</h3>
-          <span className="inline-flex h-7 items-center rounded-full border border-slate-200 px-3 text-xs font-semibold text-slate-500">
-            {pipelines.length}건
-          </span>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => void handleRunAll()}
+              disabled={pipelines.length === 0 || runningId != null || runningAll}
+              className="inline-flex h-7 items-center rounded-full bg-emerald-600 px-3 text-xs font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {runningAll ? "전체 실행 중…" : "전체 실행"}
+            </button>
+            <span className="inline-flex h-7 items-center rounded-full border border-slate-200 px-3 text-xs font-semibold text-slate-500">
+              {pipelines.length}건
+            </span>
+          </div>
         </div>
         {listError ? <p className="mt-2 text-xs text-rose-600">{listError}</p> : null}
         <div className="mt-3 overflow-x-auto rounded-xl border border-slate-200 bg-white">
@@ -699,7 +837,7 @@ export default function PipelinePanel({ dbSettingId }: { dbSettingId: string }) 
                         <button
                           type="button"
                           onClick={() => handleRunById(p.pipeline_id, p.name)}
-                          disabled={runningId === p.pipeline_id}
+                          disabled={runningAll || runningId === p.pipeline_id}
                           className="shrink-0 whitespace-nowrap rounded-full bg-emerald-600 px-3 py-1 text-[11px] font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           {runningId === p.pipeline_id ? "실행 중…" : "즉시 실행"}
@@ -798,12 +936,35 @@ export default function PipelinePanel({ dbSettingId }: { dbSettingId: string }) 
           <div className="rounded-2xl border border-slate-100 p-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-slate-700">수집</span>
-              {selectedCollection ? (
-                <span className="max-w-[60%] truncate text-[11px] text-amber-600">{selectedCollection.label}</span>
+              {selectedCollection || selectedNewsCollection ? (
+                <span className="max-w-[60%] truncate text-[11px] text-amber-600">
+                  {selectedCollection?.label ?? selectedNewsCollection}
+                </span>
               ) : null}
             </div>
             <div className="mt-2 flex flex-wrap gap-1">
-              {providerTabs.map((p) => (
+              <button
+                type="button"
+                onClick={() => setDraft({ ...draft, collectionType: "api", transformIds: resolveValidTransforms(draft.mapIds, draft.transformIds, "api") })}
+                className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${
+                  draft.collectionType === "api" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                }`}
+              >
+                API
+              </button>
+              <button
+                type="button"
+                onClick={changeNewsCollection}
+                className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${
+                  draft.collectionType === "news" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                }`}
+              >
+                뉴스
+              </button>
+            </div>
+            {draft.collectionType === "api" ? (
+              <div className="mt-2 flex flex-wrap gap-1">
+                {providerTabs.map((p) => (
                 <button
                   key={p}
                   type="button"
@@ -814,10 +975,26 @@ export default function PipelinePanel({ dbSettingId }: { dbSettingId: string }) 
                 >
                   {p === "all" ? "전체" : p.toUpperCase()}
                 </button>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : null}
             <div className="mt-2 max-h-72 space-y-1.5 overflow-auto pr-1">
-              {filteredCollects.map((o) => {
+              {draft.collectionType === "news" ? (
+                <button
+                  type="button"
+                  onClick={changeNewsCollection}
+                  className="flex w-full flex-col rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-left ring-1 ring-amber-300 transition"
+                >
+                  <span className="flex items-center gap-2">
+                    <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-slate-500">
+                      NEWS
+                    </span>
+                    <span className="text-sm font-medium text-slate-900">네이버페이 증권뉴스</span>
+                  </span>
+                  <span className="mt-0.5 font-mono text-[11px] text-slate-400">dp.news_stock_article</span>
+                </button>
+              ) : (
+                filteredCollects.map((o) => {
                 const selected = draft.groupId === o.groupId;
                 return (
                   <button
@@ -841,8 +1018,9 @@ export default function PipelinePanel({ dbSettingId }: { dbSettingId: string }) 
                     <span className="mt-0.5 font-mono text-[11px] text-slate-400">{o.targetTable}</span>
                   </button>
                 );
-              })}
-              {filteredCollects.length === 0 ? (
+                })
+              )}
+              {draft.collectionType === "api" && filteredCollects.length === 0 ? (
                 <p className="px-1 py-2 text-xs text-slate-400">수집이 없습니다.</p>
               ) : null}
             </div>
@@ -868,7 +1046,13 @@ export default function PipelinePanel({ dbSettingId }: { dbSettingId: string }) 
               ) : null}
             </div>
             <div className="mt-2 max-h-72 space-y-1.5 overflow-auto pr-1">
-              {!selectedCollection ? (
+              {draft.collectionType === "news" ? (
+                <p className="px-1 py-8 text-center text-xs text-slate-400">
+                  뉴스 수집은 매핑을 사용하지 않습니다.
+                  <br />
+                  아래 데이터 가공에서 뉴스 변수 추출을 선택하세요.
+                </p>
+              ) : !selectedCollection ? (
                 <p className="px-1 py-8 text-center text-xs text-slate-400">← 왼쪽에서 수집을 선택하세요.</p>
               ) : availableMaps.length === 0 ? (
                 <p className="px-1 py-8 text-center text-xs text-amber-600">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { findPykrxDataset, PYKRX_DATASETS } from "@/app/api/ingestion/_lib/pykrx-datasets";
 
 type ApiParam = {
   id: number;
@@ -205,9 +206,14 @@ const ORG_CATALOG = [
     description: "미국 세인트루이스 연준 경제시계열을 연동합니다.",
   },
   {
-    provider: "krx",
+    provider: "pykrx",
     name: "KRX",
-    description: "한국거래소 API 데이터를 수집합니다.",
+    description: "pykrx로 한국거래소 시세를 수집합니다. 장마감 후 당일 종가를 받을 수 있습니다.",
+  },
+  {
+    provider: "openapi_krx",
+    name: "OpenAPI KRX",
+    description: "한국거래소 Open API 데이터를 수집합니다. 전일 데이터는 다음 영업일 오전에 제공됩니다.",
   },
   {
     provider: "oecd",
@@ -272,6 +278,7 @@ const normalizeProvider = (provider?: string | null) => {
   const value = (provider ?? "").trim().toLowerCase();
   if (!value) return "custom";
   if (value === "data-go-kr" || value === "data_go_kr") return "datagokr";
+  if (value === "krx" || value === "openapi-krx" || value === "openapi_krx") return "openapi_krx";
   return value;
 };
 const KRX_API_BASE_PATH = "https://data-dbg.krx.co.kr/svc/apis";
@@ -288,6 +295,9 @@ const OECD_PUBLIC_KEY = "OECD_PUBLIC";
 // 실제 Yahoo 호스트를 센티넬로 둔다. api_key_param_key 를 null 로 두면 키가 URL 에 절대 안 붙는다.
 const YFINANCE_BASE_URL = "https://query1.finance.yahoo.com";
 const YFINANCE_PUBLIC_KEY = "YFINANCE_PUBLIC";
+// pykrx 는 HTTP API 가 아니라 Python(pykrx) 실행으로 data.krx.co.kr 화면을 읽는다.
+const PYKRX_BASE_URL = "https://data.krx.co.kr";
+const PYKRX_PUBLIC_KEY = "PYKRX_PUBLIC";
 // World Bank Open Data API. 키가 필요 없다. 최종 URL:
 //   {base}/country/{국가코드}/indicator/{지표코드}?format=json&per_page=20000&date=시작연:종료연
 const WORLDBANK_BASE_URL = "https://api.worldbank.org/v2";
@@ -560,6 +570,7 @@ export default function UserApiRegistrationModal({
   const [yfinanceAppliedQuery, setYfinanceAppliedQuery] = useState("");
   const [yfinanceExpandedCategories, setYfinanceExpandedCategories] = useState<Set<string>>(new Set());
   const [yfinanceSelectedTicker, setYfinanceSelectedTicker] = useState<string | null>(null);
+  const [pykrxSelectedId, setPykrxSelectedId] = useState<string | null>(null);
   // World Bank: OECD/yfinance 처럼 큐레이션된 지표×국가 목록에서 선택한다. 주기는 연간 고정.
   const [worldbankStats, setWorldbankStats] = useState<WorldBankApiItem[]>([]);
   const [worldbankLoading, setWorldbankLoading] = useState(false);
@@ -596,8 +607,15 @@ export default function UserApiRegistrationModal({
       const provider = normalizeProvider(item.provider);
       map.set(provider, (map.get(provider) ?? 0) + 1);
     });
+    // 템플릿 provider 가 예전 값(krx)이어도 등록된 기관이 있으면 OpenAPI KRX 카드를 켠다.
+    sources.forEach((item) => {
+      const provider = normalizeProvider(item.provider);
+      if (provider !== "openapi_krx") return;
+      if ((map.get(provider) ?? 0) > 0) return;
+      map.set(provider, 1);
+    });
     return map;
-  }, [templates]);
+  }, [sources, templates]);
 
   const visibleOrgs = useMemo(() => {
     const q = orgQuery.trim().toLowerCase();
@@ -694,7 +712,7 @@ export default function UserApiRegistrationModal({
   }, [templates]);
   const krxTemplateTarget = useMemo(() => {
     const source = templates.find(
-      (item) => normalizeProvider(item.provider) === "krx" && (item.groups ?? []).length > 0,
+      (item) => normalizeProvider(item.provider) === "openapi_krx" && (item.groups ?? []).length > 0,
     );
     const group = source?.groups?.[0];
     if (!source || !group) return null;
@@ -877,6 +895,10 @@ export default function UserApiRegistrationModal({
     () => yfinanceStats.find((item) => item.ticker === yfinanceSelectedTicker) ?? null,
     [yfinanceSelectedTicker, yfinanceStats],
   );
+  const selectedPykrxDataset = useMemo(
+    () => findPykrxDataset(pykrxSelectedId),
+    [pykrxSelectedId],
+  );
   const worldbankSortedStats = useMemo(() => {
     return worldbankStats
       .filter((item) => item.srch_yn.trim().toUpperCase() === "Y")
@@ -1034,7 +1056,7 @@ export default function UserApiRegistrationModal({
   }, [sources]);
   const krxRegisteredSource = useMemo(() => {
     const candidates = sources.filter(
-      (item) => normalizeProvider(item.provider) === "krx" && !item.is_template,
+      (item) => normalizeProvider(item.provider) === "openapi_krx" && !item.is_template,
     );
     return candidates.find((item) => item.enabled) ?? candidates[0] ?? null;
   }, [sources]);
@@ -1110,7 +1132,7 @@ export default function UserApiRegistrationModal({
         codeHint: selectedFredStat.stat_code,
       };
     }
-    if (selectedProvider === "krx") {
+    if (selectedProvider === "openapi_krx") {
       if (!selectedKrxStat || !krxTemplateTarget) return null;
       const endpointUrl = buildKrxEndpointUrl(selectedKrxStat.api_path, selectedKrxStat.api_id);
       const normalizeKrxSource = (source: ApiSource) => ({
@@ -1123,11 +1145,11 @@ export default function UserApiRegistrationModal({
       const groupForCall = krxTemplateTarget.group;
       return {
         key: `krx:${selectedKrxStat.api_id}`,
-        provider: "krx",
+        provider: "openapi_krx",
         source: sourceForCall,
         group: groupForCall,
         title: selectedKrxStat.api_name,
-        description: `${selectedKrxStat.category_name} / KRX ${selectedKrxStat.api_id}`,
+        description: `${selectedKrxStat.category_name} / OpenAPI KRX ${selectedKrxStat.api_id}`,
         typeLabel: "시계열",
         statusLabel: "사용 가능",
         codeHint: selectedKrxStat.api_id,
@@ -1189,6 +1211,62 @@ export default function UserApiRegistrationModal({
         typeLabel: "SDMX",
         statusLabel: "사용 가능",
         codeHint: selectedOecdStat.ref_area,
+      };
+    }
+    if (selectedProvider === "pykrx") {
+      if (!selectedPykrxDataset) return null;
+      const pykrxSource: ApiSource = {
+        id: -1,
+        name: "KRX",
+        provider: "pykrx",
+        base_url: PYKRX_BASE_URL,
+        api_key: PYKRX_PUBLIC_KEY,
+        api_key_param_key: null,
+        api_key_location: "query",
+        api_key_order: 0,
+        api_key_encode_mode: "encode",
+        enabled: true,
+        is_template: false,
+        created_at: new Date().toISOString(),
+        groups: [],
+      };
+      const makeParam = (
+        key: string,
+        value: string,
+        location: "path" | "query",
+        order: number,
+        encodeMode: string,
+      ): ApiParam => ({
+        id: order,
+        param_key: key,
+        param_value: value,
+        param_location: location,
+        param_order: order,
+        encode_mode: encodeMode,
+        param_role: null,
+      });
+      const pykrxGroup: ApiGroup = {
+        id: -1,
+        name: selectedPykrxDataset.item_name,
+        is_template: false,
+        created_at: new Date().toISOString(),
+        params: [
+          makeParam("dataset", selectedPykrxDataset.id, "query", 1, "none"),
+          makeParam("period", "D", "query", 2, "none"),
+          makeParam("apiStart", "", "query", 3, "encode"),
+          makeParam("apiEnd", END_LATEST_TOKEN, "query", 4, "encode"),
+        ],
+      };
+      return {
+        key: `pykrx:${selectedPykrxDataset.id}`,
+        provider: "pykrx",
+        source: pykrxSource,
+        group: pykrxGroup,
+        title: selectedPykrxDataset.item_name,
+        description: selectedPykrxDataset.description,
+        typeLabel: "시세",
+        statusLabel: "사용 가능",
+        codeHint: selectedPykrxDataset.id,
       };
     }
     if (selectedProvider === "yfinance") {
@@ -1396,6 +1474,7 @@ export default function UserApiRegistrationModal({
     selectedTarget,
     selectedUndpIndicator,
     selectedUndpLocation,
+    selectedPykrxDataset,
     selectedYfinanceStat,
     selectedWorldbankStat,
     undpRegisteredSource,
@@ -1431,7 +1510,7 @@ export default function UserApiRegistrationModal({
     void fetchBokStats();
   }, [bokLoading, bokStats.length, open, selectedProvider, step]);
   useEffect(() => {
-    if (!open || step !== "target" || selectedProvider !== "krx") return;
+    if (!open || step !== "target" || selectedProvider !== "openapi_krx") return;
     if (krxStats.length > 0 || krxLoading) return;
     const fetchKrxStats = async () => {
       setKrxLoading(true);
@@ -1444,12 +1523,12 @@ export default function UserApiRegistrationModal({
           error?: string;
         };
         if (!response.ok || !payload.ok) {
-          throw new Error(payload.error || "KRX API 목록을 불러오지 못했습니다.");
+          throw new Error(payload.error || "OpenAPI KRX API 목록을 불러오지 못했습니다.");
         }
         setKrxStats(payload.items ?? []);
         setKrxExpandedCategories(new Set());
       } catch (error) {
-        const message = error instanceof Error ? error.message : "KRX API 목록을 불러오지 못했습니다.";
+        const message = error instanceof Error ? error.message : "OpenAPI KRX API 목록을 불러오지 못했습니다.";
         setKrxError(message);
       } finally {
         setKrxLoading(false);
@@ -1713,8 +1792,8 @@ export default function UserApiRegistrationModal({
       // UN Population Division 데이터는 연 단위(start/end 연도)로 조회한다.
       return "Y";
     }
-    if (selectedProvider === "yfinance") {
-      // yfinance 는 일별(1d) 시세로 고정한다.
+    if (selectedProvider === "yfinance" || selectedProvider === "pykrx") {
+      // yfinance / pykrx 는 일별 시세로 고정한다.
       return "D";
     }
     if (selectedProvider === "worldbank") {
@@ -1732,13 +1811,13 @@ export default function UserApiRegistrationModal({
       )?.param_value ?? "";
     const value = rolePeriod || keyPeriod || "M";
     return normalizePeriodType(value);
-  }, [kosisCycle, selectedOecdStat, resolvedSelectedTarget, selectedBokStat, selectedFredStat, selectedProvider, selectedYfinanceStat, selectedWorldbankStat]);
+  }, [kosisCycle, selectedOecdStat, resolvedSelectedTarget, selectedBokStat, selectedFredStat, selectedProvider, selectedPykrxDataset, selectedYfinanceStat, selectedWorldbankStat]);
 
   const canGoNextFromOrg = Boolean(selectedProvider);
   const canGoNextFromTarget =
     selectedProvider === "bok"
       ? Boolean(selectedBokStat && bokTemplateTarget)
-      : selectedProvider === "krx"
+      : selectedProvider === "openapi_krx"
         ? Boolean(selectedKrxStat && krxTemplateTarget)
       : selectedProvider === "kosis"
         ? Boolean(selectedKosisStat && kosisTemplateTarget)
@@ -1752,6 +1831,8 @@ export default function UserApiRegistrationModal({
         ? Boolean(selectedUndpIndicator && selectedUndpLocation && undpRegisteredSource)
       : selectedProvider === "yfinance"
         ? Boolean(selectedYfinanceStat)
+      : selectedProvider === "pykrx"
+        ? Boolean(selectedPykrxDataset)
       : selectedProvider === "worldbank"
         ? Boolean(selectedWorldbankStat)
       : Boolean(selectedTarget);
@@ -1766,7 +1847,7 @@ export default function UserApiRegistrationModal({
       ? "API 서비스명과 상세 기능명을 모두 입력해주세요."
       : "";
   const canGoNextFromDatagokrSpec = datagokrSpecError.length === 0;
-  const canGoNextFromKrxApiApply = selectedProvider !== "krx" || krxApiApplied;
+  const canGoNextFromKrxApiApply = selectedProvider !== "openapi_krx" || krxApiApplied;
   const periodError =
     !startDate || !endDate
       ? "시작일과 종료일을 입력해주세요."
@@ -1787,7 +1868,7 @@ export default function UserApiRegistrationModal({
       ? KOSIS_STEP_LABELS
       : selectedProvider === "datagokr"
         ? DATAGOKR_STEP_LABELS
-      : selectedProvider === "krx"
+      : selectedProvider === "openapi_krx"
         ? KRX_STEP_LABELS
       : DEFAULT_STEP_LABELS;
   const activeStepIndex = currentStepLabels.findIndex((item) => item.key === step);
@@ -1826,8 +1907,9 @@ export default function UserApiRegistrationModal({
     const fredEndDate = normalizeIsoDate(endDate);
     const usesIsoDate =
       selectedProvider === "fred" ||
-      selectedProvider === "krx" ||
-      selectedProvider === "yfinance";
+      selectedProvider === "openapi_krx" ||
+      selectedProvider === "yfinance" ||
+      selectedProvider === "pykrx";
     const startValue = usesIsoDate ? fredStartDate : formatForPeriod(startDate, periodType);
     const endValue = usesIsoDate ? fredEndDate : formatForPeriod(endDate, periodType);
 
@@ -2011,7 +2093,7 @@ export default function UserApiRegistrationModal({
       setOrInsert(["observation_end", "apiEnd", "end"], fredEndDate, "observation_end", "query", 8);
       setOrInsert(["file_type", "fileType", "format"], "json", "file_type", "query", 1);
     }
-    if (selectedProvider === "krx" && selectedKrxStat) {
+    if (selectedProvider === "openapi_krx" && selectedKrxStat) {
       const setOrInsert = (
         keys: string[],
         value: string,
@@ -2070,7 +2152,7 @@ export default function UserApiRegistrationModal({
       const endItem = paramMap.get("endPeriod");
       if (endItem) paramMap.set("endPeriod", { ...endItem, value: oecdEnd });
     }
-    if (selectedProvider === "yfinance") {
+    if (selectedProvider === "yfinance" || selectedProvider === "pykrx") {
       // 값은 위 일반 채움에서 ISO(YYYY-MM-DD)로 채워졌다. 여기서는 role(start/end/period_type)만
       // 부여해 등록 시 저장되고 load-runner 가 기간·주기를 인식하도록 한다.
       const startItem = paramMap.get("apiStart");
@@ -2137,7 +2219,7 @@ export default function UserApiRegistrationModal({
     const source = resolvedSelectedTarget.source;
     if (!source.base_url) return "";
     const provider = normalizeProvider(resolvedSelectedTarget.provider ?? selectedProvider ?? "");
-    const isKrxProvider = provider === "krx";
+    const isKrxProvider = provider === "openapi_krx";
     const url = new URL(source.base_url);
     const base = `${url.origin}${url.pathname}`.replace(/\/$/, "");
     const apiKeyKey = source.api_key_param_key?.trim() || "";
@@ -2342,6 +2424,7 @@ export default function UserApiRegistrationModal({
     setYfinanceAppliedQuery("");
     setYfinanceExpandedCategories(new Set());
     setYfinanceSelectedTicker(null);
+    setPykrxSelectedId(null);
     setWorldbankStats([]);
     setWorldbankLoading(false);
     setWorldbankError("");
@@ -2387,7 +2470,7 @@ export default function UserApiRegistrationModal({
           ? "kosisUserStats"
           : selectedProvider === "datagokr"
             ? "datagokrSpec"
-          : selectedProvider === "krx"
+          : selectedProvider === "openapi_krx"
             ? "krxApiApply"
           : "target",
       );
@@ -3135,10 +3218,10 @@ export default function UserApiRegistrationModal({
 
     const outBlock = findOutBlockRows(raw);
     if (!outBlock.found) {
-      throw new Error("KRX 응답에서 OutBlock_1 데이터를 찾지 못했습니다.");
+      throw new Error("OpenAPI KRX 응답에서 OutBlock_1 데이터를 찾지 못했습니다.");
     }
     if (!outBlock.rows.length) {
-      throw new Error("KRX 조회 결과가 없습니다. (휴장일/비영업일일 수 있습니다.)");
+      throw new Error("OpenAPI KRX 조회 결과가 없습니다. (휴장일/비영업일일 수 있습니다.)");
     }
     const objectRows = outBlock.rows;
     const header = Array.from(new Set(objectRows.flatMap((row) => Object.keys(row))));
@@ -3202,6 +3285,69 @@ export default function UserApiRegistrationModal({
     setPreviewError("");
     try {
       const provider = normalizeProvider(resolvedSelectedTarget?.provider ?? selectedProvider ?? "");
+      if (provider === "pykrx") {
+        const dataset =
+          submitParams.find((item) => item.key.trim().toLowerCase() === "dataset")?.value?.trim() ??
+          "";
+        const pickedEnd = normalizeIsoDate(endDate) || formatIsoDate(new Date());
+        const pickedStart = normalizeIsoDate(startDate) || pickedEnd;
+        const startIso = pickedStart <= pickedEnd ? pickedStart : pickedEnd;
+        const endIso = pickedStart <= pickedEnd ? pickedEnd : pickedStart;
+        const res = await fetch("/api/ingestion/pykrx-preview", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ dataset, start: startIso, end: endIso }),
+        });
+        const payload = (await res.json()) as {
+          ok?: boolean;
+          rows?: Array<{
+            date?: string;
+            index_name?: string;
+            index_ticker?: string;
+            open?: number | null;
+            high?: number | null;
+            low?: number | null;
+            close?: number | null;
+            volume?: number | null;
+            trading_value?: number | null;
+          }>;
+          error?: string;
+        };
+        if (!res.ok || !payload.ok) {
+          throw new Error(payload.error || "pykrx 미리보기 조회에 실패했습니다.");
+        }
+        const rows = (payload.rows ?? [])
+          .slice()
+          .sort((a, b) => (a.date ?? "").localeCompare(b.date ?? ""));
+        if (!rows.length) {
+          throw new Error("조회된 KOSPI 시세가 없습니다. (기간/휴장일/종가 반영 시각을 확인하세요)");
+        }
+        setPreviewHeader([
+          "DATE",
+          "INDEX_NAME",
+          "INDEX_TICKER",
+          "OPEN",
+          "HIGH",
+          "LOW",
+          "CLOSE",
+          "VOLUME",
+          "TRADING_VALUE",
+        ]);
+        setPreviewRows(
+          rows.slice(-10).map((row) => [
+            row.date ?? "",
+            row.index_name ?? "",
+            row.index_ticker ?? "",
+            row.open ?? null,
+            row.high ?? null,
+            row.low ?? null,
+            row.close ?? null,
+            row.volume ?? null,
+            row.trading_value ?? null,
+          ]),
+        );
+        return;
+      }
       if (provider === "yfinance") {
         // yfinance 는 HTTP 직접 호출이 아니라 Python(yfinance) 실행이므로 전용 프리뷰 라우트를 쓴다.
         // 미리보기는 종료일(없으면 오늘) 기준 최근 30일 구간만 조회해 최대 10건을 보여준다.
@@ -3296,7 +3442,7 @@ export default function UserApiRegistrationModal({
         );
         return;
       }
-      const isKrxProvider = provider === "krx";
+      const isKrxProvider = provider === "openapi_krx";
       const toCompactYmd = (value: string) => value.replace(/\D/g, "").slice(0, 8);
       const fallbackBasDd = toCompactYmd(endDate || startDate || "");
       const requestedBasDd = toCompactYmd(
@@ -3411,10 +3557,10 @@ export default function UserApiRegistrationModal({
           guard += 1;
         }
         if (!foundOutBlock) {
-          throw new Error("KRX 응답에서 OutBlock_1 데이터를 찾지 못했습니다.");
+          throw new Error("OpenAPI KRX 응답에서 OutBlock_1 데이터를 찾지 못했습니다.");
         }
         if (!rows.length) {
-          throw new Error("KRX 조회 결과가 없습니다. (휴장일/비영업일일 수 있습니다.)");
+          throw new Error("OpenAPI KRX 조회 결과가 없습니다. (휴장일/비영업일일 수 있습니다.)");
         }
         const header = Array.from(new Set(rows.flatMap((row) => Object.keys(row))));
         const previewRows = rows.slice(0, 10).map((row) => header.map((key) => row[key] ?? null));
@@ -3470,7 +3616,7 @@ export default function UserApiRegistrationModal({
         return;
       }
       const tabular =
-        provider === "krx"
+        provider === "openapi_krx"
           ? buildTabularFromKrxPreview(payload.data)
           : provider === "datagokr"
           ? buildTabularFromDatagokrXml(payload.data, payload.contentType)
@@ -3918,11 +4064,13 @@ export default function UserApiRegistrationModal({
                   기간: {startDate || "-"} ~ {endDate || "-"}
                 </p>
                 <div className="mt-2">
-                  {selectedProvider === "yfinance" ? (
+                  {selectedProvider === "yfinance" || selectedProvider === "pykrx" ? (
                     <>
                       <p className="font-semibold">수집 방식:</p>
                       <p className="mt-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
-                        Python(yfinance)으로 티커·기간을 조회해 수집합니다. 별도의 호출 URL이 없습니다.
+                        {selectedProvider === "pykrx"
+                          ? "Python(pykrx)으로 KOSPI 시세를 조회해 수집합니다. 장마감 후 당일 종가를 받을 수 있고, 별도의 호출 URL이 없습니다."
+                          : "Python(yfinance)으로 티커·기간을 조회해 수집합니다. 별도의 호출 URL이 없습니다."}
                       </p>
                     </>
                   ) : (
@@ -3936,7 +4084,7 @@ export default function UserApiRegistrationModal({
                 </div>
               </div>
               <div className="flex justify-end">
-                {selectedProvider === "yfinance" ? null : (
+                {selectedProvider === "yfinance" || selectedProvider === "pykrx" ? null : (
                   <button
                     type="button"
                     onClick={() => void copyPreviewUrl()}
@@ -3978,6 +4126,7 @@ export default function UserApiRegistrationModal({
                   const disabled =
                     org.provider === "oecd" ||
                     org.provider === "yfinance" ||
+                    org.provider === "pykrx" ||
                     org.provider === "worldbank"
                       ? false
                       : org.provider === "undp"
@@ -4030,6 +4179,7 @@ export default function UserApiRegistrationModal({
                         setYfinanceAppliedQuery("");
                         setYfinanceExpandedCategories(new Set());
                         setYfinanceSelectedTicker(null);
+                        setPykrxSelectedId(null);
                         setWorldbankAppliedQuery("");
                         setWorldbankExpandedCategories(new Set());
                         setWorldbankSelectedId(null);
@@ -4455,7 +4605,7 @@ export default function UserApiRegistrationModal({
                       : "없음"}
                   </div>
                 </div>
-              ) : selectedProvider === "krx" ? (
+              ) : selectedProvider === "openapi_krx" ? (
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_auto_auto]">
                     <input
@@ -4496,7 +4646,7 @@ export default function UserApiRegistrationModal({
                   )}
                   {krxLoading ? (
                     <p className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-500">
-                      KRX API 목록을 불러오는 중입니다...
+                      OpenAPI KRX API 목록을 불러오는 중입니다...
                     </p>
                   ) : krxError ? (
                     <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-5 text-sm text-rose-600">
@@ -4721,6 +4871,41 @@ export default function UserApiRegistrationModal({
                     선택된 수집대상:{" "}
                     {selectedOecdStat
                       ? `${selectedOecdStat.indicator_name} (${selectedOecdStat.data_key})`
+                      : "없음"}
+                  </div>
+                </div>
+              ) : selectedProvider === "pykrx" ? (
+                <div className="space-y-4">
+                  <p className="text-xs text-slate-500">
+                    pykrx가 한국거래소 화면에서 읽는 시세입니다. 장마감 후 당일 종가를 받을 수 있습니다.
+                    서버 환경변수 KRX_ID, KRX_PW(정보데이터시스템 로그인)가 필요합니다.
+                  </p>
+                  <div className="max-h-[42vh] space-y-2 overflow-y-auto rounded-2xl border border-slate-200 bg-slate-50 p-2">
+                    {PYKRX_DATASETS.map((item) => {
+                      const selected = pykrxSelectedId === item.id;
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => setPykrxSelectedId(item.id)}
+                          className={`w-full rounded-xl border px-3 py-2 text-left hover:border-slate-300 ${
+                            selected
+                              ? "border-slate-900 bg-slate-900 text-white"
+                              : "border-slate-200 bg-white text-slate-700"
+                          }`}
+                        >
+                          <p className="text-sm font-semibold">{item.item_name}</p>
+                          <p className="text-[11px] opacity-80">
+                            {item.category_name} / {item.description}
+                          </p>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
+                    선택된 수집대상:{" "}
+                    {selectedPykrxDataset
+                      ? `${selectedPykrxDataset.item_name} (${selectedPykrxDataset.id})`
                       : "없음"}
                   </div>
                 </div>
@@ -5179,7 +5364,7 @@ export default function UserApiRegistrationModal({
                         ? "kosisUserStats"
                         : selectedProvider === "datagokr"
                           ? "datagokrSpec"
-                        : selectedProvider === "krx"
+                        : selectedProvider === "openapi_krx"
                           ? "krxApiApply"
                         : selectedProvider === "fred"
                           ? "period"
@@ -5304,16 +5489,16 @@ export default function UserApiRegistrationModal({
           {!done && step === "krxApiApply" ? (
             <div className="space-y-5 py-4">
               <div>
-                <h4 className="text-2xl font-bold text-slate-900">KRX API 신청을 확인해주세요</h4>
+                <h4 className="text-2xl font-bold text-slate-900">OpenAPI KRX API 신청을 확인해주세요</h4>
                 <p className="mt-2 text-sm text-slate-600">
-                  KRX는 별도의 사용자 ID 입력 없이, 최초 1회 사이트에서 로그인 후 API 이용신청을
+                  OpenAPI KRX는 별도의 사용자 ID 입력 없이, 최초 1회 사이트에서 로그인 후 API 이용신청을
                   하면 데이터를 수집할 수 있습니다.
                 </p>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600">
                 <p>아직 신청하지 않았다면 아래 순서로 먼저 신청이 필요합니다.</p>
                 <p className="mt-2">
-                  KRX Data Marketplace OPEN API &gt; 회원가입/로그인 &gt; 인증키 신청 &gt;
+                  OpenAPI KRX Data Marketplace &gt; 회원가입/로그인 &gt; 인증키 신청 &gt;
                   컨텐츠별 API 이용신청(관리자 승인 후 사용)
                 </p>
                 <a
@@ -5324,7 +5509,7 @@ export default function UserApiRegistrationModal({
                 >
                   {selectedKrxStat?.guide_url?.trim()
                     ? `${selectedKrxStat.api_name} 안내 페이지 바로가기`
-                    : "KRX OpenAPI 바로가기"}
+                    : "OpenAPI KRX 바로가기"}
                 </a>
               </div>
               <label className="flex items-start gap-3 rounded-2xl border border-slate-200 p-4 text-sm text-slate-700">
@@ -5335,7 +5520,7 @@ export default function UserApiRegistrationModal({
                   className="mt-0.5 h-4 w-4"
                 />
                 <span>
-                  선택한 API에 대해 KRX 사이트에서 로그인 및 API 이용신청을 완료했습니다.
+                  선택한 API에 대해 OpenAPI KRX 사이트에서 로그인 및 API 이용신청을 완료했습니다.
                 </span>
               </label>
               {!canGoNextFromKrxApiApply ? (
@@ -5689,6 +5874,19 @@ export default function UserApiRegistrationModal({
                     </p>
                   </>
                 ) : null}
+                {selectedProvider === "pykrx" && selectedPykrxDataset ? (
+                  <>
+                    <p>
+                      <span className="font-semibold">데이터:</span> {selectedPykrxDataset.item_name}
+                    </p>
+                    <p>
+                      <span className="font-semibold">코드:</span> {selectedPykrxDataset.id}
+                    </p>
+                    <p>
+                      <span className="font-semibold">설명:</span> {selectedPykrxDataset.description}
+                    </p>
+                  </>
+                ) : null}
                 {selectedProvider === "yfinance" && selectedYfinanceStat ? (
                   <>
                     <p>
@@ -5757,12 +5955,13 @@ export default function UserApiRegistrationModal({
                     <p className="mt-1 text-xs text-slate-500">없음</p>
                   )}
                 </div>
-                {selectedProvider === "yfinance" ? (
+                {selectedProvider === "yfinance" || selectedProvider === "pykrx" ? (
                   <div>
                     <p className="font-semibold">수집 방식:</p>
                     <p className="mt-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
-                      URL 호출이 아니라 Python(yfinance)으로 수집합니다. 티커·기간으로 시세를
-                      직접 조회하므로 별도의 API URL/키가 없습니다.
+                      {selectedProvider === "pykrx"
+                        ? "URL 호출이 아니라 Python(pykrx)으로 수집합니다. 장마감 후 당일 KOSPI 종가를 받을 수 있습니다."
+                        : "URL 호출이 아니라 Python(yfinance)으로 수집합니다. 티커·기간으로 시세를 직접 조회하므로 별도의 API URL/키가 없습니다."}
                     </p>
                   </div>
                 ) : (
@@ -5831,7 +6030,7 @@ export default function UserApiRegistrationModal({
               </div>
               {submitError ? <p className="text-xs text-rose-600">{submitError}</p> : null}
               <div className="flex justify-end">
-                {selectedProvider === "yfinance" ? null : (
+                {selectedProvider === "yfinance" || selectedProvider === "pykrx" ? null : (
                   <button
                     type="button"
                     onClick={() => void copyPreviewUrl()}

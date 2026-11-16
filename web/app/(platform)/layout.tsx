@@ -10,6 +10,16 @@ const navItems = [
     description: "플랫폼 전체 현황과 알림",
   },
   {
+    title: "데이터 수집",
+    href: "/ingestion",
+    description: "소스 연결, 파이프라인, 수집 작업",
+  },
+  {
+    title: "코스피 예측",
+    href: "/kospi-forecast",
+    description: "신규 KOSPI 예측 화면",
+  },
+  {
     title: "사용자 관리",
     href: "/users",
     description: "사용자 계정 및 권한 관리",
@@ -30,17 +40,12 @@ const navItems = [
     description: "자연어로 수집·매핑 설정/실행",
   },
   {
-    title: "데이터 수집",
-    href: "/ingestion",
-    description: "소스 연결, 파이프라인, 수집 작업",
-  },
-  {
     title: "데이터 시각화",
     href: "/visualization",
     description: "대시보드, 리포트, 공유",
   },
   {
-    title: "코스피 예측",
+    title: "테스트_코스피예측(구)",
     href: "/analysis",
     description: "뉴스 기반 KOSPI 예측 실행",
   },

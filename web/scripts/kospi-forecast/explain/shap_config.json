@@ -1,0 +1,57 @@
+{
+ "background_rows": {
+  "T0": 200,
+  "T1": 200,
+  "T2": 200
+ },
+ "decided": "2026-11-05",
+ "evidence": "experiments/daily/test/shap_background_size(01_run_sizes.py·02_select.py) → outputs/test/shap_background_size/choice.json. 50~500행을 1,000행 SHAP 과 비교(홀드아웃 5일 x 배경 시드 3개), 분류·회귀 모두 상위 3개 변수가 상위 5개 안 >= 90%, 상위 5개 기여 방향 일치 >= 95%, 기여 오차 <= 1,000행 기여 크기의 10% 를 만족하는 가장 작은 행 수",
+ "metrics": {
+  "T0": {
+   "service_seconds": 21.6,
+   "cls": {
+    "rel_err": 0.0651,
+    "top3_in5": 1.0,
+    "sign5": 1.0,
+    "base_sd_pp": 0.038
+   },
+   "reg": {
+    "rel_err": 0.0886,
+    "top3_in5": 1.0,
+    "sign5": 1.0,
+    "base_sd_pp": 0.0167
+   }
+  },
+  "T1": {
+   "service_seconds": 11.5,
+   "cls": {
+    "rel_err": 0.0883,
+    "top3_in5": 1.0,
+    "sign5": 1.0,
+    "base_sd_pp": 1.3975
+   },
+   "reg": {
+    "rel_err": 0.0644,
+    "top3_in5": 1.0,
+    "sign5": 1.0,
+    "base_sd_pp": 0.0231
+   }
+  },
+  "T2": {
+   "service_seconds": 52.2,
+   "cls": {
+    "rel_err": 0.068,
+    "top3_in5": 0.9333,
+    "sign5": 1.0,
+    "base_sd_pp": 0.9089
+   },
+   "reg": {
+    "rel_err": 0.0894,
+    "top3_in5": 1.0,
+    "sign5": 1.0,
+    "base_sd_pp": 0.0627
+   }
+  }
+ },
+ "note": "2026-11-05 사용자 결정: 세 시점 모두 200행으로 통일(실험상 최소 기준 통과 행 수는 코스피 장 마감 200·유럽 장 마감 100·미국 장 마감 200행, metrics 는 그 실험값)"
+}

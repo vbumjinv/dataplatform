@@ -121,7 +121,7 @@ export async function GET() {
     });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "KRX API 목록을 불러오지 못했습니다.";
+      error instanceof Error ? error.message : "OpenAPI KRX API 목록을 불러오지 못했습니다.";
     return NextResponse.json({ ok: false, error: message }, { status: 500 });
   } finally {
     if (timeoutId) clearTimeout(timeoutId);

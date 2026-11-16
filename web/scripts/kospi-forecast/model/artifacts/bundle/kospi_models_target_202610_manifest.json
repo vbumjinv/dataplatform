@@ -1,0 +1,52 @@
+{
+ "target_month": "2026-10",
+ "checkpoints": {
+  "T0": {
+   "cls": {
+    "artifact": "T0/cls_model_1.joblib",
+    "artifact_sha256": "5c714f0b422e4fe4db143e6a42fd0afff81bc25208dc3ce2df58bb2165c09aac",
+    "model_version": "model_1_t0_cls_2026_10_5c714f0b422e",
+    "pipeline_sha256": "b9d6dc3f4a48be52ac07572bd41349b81102062f06255d0b0059f959b6993ff2"
+   },
+   "reg": {
+    "artifact": "T0/reg_model_1.joblib",
+    "artifact_sha256": "03156647ca76995f76ca9e536637335a619c942f18e3a244e7434706e0df6782",
+    "model_version": "model_1_t0_reg_2026_10_03156647ca76",
+    "pipeline_sha256": "b9d6dc3f4a48be52ac07572bd41349b81102062f06255d0b0059f959b6993ff2"
+   }
+  },
+  "T1": {
+   "cls": {
+    "artifact": "T1/cls_model_1.joblib",
+    "artifact_sha256": "4435e805db060ce368fffc2f5d4ba9c1eafc9844f73eb85018220caeda750eac",
+    "model_version": "model_1_t1_cls_2026_10_4435e805db06",
+    "pipeline_sha256": "5dc66216397972ff870efc515f024fb2071311e4a502207925c20b0096b7290e"
+   },
+   "reg": {
+    "artifact": "T1/reg_model_1.joblib",
+    "artifact_sha256": "0e937730fc01c4cae6bd0e084461de884824372c3468fa3c17bfefd67002b174",
+    "model_version": "model_1_t1_reg_2026_10_0e937730fc01",
+    "pipeline_sha256": "5dc66216397972ff870efc515f024fb2071311e4a502207925c20b0096b7290e"
+   }
+  },
+  "T2": {
+   "cls": {
+    "artifact": "T2/cls_model_1.joblib",
+    "artifact_sha256": "b464aa93a2711d5f1a2ae3d18d27450d8104c7c2838e9d30f6acb5b13657e695",
+    "model_version": "model_1_cls_2026_10_v3_b464aa93a271",
+    "pipeline_sha256": "4dfad666c016cf85496d30a490e27af9e03feb5c3899aa050ec941befb18931b"
+   },
+   "reg": {
+    "artifact": "T2/reg_model_1.joblib",
+    "artifact_sha256": "a6ec05d618124948c60b2cf6f349bb6f4ecf7c6d201a69375eba1ef03f960fea",
+    "model_version": "model_1_reg_2026_10_v3_a6ec05d61812",
+    "pipeline_sha256": "4dfad666c016cf85496d30a490e27af9e03feb5c3899aa050ec941befb18931b"
+   }
+  }
+ },
+ "skipped": {},
+ "bundle": "kospi_models_target_202610.joblib",
+ "bundle_sha256": "2b539632914f2517a016a2ad44b7350254afea6b95c89c4cf8f26474e59221e4",
+ "code": "model/build_bundle.py",
+ "created": "2026-11-05 17:50:10.738187+09:00"
+}

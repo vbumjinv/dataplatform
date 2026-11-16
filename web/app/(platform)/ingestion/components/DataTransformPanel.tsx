@@ -11,11 +11,13 @@ type TransformType =
   | "combine"
   | "interpolate"
   | "movavg"
+  | "news_feature"
   | "python";
 type ResampleUnit = "day" | "week" | "month" | "quarter" | "year";
 type ResampleAgg = "avg" | "sum" | "max" | "min" | "last" | "first";
 type RateType = "pop" | "yoy";
 type CombineOp = "sub" | "add" | "mul" | "div";
+type NewsSource = "naver_pay" | "nyt";
 
 type TransformConfig = {
   sql?: string;
@@ -27,6 +29,9 @@ type TransformConfig = {
   divToPercent?: boolean;
   window?: number;
   code?: string;
+  newsSource?: NewsSource;
+  newsStartExpr?: string;
+  newsEndExpr?: string;
 };
 
 type TransformListItem = {
@@ -73,6 +78,9 @@ type Draft = {
   op: CombineOp;
   divToPercent: boolean;
   window: number;
+  newsSource: NewsSource;
+  newsStartExpr: string;
+  newsEndExpr: string;
   code: string;
   outputName: string;
   outputUnit: string;
@@ -135,12 +143,26 @@ const OP_OPTIONS: Array<{ value: CombineOp; label: string }> = [
   { value: "mul", label: "곱하기 (A × B)" },
   { value: "div", label: "나누기 (A ÷ B)" },
 ];
+const NEWS_SOURCE_OPTIONS: Array<{ value: NewsSource; label: string }> = [
+  { value: "naver_pay", label: "네이버페이 증권뉴스" },
+];
+const NEWS_SOURCE_TABLES: Record<NewsSource, { sourceTable: string; featureTable: string }> = {
+  naver_pay: {
+    sourceTable: "dp.news_stock_article",
+    featureTable: "dp.news_feature_orig",
+  },
+  nyt: {
+    sourceTable: "dp.news_nyt_article",
+    featureTable: "미지원",
+  },
+};
 const TYPE_TABS: Array<{ value: TransformType; label: string }> = [
   { value: "rate", label: "증감률" },
   { value: "resample", label: "리샘플(집계)" },
   { value: "interpolate", label: "선형보간(업샘플)" },
   { value: "movavg", label: "이동평균" },
   { value: "combine", label: "두 시리즈 연산" },
+  { value: "news_feature", label: "뉴스 변수 추출" },
   { value: "sql", label: "SQL 직접" },
   { value: "python", label: "Python" },
 ];
@@ -159,6 +181,9 @@ const emptyDraft = (): Draft => ({
   op: "sub",
   divToPercent: false,
   window: 60,
+  newsSource: "naver_pay",
+  newsStartExpr: "__TODAY_MINUS_3D__",
+  newsEndExpr: "__TODAY__",
   code: PY_PLACEHOLDER,
   outputName: "",
   outputUnit: "",
@@ -169,6 +194,10 @@ const typeLabel = (item: TransformListItem) => {
   const c = item.config ?? {};
   if (item.transform_type === "sql") return "SQL";
   if (item.transform_type === "python") return "Python";
+  if (item.transform_type === "news_feature") {
+    const source = NEWS_SOURCE_OPTIONS.find((option) => option.value === c.newsSource)?.label ?? "뉴스";
+    return `뉴스 변수 추출 · ${source}`;
+  }
   if (item.transform_type === "resample") {
     const unit = UNIT_OPTIONS.find((u) => u.value === (c.targetUnit ?? "month"))?.label ?? "월";
     const agg = AGG_OPTIONS.find((a) => a.value === (c.agg ?? "avg"))?.label ?? "평균";
@@ -340,6 +369,9 @@ export default function DataTransformPanel({ dbSettingId }: { dbSettingId: strin
         op: c.op ?? "sub",
         divToPercent: Boolean(c.divToPercent),
         window: Number(c.window) > 0 ? Number(c.window) : 60,
+        newsSource: c.newsSource === "nyt" ? "nyt" : "naver_pay",
+        newsStartExpr: c.newsStartExpr ?? "__TODAY_MINUS_3D__",
+        newsEndExpr: c.newsEndExpr ?? "__TODAY__",
         code: c.code ?? PY_PLACEHOLDER,
         outputName: t.output_name ?? "",
         outputUnit: t.output_unit ?? "",
@@ -380,6 +412,14 @@ export default function DataTransformPanel({ dbSettingId }: { dbSettingId: strin
         divToPercent: d.op === "div" ? Boolean(d.divToPercent) : false,
       };
     }
+    if (d.transformType === "news_feature") {
+      return {
+        newsFeature: true,
+        newsSource: d.newsSource,
+        newsStartExpr: d.newsStartExpr.trim(),
+        newsEndExpr: d.newsEndExpr.trim(),
+      };
+    }
     if (d.transformType === "python") {
       return { code: d.code, secondMapId: d.secondMapId ?? undefined };
     }
@@ -401,6 +441,10 @@ export default function DataTransformPanel({ dbSettingId }: { dbSettingId: strin
 
   const runPreview = async () => {
     if (!draft) return;
+    if (draft.transformType === "news_feature") {
+      setPreview([]);
+      return setPreviewError("뉴스 변수 추출 미리보기는 실행 연결 후 제공됩니다.");
+    }
     if (!draft.sourceMapId) return setPreviewError("입력 시리즈를 선택하세요.");
     setPreviewLoading(true);
     setPreviewError("");
@@ -428,7 +472,7 @@ export default function DataTransformPanel({ dbSettingId }: { dbSettingId: strin
   const handleSave = async () => {
     if (!draft) return;
     if (!draft.name.trim()) return setSaveError("이름을 입력하세요.");
-    if (!draft.sourceMapId) return setSaveError("입력 시리즈를 선택하세요.");
+    if (draft.transformType !== "news_feature" && !draft.sourceMapId) return setSaveError("입력 시리즈를 선택하세요.");
     setSaving(true);
     setSaveError("");
     setSaveMsg("");
@@ -531,6 +575,9 @@ export default function DataTransformPanel({ dbSettingId }: { dbSettingId: strin
         // Python 전환 시 편집창이 비어있으면 HP 필터 템플릿을 채운다.
         const code = d.code.trim() ? d.code : PY_PLACEHOLDER;
         return { ...d, transformType: type, code };
+      }
+      if (type === "news_feature") {
+        return { ...d, transformType: type, sourceMapId: null, secondMapId: null, outputFreq: "D" };
       }
       if (type === "interpolate") return { ...d, transformType: type, targetUnit: "day" };
       if (type === "resample" && d.targetUnit === "day") {
@@ -697,9 +744,16 @@ export default function DataTransformPanel({ dbSettingId }: { dbSettingId: strin
                   <select
                     value={draft.sourceMapId ?? ""}
                     onChange={(e) => changeSource(e.target.value ? Number(e.target.value) : null)}
-                    className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-slate-400 focus:outline-none"
+                    disabled={draft.transformType === "news_feature"}
+                    className={`mt-1 w-full rounded-xl border px-3 py-2 text-sm focus:outline-none ${
+                      draft.transformType === "news_feature"
+                        ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"
+                        : "border-slate-200 bg-white text-slate-900 focus:border-slate-400"
+                    }`}
                   >
-                    <option value="">시리즈 선택…</option>
+                    <option value="">
+                      {draft.transformType === "news_feature" ? "뉴스 변수 추출은 입력 시리즈를 사용하지 않음" : "시리즈 선택…"}
+                    </option>
                     {selectableSources.map((s) => (
                       <option key={s.mapId} value={s.mapId}>
                         {s.label}
@@ -752,6 +806,73 @@ export default function DataTransformPanel({ dbSettingId }: { dbSettingId: strin
                       </label>
                       <p className="flex-1 text-[11px] text-slate-400">
                         입력 시리즈의 각 시점 값을 기준 시점과 비교해 변화율(%)을 계산합니다.
+                      </p>
+                    </div>
+                  ) : null}
+
+                  {draft.transformType === "news_feature" ? (
+                    <div className="space-y-3">
+                      <p className="text-[11px] text-slate-500">
+                        뉴스 기사에서 LLM으로 코스피 예측용 변수를 추출합니다. 이 가공은 입력 시리즈를 사용하지 않고,
+                        선택한 뉴스 데이터와 기간을 기준으로 실행됩니다.
+                      </p>
+                      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                        <label className="block space-y-1 text-xs text-slate-600">
+                          뉴스
+                          <select
+                            value={draft.newsSource}
+                            onChange={(e) => updateDraft({ newsSource: e.target.value as NewsSource })}
+                            className="block w-full rounded-lg border border-slate-200 px-2 py-2 text-sm"
+                          >
+                            {NEWS_SOURCE_OPTIONS.map((option) => (
+                              <option key={option.value} value={option.value}>
+                                {option.label}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+                          <div className="font-semibold text-slate-700">연결 테이블</div>
+                          <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
+                            <span>
+                              원천{" "}
+                              <code className="rounded bg-white px-1 py-0.5 text-[11px] text-slate-700">
+                                {NEWS_SOURCE_TABLES[draft.newsSource].sourceTable}
+                              </code>
+                            </span>
+                            <span>
+                              피처{" "}
+                              <code className="rounded bg-white px-1 py-0.5 text-[11px] text-slate-700">
+                                {NEWS_SOURCE_TABLES[draft.newsSource].featureTable}
+                              </code>
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                        <label className="block space-y-1 text-xs text-slate-600">
+                          시작일
+                          <input
+                            value={draft.newsStartExpr}
+                            onChange={(e) => updateDraft({ newsStartExpr: e.target.value })}
+                            spellCheck={false}
+                            placeholder="예) 2026-10-26 / __TODAY_MINUS_3D__"
+                            className="block w-full rounded-lg border border-slate-200 px-2 py-2 text-sm"
+                          />
+                        </label>
+                        <label className="block space-y-1 text-xs text-slate-600">
+                          종료일
+                          <input
+                            value={draft.newsEndExpr}
+                            onChange={(e) => updateDraft({ newsEndExpr: e.target.value })}
+                            spellCheck={false}
+                            placeholder="예) 2026-10-29 / __TODAY__"
+                            className="block w-full rounded-lg border border-slate-200 px-2 py-2 text-sm"
+                          />
+                        </label>
+                      </div>
+                      <p className="text-[11px] text-amber-600">
+                        현재 뉴스 변수 추출은 네이버페이 증권뉴스만 지원합니다.
                       </p>
                     </div>
                   ) : null}
@@ -990,7 +1111,7 @@ export default function DataTransformPanel({ dbSettingId }: { dbSettingId: strin
                   <button
                     type="button"
                     onClick={runPreview}
-                    disabled={previewLoading || !draft.sourceMapId}
+                    disabled={previewLoading || draft.transformType === "news_feature" || !draft.sourceMapId}
                     className="inline-flex h-8 items-center rounded-full border border-sky-200 bg-sky-50 px-3 text-xs font-semibold text-sky-700 transition hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {previewLoading ? "계산 중…" : "미리보기"}

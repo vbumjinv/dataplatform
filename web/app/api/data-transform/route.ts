@@ -21,7 +21,9 @@ export async function GET(request: Request) {
     await connectWithTimeout(client);
     const result = await client.query(
       `select
-         t.transform_id, t.name, t.transform_type, t.source_map_id, t.output_map_id,
+         t.transform_id, t.name,
+         case when t.config->>'newsFeature' = 'true' then 'news_feature' else t.transform_type end as transform_type,
+         t.source_map_id, t.output_map_id,
          t.config, t.output_name, t.output_unit, t.output_freq, t.is_active,
          sm.series_name as source_series_name,
          (select count(*)::int from dp.viz_map_data d where d.map_id = t.output_map_id) as output_count,

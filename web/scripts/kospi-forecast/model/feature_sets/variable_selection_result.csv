@@ -1,0 +1,7 @@
+﻿checkpoint,objective,n_final_features,final_features,gain_vs_kospi_base,win_rate,adopted
+T0_1600,reg,6,"K_close_location, K_intraday, K_log_volume_change, K_open_gap, K_range, K_ret_1d",1.200744809055877e-07,0.25,False
+T0_1600,cls,14,"EU_DAX_ret_5d, K_close_location, K_intraday, K_log_volume_change, K_open_gap, K_range, K_ret_1d, MACRO_DXY_ret_10d, SECTOR_AUTO_ma_gap_20, SECTOR_FASHION_ret_20d, SECTOR_INTERNET_ma_gap_5, SECTOR_LIVING_ma_gap_5, TA_SMA10_gap, US_SOX_ret_1d",0.036602821647189934,0.75,True
+T1_EU_CLOSE,reg,7,"EU_STOXX600_ret_1d, K_close_location, K_intraday, K_log_volume_change, K_open_gap, K_range, K_ret_1d",0.053109155775295624,0.8333333333333334,True
+T1_EU_CLOSE,cls,15,"EU_DAX_ma_gap_20, EU_STOXX600_ret_1d, K_close_location, K_intraday, K_log_volume_change, K_open_gap, K_range, K_ret_1d, MACRO_GOLD_ret_3d, SECTOR_AUTO_ma_gap_20, SECTOR_FASHION_ret_20d, SECTOR_INTERNET_ma_gap_5, SECTOR_LIVING_ma_gap_5, TA_SMA10_gap, US_SOX_ret_3d",0.1922300438849795,1.0,True
+T2_0830,reg,9,"EU_STOXX600_ret_1d, K_close_location, K_intraday, K_log_volume_change, K_open_gap, K_range, K_ret_1d, MACRO_DXY_ret_1d, US_SP500_ret_1d",0.1018357717160202,1.0,True
+T2_0830,cls,16,"EU_DAX_ma_gap_20, EU_STOXX600_ret_1d, K_close_location, K_intraday, K_log_volume_change, K_open_gap, K_range, K_ret_1d, MACRO_DXY_ma_gap_20, MACRO_OIL_ret_1d, SECTOR_AUTO_ma_gap_20, SECTOR_FASHION_ret_20d, SECTOR_INTERNET_ma_gap_5, SECTOR_LIVING_ma_gap_5, TA_SMA10_gap, US_SP500_ret_1d",0.2787656083387606,1.0,True

@@ -1,0 +1,9 @@
+# crontab -e 에 붙여 넣는다(경로는 서버 위치로). KOSPI_VENV 는 가상환경 폴더. 서버 시간대가 KST 가 아니면 CRON_TZ 지원(cronie) 확인.
+# 이 파일은 scheduler/make_schedule.py --write 가 service/time_points.json 시각으로 만든다(직접 고치지 말 것).
+# 월간 재학습은 따로 예약하지 않는다: t0·t1·t2 작업이 대상일이 그달 마지막 거래일이면 예측 직후 다음 달용으로 재학습한다.
+CRON_TZ=Asia/Seoul
+KOSPI_VENV=/opt/kospi_venv
+0  2  * * *    /opt/kospi_pred/service/scheduler/t1.sh
+30 8  * * *    /opt/kospi_pred/service/scheduler/t2.sh
+0  16 * * *    /opt/kospi_pred/service/scheduler/t0.sh
+0  19 * * 1-5  /opt/kospi_pred/service/scheduler/evening.sh

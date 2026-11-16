@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { connectWithTimeout, createPipelineClientFromRequest, parseDbSettingIdFromRequest } from "../_lib/db";
-import { updatePipeline, type PipelineInput } from "../_lib/persist";
+import { ensurePipelineCollectionSchema, updatePipeline, type PipelineInput } from "../_lib/persist";
 import {
   refreshPipelineSchedule,
   removePipelineSchedule,
@@ -28,10 +28,16 @@ export async function GET(
   }
   try {
     await connectWithTimeout(client);
+    await ensurePipelineCollectionSchema(client);
     const pipelineRes = await client.query(
-      `select pipeline_id, name, description, group_id, schedule_enabled, schedule_type,
-              schedule_interval_minutes, schedule_cron_expr, is_active
-       from dp.api_pipeline where pipeline_id = $1`,
+      `select p.pipeline_id, p.name, p.description, p.group_id,
+              case when pc.collection_type = 'news' then 'news' else 'api' end as collection_type,
+              pc.news_source_key,
+              p.schedule_enabled, p.schedule_type,
+              p.schedule_interval_minutes, p.schedule_cron_expr, p.is_active
+       from dp.api_pipeline p
+       left join dp.api_pipeline_collection pc on pc.pipeline_id = p.pipeline_id
+       where p.pipeline_id = $1`,
       [pipelineId],
     );
     const pipeline = pipelineRes.rows[0];
@@ -85,6 +91,7 @@ export async function PATCH(
   }
   try {
     await connectWithTimeout(client);
+    await ensurePipelineCollectionSchema(client);
     const dbSettingId = parseDbSettingIdFromRequest(request);
     await updatePipeline(client, pipelineId, { ...body, dbSettingId });
     await refreshPipelineSchedule(pipelineId);

@@ -1,0 +1,31 @@
+{
+  "_설명": "예측 시점 등록부. 시각을 바꿀 때는 이 파일의 time(예측 기준 시각)만 고친다. 모든 코드는 시점 이름(T0·T1·T2)만 받고 시각은 여기서 읽는다(features/timepoints.py).",
+  "_주의": "checkpoint_id 는 학습본·변수 목록 파일 안에 저장된 이름표라 시각과 관계없이 그대로 둔다. 시각을 바꾸면 학습 때와 다른 시각 자료로 예측하게 되므로 변경 이유를 세션 기록에 남긴다.",
+  "_모델 묶음": "models 아래 묶음마다 예측 기간(horizon)·목적 이름(objectives)·시점이 있다. 지금은 daily(다음 거래일 1일) 하나. 주별 모델은 weekly 묶음을 더하고 시점 이름은 일별과 겹치지 않게(W1 등) 정한다. 일별 코드(TPS)는 daily 묶음만 읽으므로 weekly 를 더해도 바뀌지 않는다.",
+  "timezone": "Asia/Seoul",
+  "market_close": "15:30",
+  "evening_run": "19:00",
+  "_evening_run": "저녁 작업(정답 결합·지표·경고) 예약 시각. 시점이 아니라 운영 작업 시각",
+  "_market_close": "코스피 장 마감. 뉴스 집계·근거 기사 구간의 시작(예측 기준일 직전 거래일 이 시각부터 예측 시각까지)",
+  "models": {
+    "daily": {
+      "horizon": "1D",
+      "objectives": {"cls": "DIR_1D", "reg": "RET_1D"},
+      "time_points": {
+        "T0": {"anchor": "prev_trading_day", "time": "16:00", "run_delay_minutes": 0, "name": "코스피 장 마감",
+               "when": "예측 전날", "checkpoint_id": "T0_1600"},
+        "T1": {"anchor": "target_date", "time": "02:00", "run_delay_minutes": 0, "name": "유럽 장 마감",
+               "when": "예측 당일", "checkpoint_id": "T1_EU_CLOSE"},
+        "T2": {"anchor": "target_date", "time": "08:30", "run_delay_minutes": 0, "name": "미국 장 마감",
+               "when": "예측 당일", "checkpoint_id": "T2_0830"}
+      }
+    }
+  },
+  "_항목": {
+    "horizon": "예측 기간(1D = 다음 거래일). objectives 는 DB·CSV objective 열 값(분류 cls·회귀 reg)",
+    "anchor": "prev_trading_day = 대상일 직전 코스피 거래일, target_date = 대상일",
+    "time": "예측 기준 시각(KST). 이 시각까지 확정된 자료만 쓴다",
+    "run_delay_minutes": "예약 실행 시각 = time + 이 분(scheduler/make_schedule.py 가 crontab·작업 스케줄러 줄을 만든다). 지금은 세 시점 모두 0 — 예측 시각에 바로 실행(사용자 결정 2026-11-06)",
+    "name·when": "화면·해설에 쓰는 이름"
+  }
+}

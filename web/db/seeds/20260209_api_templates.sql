@@ -129,20 +129,20 @@ CROSS JOIN (VALUES
 WHERE s.name = 'FRED_템플릿'
 ON CONFLICT (group_id, param_key) DO NOTHING;
 
--- KRX
+-- OpenAPI KRX
 INSERT INTO dp.api_source
   (name, provider, base_url, api_key, enabled, api_key_param_key, api_key_location, api_key_order, api_key_encode_mode, is_template)
 VALUES
-  ('KRX_템플릿', 'krx', 'https://data-dbg.krx.co.kr/svc/apis/gen', '', true, NULL, 'query', 0, 'encode', true)
+  ('OpenAPI KRX_템플릿', 'openapi_krx', 'https://data-dbg.krx.co.kr/svc/apis/gen', '', true, NULL, 'query', 0, 'encode', true)
 ON CONFLICT (name) DO NOTHING;
 
 INSERT INTO dp.api_param_group (source_id, name, is_template)
-SELECT s.id, 'KRX', true
+SELECT s.id, 'OpenAPI KRX', true
 FROM dp.api_source s
-WHERE s.name = 'KRX_템플릿'
+WHERE s.name = 'OpenAPI KRX_템플릿'
   AND NOT EXISTS (
     SELECT 1 FROM dp.api_param_group g
-    WHERE g.source_id = s.id AND g.name = 'KRX' AND g.is_template = true
+    WHERE g.source_id = s.id AND g.name = 'OpenAPI KRX' AND g.is_template = true
   );
 
 INSERT INTO dp.api_param (group_id, param_key, param_value, param_location, param_order, encode_mode, param_role)
@@ -155,5 +155,5 @@ CROSS JOIN (VALUES
   ('apiEnd','__TODAY__', 'query',3,'encode','end'),
   ('basDd','', 'query',4,'encode',NULL)
 ) AS v(param_key, param_value, param_location, param_order, encode_mode, param_role)
-WHERE s.name = 'KRX_템플릿'
+WHERE s.name = 'OpenAPI KRX_템플릿'
 ON CONFLICT (group_id, param_key) DO NOTHING;

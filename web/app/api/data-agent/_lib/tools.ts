@@ -53,6 +53,20 @@ const STAT_ENDPOINTS: Record<
     name: "api_name",
     extra: ["category_name", "cycle"],
   },
+  openapi_krx: {
+    base: "/api/ingestion/krx-stat-list",
+    serverSearch: false,
+    code: "api_id",
+    name: "api_name",
+    extra: ["category_name", "cycle"],
+  },
+  pykrx: {
+    base: "/api/ingestion/pykrx-stat-list",
+    serverSearch: false,
+    code: "id",
+    name: "item_name",
+    extra: ["category_name", "description"],
+  },
   oecd: {
     base: "/api/ingestion/oecd-stat-list",
     serverSearch: false,
@@ -139,13 +153,13 @@ export const AGENT_TOOLS: OpenAiTool[] = [
     function: {
       name: "search_statistic",
       description:
-        "기관(provider)의 통계/지표 목록을 검색한다. 반환: {code, name, ...}. 기관 매핑 — 통계청=kosis, 한국은행=bok, 한국거래소=krx, 공공데이터포털=datagokr, 미국연준=fred, OECD=oecd, 세계은행=worldbank, 야후금융/주식=yfinance, UN인구=undp.",
+        "기관(provider)의 통계/지표 목록을 검색한다. 반환: {code, name, ...}. 기관 매핑 — 통계청=kosis, 한국은행=bok, OpenAPI KRX=openapi_krx(구 krx), pykrx KRX=pykrx, 공공데이터포털=datagokr, 미국연준=fred, OECD=oecd, 세계은행=worldbank, 야후금융/주식=yfinance, UN인구=undp.",
       parameters: {
         type: "object",
         properties: {
           provider: {
             type: "string",
-            enum: ["kosis", "bok", "krx", "datagokr", "fred", "oecd", "worldbank", "yfinance", "undp"],
+            enum: ["kosis", "bok", "krx", "openapi_krx", "pykrx", "datagokr", "fred", "oecd", "worldbank", "yfinance", "undp"],
           },
           query: { type: "string", description: "검색어(예: 소비자물가지수, 기준금리, GDP)" },
         },

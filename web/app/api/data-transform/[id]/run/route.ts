@@ -3,7 +3,7 @@ import { connectWithTimeout, createDbClientFromRequest } from "../../../visualiz
 import { runTransform } from "../../_lib/transform-runner";
 
 export const runtime = "nodejs";
-export const maxDuration = 300;
+export const maxDuration = 3600;
 
 export async function POST(
   request: Request,

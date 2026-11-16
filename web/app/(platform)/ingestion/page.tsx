@@ -5,6 +5,7 @@ import UserApiRegistrationModal from "./components/UserApiRegistrationModal";
 import DataMappingManagerModal from "./components/DataMappingManagerModal";
 import PdfTableIngestPanel from "./components/PdfTableIngestPanel";
 import PdfItemTradePanel from "./components/PdfItemTradePanel";
+import NewsSettingsPanel from "./components/NewsSettingsPanel";
 import PipelinePanel from "./components/PipelinePanel";
 import DataTransformPanel from "./components/DataTransformPanel";
 
@@ -36,6 +37,7 @@ const normalizeProvider = (provider?: string | null) => {
   if (!value) return "custom";
   const lowered = value.toLowerCase();
   if (lowered === "data-go-kr" || lowered === "data_go_kr") return "datagokr";
+  if (lowered === "krx" || lowered === "openapi-krx" || lowered === "openapi_krx") return "openapi_krx";
   return lowered;
 };
 const END_LATEST_TOKEN = "__TODAY__";
@@ -157,6 +159,29 @@ type PipelineStatusFailure = {
   errorMessage: string | null;
   stepResults: PipelineStepResult[];
 };
+type NewsCollectionSummary = {
+  total: number;
+  ok: number;
+  lowQuality: number;
+  failed: number;
+  pending: number;
+};
+type NewsCollectionDaily = NewsCollectionSummary & {
+  crawlDate: string;
+  lastPublished: string | null;
+};
+type NewsCollectionSlot = NewsCollectionSummary & {
+  crawlDate: string;
+  time: string;
+  reached: boolean;
+};
+type NewsCollectionJob = {
+  status: string;
+  startDate: string;
+  endDate: string;
+  message: string;
+  updatedAt: string | null;
+};
 type StandaloneExecutionRow = {
   id: string;
   kind: "ingestion" | "mapping";
@@ -169,7 +194,7 @@ type StandaloneExecutionRow = {
   errorMessage: string | null;
 };
 type IngestionChannelFilter = "전체" | "API" | "엑셀" | "기타";
-type IngestionSettingsTab = "API 설정" | "엑셀 설정" | "기타 설정" | "PDF 설정";
+type IngestionSettingsTab = "API 설정" | "뉴스 설정" | "기타 설정" | "PDF 설정";
 const ingestionTabs: Array<{ key: IngestionTabKey; label: string }> = [
   { key: "overallStatus", label: "전체 현황" },
   { key: "apiSettings", label: "수집 설정" },
@@ -178,7 +203,7 @@ const ingestionTabs: Array<{ key: IngestionTabKey; label: string }> = [
   { key: "pipeline", label: "파이프라인" },
 ];
 const ingestionChannelFilters: IngestionChannelFilter[] = ["전체", "API", "엑셀", "기타"];
-const ingestionSettingsTabs: IngestionSettingsTab[] = ["API 설정", "엑셀 설정", "기타 설정", "PDF 설정"];
+const ingestionSettingsTabs: IngestionSettingsTab[] = ["API 설정", "뉴스 설정", "기타 설정", "PDF 설정"];
 const formatNumber = (value: number) => new Intl.NumberFormat("ko-KR").format(value);
 const formatDateTime24h = (value: string | Date) => {
   const date = value instanceof Date ? value : new Date(value);
@@ -305,6 +330,15 @@ export default function IngestionPage() {
   const [pipelineDailyRows, setPipelineDailyRows] = useState<PipelineStatusDaily[]>([]);
   const [pipelineFailureRows, setPipelineFailureRows] = useState<PipelineStatusFailure[]>([]);
   const [selectedPipelineDailyDate, setSelectedPipelineDailyDate] = useState<string | null>(null);
+  const [newsCollectionLoaded, setNewsCollectionLoaded] = useState(false);
+  const [newsCollectionLoading, setNewsCollectionLoading] = useState(false);
+  const [newsCollectionError, setNewsCollectionError] = useState("");
+  const [newsCollectionSummary, setNewsCollectionSummary] = useState<NewsCollectionSummary | null>(null);
+  const [newsCollectionDailyRows, setNewsCollectionDailyRows] = useState<NewsCollectionDaily[]>([]);
+  const [newsCollectionSlots, setNewsCollectionSlots] = useState<NewsCollectionSlot[]>([]);
+  const [newsScheduleTimes, setNewsScheduleTimes] = useState<string[]>([]);
+  const [newsCollectionJob, setNewsCollectionJob] = useState<NewsCollectionJob | null>(null);
+  const [selectedNewsDate, setSelectedNewsDate] = useState<string | null>(null);
   const [standaloneView, setStandaloneView] = useState<"ingestion" | "mapping">("ingestion");
   const [standaloneDetailTarget, setStandaloneDetailTarget] = useState<StandaloneExecutionRow | null>(null);
   const [pipelineRunDetailTarget, setPipelineRunDetailTarget] =
@@ -439,6 +473,10 @@ export default function IngestionPage() {
   };
   const shouldUseDailyCompactParamFormat = (paramKey: string) =>
     paramKey.trim().toLowerCase() === "basdd";
+  const shouldUseYearOnlyParamFormat = (paramKey: string) => {
+    const normalized = paramKey.trim().toLowerCase();
+    return normalized === "startyear" || normalized === "endyear";
+  };
   // OECD(SDMX) startPeriod/endPeriod: 하이픈 표기(YYYY / YYYY-Qn / YYYY-MM / YYYY-MM-DD)
   const shouldUseOecdPeriodFormat = (paramKey: string) => {
     const normalized = paramKey.trim().toLowerCase();
@@ -458,6 +496,9 @@ export default function IngestionPage() {
     }
     if (shouldUseDailyCompactParamFormat(paramKey)) {
       return formatPeriodValue(date, "D");
+    }
+    if (shouldUseYearOnlyParamFormat(paramKey)) {
+      return formatPeriodValue(date, "Y");
     }
     if (shouldUseOecdPeriodFormat(paramKey)) {
       return formatOecdPeriodValue(date, period);
@@ -592,12 +633,12 @@ export default function IngestionPage() {
       ) ?? null);
     const endKey =
       roleKeyMap.get("end") ??
-      (["apiend", "endprdde", "endyymm", "observation_end", "endperiod", "basdd"].find((key) =>
+      (["apiend", "endprdde", "endyymm", "observation_end", "endperiod", "endyear", "basdd"].find((key) =>
         paramValueByKeyLower.has(key),
       ) ?? null);
     const startKey =
       roleKeyMap.get("start") ??
-      (["apistart", "startprdde", "strtyymm", "observation_start", "startperiod"].find((key) =>
+      (["apistart", "startprdde", "strtyymm", "observation_start", "startperiod", "startyear"].find((key) =>
         paramValueByKeyLower.has(key),
       ) ?? null);
     // roleKeyMap 은 원본 대소문자 키를 저장하므로(예: apiStart), 소문자화한 paramKey 와
@@ -643,6 +684,7 @@ export default function IngestionPage() {
         "endYymm",
         "observation_end",
         "endPeriod",
+        "endYear",
         "basDd",
         "BAS_DD",
       ]
@@ -654,6 +696,7 @@ export default function IngestionPage() {
         "strtYymm",
         "observation_start",
         "startPeriod",
+        "startYear",
       ]
         .map((key) => key.toLowerCase())
         .includes(paramKey);
@@ -941,6 +984,11 @@ export default function IngestionPage() {
               group.params?.find((param) => param.param_key.toLowerCase() === "ticker")
                 ?.param_value ?? "-"
             }`
+          : groupProvider === "pykrx"
+            ? `pykrx(Python) · 데이터=${
+                group.params?.find((param) => param.param_key.toLowerCase() === "dataset")
+                  ?.param_value ?? "-"
+              }`
           : sourceItem && Array.isArray(group.params)
             ? buildUrlFromSourceParams(
                 resolveSourceForRequestUrl(sourceItem),
@@ -1079,6 +1127,29 @@ export default function IngestionPage() {
   const selectedPipelineDateErrorRows = useMemo(
     () => selectedPipelineDateDetailRows.filter((row) => row.status !== "success"),
     [selectedPipelineDateDetailRows],
+  );
+  const displayedNewsDailyRows = useMemo(
+    () => newsCollectionDailyRows.slice(-7).reverse(),
+    [newsCollectionDailyRows],
+  );
+  const displayedNewsDailyMax = useMemo(() => {
+    if (!displayedNewsDailyRows.length) return 1;
+    return Math.max(...displayedNewsDailyRows.map((row) => row.total), 1);
+  }, [displayedNewsDailyRows]);
+  const selectedNewsSlots = useMemo(
+    () =>
+      selectedNewsDate
+        ? newsCollectionSlots.filter((row) => row.crawlDate === selectedNewsDate)
+        : [],
+    [newsCollectionSlots, selectedNewsDate],
+  );
+  const selectedNewsSlotMax = useMemo(() => {
+    if (!selectedNewsSlots.length) return 1;
+    return Math.max(...selectedNewsSlots.map((row) => row.total), 1);
+  }, [selectedNewsSlots]);
+  const selectedNewsDay = useMemo(
+    () => newsCollectionDailyRows.find((row) => row.crawlDate === selectedNewsDate) ?? null,
+    [newsCollectionDailyRows, selectedNewsDate],
   );
   const pipelineRunDetail = useMemo(() => {
     if (!pipelineRunDetailTarget) return null;
@@ -1486,6 +1557,40 @@ export default function IngestionPage() {
       setPipelineStatusLoading(false);
     }
   }, [withDbSettingQuery]);
+  const fetchNewsCollectionStatus = useCallback(async () => {
+    setNewsCollectionLoading(true);
+    setNewsCollectionError("");
+    try {
+      const response = await fetch(withDbSettingQuery("/api/visualization/news-collection-status"));
+      const payload = (await response.json()) as {
+        ok?: boolean;
+        summary?: NewsCollectionSummary;
+        daily?: NewsCollectionDaily[];
+        slots?: NewsCollectionSlot[];
+        scheduleTimes?: string[];
+        job?: NewsCollectionJob | null;
+        error?: string;
+      };
+      if (!response.ok || !payload.ok) {
+        throw new Error(payload.error || "뉴스 수집 현황을 불러오지 못했습니다.");
+      }
+      setNewsCollectionSummary(payload.summary ?? null);
+      const nextDailyRows = payload.daily ?? [];
+      setNewsCollectionDailyRows(nextDailyRows);
+      setNewsCollectionSlots(payload.slots ?? []);
+      setNewsScheduleTimes(payload.scheduleTimes ?? []);
+      setNewsCollectionJob(payload.job ?? null);
+      setSelectedNewsDate((prev) => {
+        if (prev && nextDailyRows.some((row) => row.crawlDate === prev)) return prev;
+        return nextDailyRows[nextDailyRows.length - 1]?.crawlDate ?? null;
+      });
+      setNewsCollectionLoaded(true);
+    } catch (error) {
+      setNewsCollectionError(error instanceof Error ? error.message : "뉴스 수집 현황을 불러오지 못했습니다.");
+    } finally {
+      setNewsCollectionLoading(false);
+    }
+  }, [withDbSettingQuery]);
 
   useEffect(() => {
     void fetchDbSettings();
@@ -1524,6 +1629,14 @@ export default function IngestionPage() {
     setPipelineFailureRows([]);
     setSelectedPipelineDailyDate(null);
     setPipelineStatusError("");
+    setNewsCollectionLoaded(false);
+    setNewsCollectionSummary(null);
+    setNewsCollectionDailyRows([]);
+    setNewsCollectionSlots([]);
+    setNewsScheduleTimes([]);
+    setNewsCollectionJob(null);
+    setSelectedNewsDate(null);
+    setNewsCollectionError("");
   }, [fetchApiList, fetchApiTemplates, selectedDbSettingId]);
 
   useEffect(() => {
@@ -1531,14 +1644,17 @@ export default function IngestionPage() {
     if (!ingestionStatusLoaded) void fetchIngestionStatus();
     if (!mappingStatusLoaded) void fetchMappingStatus();
     if (!pipelineStatusLoaded) void fetchPipelineStatus();
+    if (!newsCollectionLoaded) void fetchNewsCollectionStatus();
   }, [
     activeTab,
     fetchIngestionStatus,
     fetchMappingStatus,
     fetchPipelineStatus,
+    fetchNewsCollectionStatus,
     ingestionStatusLoaded,
     mappingStatusLoaded,
     pipelineStatusLoaded,
+    newsCollectionLoaded,
   ]);
 
   const handleCreateSource = useCallback(async () => {
@@ -2344,7 +2460,7 @@ export default function IngestionPage() {
           <div>
         <h2 className="text-xl font-semibold text-slate-900">데이터 수집</h2>
         <p className="mt-2 text-sm text-slate-600">
-          수집 현황과 수집 설정을 분리해 운영하며, API 중심으로 엑셀/기타
+          수집 현황과 수집 설정을 분리해 운영하며, API 중심으로 뉴스/기타
           수집 방식까지 확장할 수 있습니다.
             </p>
           </div>
@@ -2411,6 +2527,7 @@ export default function IngestionPage() {
                   void fetchIngestionStatus();
                   void fetchMappingStatus();
                   void fetchPipelineStatus();
+                  void fetchNewsCollectionStatus();
                 }}
                 className="inline-flex h-7 items-center rounded-full border border-slate-200 px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50"
               >
@@ -2420,12 +2537,12 @@ export default function IngestionPage() {
             <p className="mt-3 text-xs text-slate-500">
               파이프라인 현황을 메인으로 먼저 보여주고, 수집/매핑 개별 실행은 아래에서 보조 지표로 확인합니다.
             </p>
-            {ingestionLoading || mappingStatusLoading || pipelineStatusLoading ? (
+            {ingestionLoading || mappingStatusLoading || pipelineStatusLoading || newsCollectionLoading ? (
               <p className="mt-3 text-sm text-slate-500">불러오는 중...</p>
             ) : null}
-            {ingestionError || mappingStatusError || pipelineStatusError ? (
+            {ingestionError || mappingStatusError || pipelineStatusError || newsCollectionError ? (
               <p className="mt-3 text-sm text-rose-600">
-                {[ingestionError, mappingStatusError, pipelineStatusError].filter(Boolean).join(" / ")}
+                {[...new Set([ingestionError, mappingStatusError, pipelineStatusError, newsCollectionError].filter(Boolean))].join(" / ")}
               </p>
             ) : null}
           </div>
@@ -2732,6 +2849,154 @@ export default function IngestionPage() {
               </div>
             </div>
           </section>
+
+          <section className="order-1 space-y-4">
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-semibold text-slate-900">뉴스 수집 추이</h4>
+              <span className="text-xs text-slate-500">
+                네이버페이 증권뉴스
+                {newsScheduleTimes.length > 0 ? ` · ${newsScheduleTimes.join(" · ")}` : ""}
+              </span>
+            </div>
+            <div className="rounded-3xl border border-slate-200 bg-white p-5">
+              <div className="grid gap-3 md:grid-cols-4">
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                  <p className="text-[11px] text-slate-500">오늘 수집</p>
+                  <p className="mt-1 text-lg font-semibold text-slate-900">
+                    {formatNumber(newsCollectionSummary?.total ?? 0)}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-3">
+                  <p className="text-[11px] text-emerald-700">본문 정상</p>
+                  <p className="mt-1 text-lg font-semibold text-emerald-700">
+                    {formatNumber(newsCollectionSummary?.ok ?? 0)}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-amber-200 bg-amber-50 p-3">
+                  <p className="text-[11px] text-amber-700">짧은 본문</p>
+                  <p className="mt-1 text-lg font-semibold text-amber-700">
+                    {formatNumber(newsCollectionSummary?.lowQuality ?? 0)}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-rose-200 bg-rose-50 p-3">
+                  <p className="text-[11px] text-rose-700">본문 실패</p>
+                  <p className="mt-1 text-lg font-semibold text-rose-700">
+                    {formatNumber(newsCollectionSummary?.failed ?? 0)}
+                  </p>
+                </div>
+              </div>
+              {newsCollectionJob ? (
+                <p className="mt-3 text-[11px] text-slate-500">
+                  마지막 수집{" "}
+                  {newsCollectionJob.updatedAt
+                    ? new Date(newsCollectionJob.updatedAt).toLocaleString("ko-KR", { hour12: false })
+                    : "-"}
+                  {" · "}
+                  {newsCollectionJob.status === "running"
+                    ? "수집 중"
+                    : newsCollectionJob.status === "error"
+                      ? "실패"
+                      : "완료"}
+                  {newsCollectionJob.message ? ` · ${newsCollectionJob.message}` : ""}
+                </p>
+              ) : null}
+              <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50/60 p-3">
+                <h5 className="text-xs font-semibold text-slate-800">일별 추이 (뉴스 수집)</h5>
+                <div className="mt-3 grid gap-4 xl:grid-cols-2">
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                    <h6 className="text-sm font-semibold text-slate-900">일별 수집 건수 (최근 7일)</h6>
+                    <div className="mt-3 space-y-2">
+                      {displayedNewsDailyRows.length === 0 ? (
+                        <p className="text-xs text-slate-500">수집 데이터가 없습니다.</p>
+                      ) : (
+                        displayedNewsDailyRows.map((row) => {
+                          const total = Math.max(row.total, 1);
+                          const okPercent = Math.round((row.ok / total) * 100);
+                          const lowPercent = Math.round((row.lowQuality / total) * 100);
+                          const failedPercent = Math.max(0, 100 - okPercent - lowPercent);
+                          const totalWidth = Math.max(4, Math.round((row.total / displayedNewsDailyMax) * 100));
+                          const isSelected = row.crawlDate === selectedNewsDate;
+                          return (
+                            <button
+                              key={`news-${row.crawlDate}`}
+                              type="button"
+                              onClick={() => setSelectedNewsDate(row.crawlDate)}
+                              className={`grid w-full grid-cols-[88px_1fr_72px] items-center gap-2 rounded-lg px-1 py-1 text-left transition ${
+                                isSelected ? "bg-slate-50" : "hover:bg-slate-50"
+                              }`}
+                            >
+                              <span className="text-[11px] text-slate-600">{row.crawlDate.slice(5).replace("-", ".")}</span>
+                              <div className="h-2 rounded-full bg-slate-100">
+                                <div className="flex h-2 overflow-hidden rounded-full" style={{ width: `${totalWidth}%` }}>
+                                  <div className="h-2 bg-emerald-500" style={{ width: `${okPercent}%` }} />
+                                  <div className="h-2 bg-amber-400" style={{ width: `${lowPercent}%` }} />
+                                  <div className="h-2 bg-rose-400" style={{ width: `${failedPercent}%` }} />
+                                </div>
+                              </div>
+                              <span className="text-right text-[11px] font-semibold text-slate-700">
+                                {formatNumber(row.total)}
+                              </span>
+                            </button>
+                          );
+                        })
+                      )}
+                    </div>
+                    <div className="mt-3 flex items-center gap-3 text-[11px] text-slate-500">
+                      <span className="inline-flex items-center gap-1">
+                        <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
+                        본문 정상
+                      </span>
+                      <span className="inline-flex items-center gap-1">
+                        <span className="inline-block h-2 w-2 rounded-full bg-amber-400" />
+                        짧은 본문
+                      </span>
+                      <span className="inline-flex items-center gap-1">
+                        <span className="inline-block h-2 w-2 rounded-full bg-rose-400" />
+                        실패
+                      </span>
+                    </div>
+                  </div>
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                    <h6 className="text-sm font-semibold text-slate-900">
+                      {selectedNewsDate
+                        ? `${selectedNewsDate.replaceAll("-", ".")} 수집 시각`
+                        : "선택 일자 수집 시각"}
+                    </h6>
+                    {selectedNewsDay ? (
+                      <p className="mt-1 text-[11px] text-slate-500">
+                        정상 {formatNumber(selectedNewsDay.ok)} / 짧은 본문 {formatNumber(selectedNewsDay.lowQuality)} / 실패{" "}
+                        {formatNumber(selectedNewsDay.failed)}
+                      </p>
+                    ) : null}
+                    <div className="mt-3 space-y-3">
+                      {selectedNewsSlots.length === 0 ? (
+                        <p className="text-xs text-slate-500">설정된 수집 시각이 없습니다.</p>
+                      ) : (
+                        selectedNewsSlots.map((row) => {
+                          const width = !row.reached || row.total === 0
+                            ? 0
+                            : Math.max(4, Math.round((row.total / selectedNewsSlotMax) * 100));
+                          return (
+                            <div key={`news-slot-${row.crawlDate}-${row.time}`} className="space-y-1">
+                              <div className="flex items-center justify-between text-[12px]">
+                                <span className="font-semibold text-slate-800">{row.time}</span>
+                                <span className={row.reached ? "font-semibold text-slate-800" : "text-slate-400"}>
+                                  {row.reached ? `${formatNumber(row.total)}건` : "예정"}
+                                </span>
+                              </div>
+                              <div className="h-2 rounded-full bg-slate-100">
+                                <div className="h-2 rounded-full bg-slate-800" style={{ width: `${width}%` }} />
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
         </div>
       ) : activeTab === "dataTransform" ? (
         <div className="space-y-4">
@@ -2954,13 +3219,8 @@ export default function IngestionPage() {
               </div>
             </div>
             </>
-          ) : activeTab === "apiSettings" && activeSettingsTab === "엑셀 설정" ? (
-            <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-8 text-center">
-              <h4 className="text-base font-semibold text-slate-900">엑셀 설정</h4>
-              <p className="mt-2 text-sm text-slate-600">
-                엑셀 수집 연결원 등록 및 설정 화면은 다음 단계에서 추가됩니다.
-              </p>
-            </div>
+          ) : activeTab === "apiSettings" && activeSettingsTab === "뉴스 설정" ? (
+            <NewsSettingsPanel dbSettingId={selectedDbSettingId} />
           ) : activeTab === "apiSettings" && activeSettingsTab === "PDF 설정" ? (
             <PdfItemTradePanel dbSettingId={selectedDbSettingId} />
           ) : activeTab === "apiSettings" ? (

@@ -1,7 +1,13 @@
 import type { Client } from "pg";
+import { spawn } from "node:child_process";
+import { existsSync } from "node:fs";
+import path from "node:path";
+import { resolveDbConfig } from "../../db/_lib/connection";
+import { resolveNewsDateToken } from "../../ingestion/_lib/news-date-token";
 import { runPythonTransform, type SeriesPoint } from "./python-client";
 import {
   buildTransformSelect,
+  isNewsFeatureTransform,
   isPythonTransform,
   validateUserPython,
   type TransformConfig,
@@ -17,7 +23,15 @@ type TransformRow = {
   output_name: string | null;
   output_unit: string | null;
   output_freq: string | null;
+  db_setting_id: number | null;
 };
+
+const resolveWebDir = () => {
+  if (existsSync(path.join(process.cwd(), "scripts", "news-feature", "news_to_feature.py"))) return process.cwd();
+  return path.join(process.cwd(), "web");
+};
+const WEB_DIR = resolveWebDir();
+const NEWS_FEATURE_SCRIPT = path.join(WEB_DIR, "scripts", "news-feature", "news_to_feature.py");
 
 // 입력 시리즈의 freq (보간 시 앵커 기준에 사용)
 const fetchSourceFreq = async (client: Client, mapId: number): Promise<string | null> => {
@@ -73,13 +87,74 @@ export const loadTransform = async (
 ): Promise<TransformRow | null> => {
   const res = await client.query<TransformRow>(
     `select transform_id, transform_type, source_map_id, output_map_id,
-            config, output_name, output_unit, output_freq
+            config, output_name, output_unit, output_freq, db_setting_id
      from dp.api_transform
      where transform_id = $1`,
     [transformId],
   );
   return res.rows[0] ?? null;
 };
+
+const dbEnvFromConfig = async (settingId: number | null | undefined) => {
+  const resolved = await resolveDbConfig({ settingId: settingId ?? null });
+  if (!resolved) throw new Error("DB 연결 설정을 찾을 수 없습니다.");
+  const normalized = resolved.url.startsWith("jdbc:") ? resolved.url.replace(/^jdbc:/, "") : resolved.url;
+  const parsed = new URL(normalized);
+  return {
+    DB_HOST: parsed.hostname,
+    DB_PORT: parsed.port || "5432",
+    DB_NAME: resolved.database,
+    DB_USER: resolved.user,
+    DB_PASSWORD: resolved.password,
+  };
+};
+
+const parseWrittenCount = (output: string) => {
+  const currentMatch = /DB\s*적재\s*건수\(이번\s*실행\):\s*(\d+)/.exec(output);
+  if (currentMatch) return Number(currentMatch[1]);
+  const scratchMatch = /DB\s*적재\s+(\d+)건/.exec(output);
+  return scratchMatch ? Number(scratchMatch[1]) : 0;
+};
+
+const runNewsFeaturePython = async (config: TransformConfig, settingId: number | null | undefined) => {
+  if ((config.newsSource ?? "naver_pay") !== "naver_pay") {
+    throw new Error("뉴스 변수 추출은 네이버페이 증권뉴스만 지원합니다.");
+  }
+  const startDate = resolveNewsDateToken(config.newsStartExpr ?? "");
+  const endDate = resolveNewsDateToken(config.newsEndExpr ?? "");
+  if (!startDate || !endDate) throw new Error("뉴스 시작일/종료일을 확인하세요.");
+  const dbEnv = await dbEnvFromConfig(settingId);
+  const python = process.env.NEWS_FEATURE_PYTHON || "python";
+  const args = [NEWS_FEATURE_SCRIPT, "--start", startDate, "--end", endDate];
+  const env = {
+    ...process.env,
+    ...dbEnv,
+    PYTHONIOENCODING: "utf-8",
+  };
+  if (!env.TYPESAFE_API_KEY) throw new Error("TYPESAFE_API_KEY가 설정되어 있지 않습니다.");
+  const output = await new Promise<string>((resolve, reject) => {
+    const child = spawn(python, args, {
+      cwd: path.dirname(NEWS_FEATURE_SCRIPT),
+      env,
+      windowsHide: true,
+    });
+    const chunks: string[] = [];
+    child.stdout.setEncoding("utf8");
+    child.stderr.setEncoding("utf8");
+    child.stdout.on("data", (chunk) => chunks.push(String(chunk)));
+    child.stderr.on("data", (chunk) => chunks.push(String(chunk)));
+    child.on("error", reject);
+    child.on("close", (code) => {
+      const text = chunks.join("");
+      if (code === 0) resolve(text);
+      else reject(new Error(text.trim() || `뉴스 변수 추출 Python 실행 실패 (${code})`));
+    });
+  });
+  return { affectedCount: parseWrittenCount(output), startDate, endDate };
+};
+
+const isNewsFeatureConfig = (transform: TransformRow) =>
+  isNewsFeatureTransform(transform.transform_type) || Boolean(transform.config?.newsFeature);
 
 export type RunTransformResult = {
   ok: boolean;
@@ -96,22 +171,6 @@ export const runTransform = async (
 ): Promise<RunTransformResult> => {
   const transform = await loadTransform(client, transformId);
   if (!transform) throw new Error("가공 정의를 찾을 수 없습니다.");
-  if (!transform.source_map_id) throw new Error("입력 시리즈가 설정되지 않았습니다.");
-  if (!transform.output_map_id) throw new Error("출력 시리즈가 설정되지 않았습니다.");
-
-  const isPython = isPythonTransform(transform.transform_type);
-  const sourceFreq = await fetchSourceFreq(client, Number(transform.source_map_id));
-  // 비-python: 변환 SELECT 생성(검증 겸). python: SQL이 아니므로 생성하지 않는다.
-  const transformSelect = isPython
-    ? null
-    : buildTransformSelect(
-        transform.transform_type,
-        transform.config ?? {},
-        Number(transform.source_map_id),
-        sourceFreq,
-      );
-  const outputMapId = Number(transform.output_map_id);
-  const outputFreq = ((transform.output_freq ?? "M").trim() || "M").toUpperCase();
 
   const startedAt = Date.now();
   const runLogRes = await client.query<{ run_log_id: number }>(
@@ -123,6 +182,37 @@ export const runTransform = async (
   const runLogId = Number(runLogRes.rows[0]?.run_log_id);
 
   try {
+    if (isNewsFeatureConfig(transform)) {
+      const result = await runNewsFeaturePython(transform.config ?? {}, transform.db_setting_id);
+      await client.query(
+        `update dp.api_transform_run_log
+         set status = 'success', finished_at = now(), elapsed_ms = $2, affected_count = $3
+         where run_log_id = $1`,
+        [runLogId, Date.now() - startedAt, result.affectedCount],
+      );
+      return {
+        ok: true,
+        affectedCount: result.affectedCount,
+        startDate: result.startDate,
+        endDate: result.endDate,
+      };
+    }
+    if (!transform.source_map_id) throw new Error("입력 시리즈가 설정되지 않았습니다.");
+    if (!transform.output_map_id) throw new Error("출력 시리즈가 설정되지 않았습니다.");
+
+    const isPython = isPythonTransform(transform.transform_type);
+    const sourceFreq = await fetchSourceFreq(client, Number(transform.source_map_id));
+    // 비-python: 변환 SELECT 생성(검증 겸). python: SQL이 아니므로 생성하지 않는다.
+    const transformSelect = isPython
+      ? null
+      : buildTransformSelect(
+          transform.transform_type,
+          transform.config ?? {},
+          Number(transform.source_map_id),
+          sourceFreq,
+        );
+    const outputMapId = Number(transform.output_map_id);
+    const outputFreq = ((transform.output_freq ?? "M").trim() || "M").toUpperCase();
     // python 가공은 외부 서비스 호출(네트워크)이므로 트랜잭션을 열기 전에 먼저 계산한다.
     const pythonRows = isPython
       ? await computePythonRows(client, transform.config ?? {}, Number(transform.source_map_id))
