@@ -265,6 +265,14 @@ class DbStore(PredMixin):
             return 0
         t = self.t[name]
         with self.engine.begin() as con:
+            dialect = con.dialect.name
+            if name in PRED_TABLES and dialect in ('postgresql', 'sqlite'):
+                if dialect == 'postgresql':
+                    from sqlalchemy.dialects.postgresql import insert
+                else:
+                    from sqlalchemy.dialects.sqlite import insert
+                stmt = insert(t).on_conflict_do_nothing(index_elements=keys).returning(t.c[keys[0]])
+                return len(con.execute(stmt, rows).all())
             have = {tuple(map(self._kv, r)) for r in con.execute(select(*[t.c[k] for k in keys])).all()}
             new = [r for r in rows if tuple(self._kv(r[k]) for k in keys) not in have]
             if new:

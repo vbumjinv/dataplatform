@@ -33,14 +33,23 @@ from features import timepoints as TPR  # noqa: E402
 
 
 def saved(tp, target, at, mode=None):
-    """(예측 있음, 해설 있음): 저장소에 (대상일, 시점, prediction_at) 분류·회귀 행 / 해설 행이 있는지(학습본 버전 무관)."""
+    """Return completion flags for prediction, range, SHAP and explanation."""
     sys.path.insert(0, str(HERE / 'mlops'))
-    from store import open_prediction_store
+    from store import RANGE_COLS, open_prediction_store
+    from store_pred import VALUE
+
     st = open_prediction_store(False, mode)
     at = pd.Timestamp(at)
-    pred = all((lambda d: len(d) and (d.prediction_at == at).any())(st.pred_read(o, tp, target, target)) for o in ('cls', 'reg'))
+    rows = {}
+    for obj in ('cls', 'reg'):
+        frame = st.pred_read(obj, tp, target, target)
+        rows[obj] = frame[(frame.prediction_at == at) & frame[VALUE[obj]].notna()] if len(frame) else frame
+    have_pred = all(len(frame) for frame in rows.values())
+    have_range = bool(have_pred and rows['reg'][list(RANGE_COLS)].notna().all(axis=1).any())
+    have_shap = bool(have_pred and all(frame.shap_result.map(bool).any() for frame in rows.values()))
     ex = st.explain_read(tp, target, target)
-    return bool(pred), bool(len(ex) and ((ex.prediction_at == at) & (ex.status == 'ok')).any())   # failed 해설은 없는 것으로 보고 다시 만든다
+    have_explain = bool(len(ex) and ((ex.prediction_at == at) & (ex.status == 'ok')).any())
+    return have_pred, have_range, have_shap, have_explain
 
 
 def main():
@@ -78,12 +87,12 @@ def main():
         ready = a.ready_through or pd.Timestamp.now(tz=TPR.tz()).isoformat(timespec='seconds')
         pred += ['--ready-through', ready]
     # (대상일, 시점, prediction_at) 예측·해설이 이미 있으면 그 단계는 조용히 건너뛴다(사용자 결정 2026-11-13)
-    have_pred, have_explain = saved(tp, target, at, a.mode) if a.write else (False, False)
+    have_pred, have_range, have_shap, have_explain = saved(tp, target, at, a.mode) if a.write else (False,) * 4
     commands = [] if a.explain_only or have_pred else [pred]
     if a.write:
-        if not a.explain_only and not have_pred:
+        if not a.explain_only and not have_range:
             commands.append([PREDICT / 'predict_range.py', '--target', target, '--tps', tp] + pa + src + store)
-        if not have_pred or a.explain_only or (a.llm and not have_explain):     # 예측이 있으면 빠진 GPT 해설만 만든다
+        if not have_shap or not have_range or a.explain_only or a.refresh_shap or (a.llm and not have_explain):
             commands.append([EXPLAIN / 'explain_timepoint.py', '--tp', tp, '--target', target] + pa + src + store
                             + (['--llm'] if a.llm else []) + (['--refresh-shap'] if a.refresh_shap else []))
     for command in commands:

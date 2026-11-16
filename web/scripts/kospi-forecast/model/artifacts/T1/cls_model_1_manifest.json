@@ -150,7 +150,7 @@
   "created": "2026-11-10T03:42:55.323133+00:00",
   "model_version": "model_1_t1_cls_2026_11_83cad497684e",
   "pipeline": "predict/engine.py",
-  "pipeline_sha256": "73ed9a314dd2156c231c26de41b2bb3607278cc0e658bf32d7171f992e43c3b4",
+  "pipeline_sha256": "89cb409785220f1c112b2bfe7f0394320e3eca514ff83068f924a0e217262deb",
   "refit": {
     "source_snapshot_at": "2026-11-09 14:30:14.677965+09:00",
     "source_table": "dp.news_feature_orig",

@@ -121,13 +121,13 @@ def retrain_args(tp, month, w):
 
 
 def news_features(st, job, w):
-    """뉴스를 쓰는 시점(T1·T2) 예측 직전 뉴스 피처 단계. 실패하면 뉴스가 빈 채로 예측하지 않도록 멈춘다."""
+    """뉴스를 쓰는 시점(T1·T2) 예측 직전 뉴스 피처 단계. 실패를 기록하고 기존 피처로 예측을 계속한다."""
     if flag("KOSPI_RUN_NEWS_FEATURES"):
         from news.settings import FEATURE_TABLE, FEATURE_READ_TABLE
         if FEATURE_TABLE != FEATURE_READ_TABLE:
             raise RuntimeError(f'자동 뉴스 적재 대상({FEATURE_TABLE})과 예측 원천({FEATURE_READ_TABLE})이 다릅니다. '
                                '외부 원천 적재 완료를 확인하고 자동 적재 옵션을 끄세요.')
-        step(st, job, "news_features", ["run_news_features.py", "--require-completion"] + ([] if w else ["--no-write", "--limit", "20"]))
+        step(st, job, "news_features", ["run_news_features.py", "--require-completion"] + ([] if w else ["--no-write", "--limit", "20"]), required=False)
 
 
 def run_timepoint(st, d, w, tp):

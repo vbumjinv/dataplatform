@@ -3,7 +3,7 @@
 사용처: mlops/store.py 의 DbStore·store_csv.CsvStore 가 이 클래스를 함께 쓴다(st.pred_put 등). 저장소 열기는 store.open_store(write, mode).
 규칙:
   - 예측 행 키 = (target_dd, time_point, model_version, prediction_at), 해설 키 = (target_dd, time_point, prediction_at).
-    같은 키가 이미 있으면 세 테이블 모두 넣지 않고 건너뛴다(지우거나 덮어쓰지 않음, 사용자 결정 2026-11-13).
+    같은 키의 유효한 예측은 유지한다. 비어 있는 예측과 실패 해설은 재실행으로 채운다.
   - 주말·휴일에도 실행하므로 같은 대상일·시점에 실행일마다 행이 생긴다(금·토·일 T0 → 월요일). 분류·회귀·해설은 같은 prediction_at 으로 짝짓는다.
   - 모델 입력(model_input json)은 예측 행에 함께 둔다(따로 파일을 만들지 않음): {"features": {변수: 값}, "context": {...(T2 기사 참조 등)}}.
   - 범위(range_*)·SHAP(shap_result)은 나중 단계가 같은 행(prediction_at 포함 키)에 채운다(pred_update).
@@ -49,10 +49,20 @@ class PredMixin:
 
     # ------------------------------------------------------------ 예측
     def pred_put(self, obj: str, rows: list[dict]) -> int:
-        """예측 행을 넣는다(같은 키가 이미 있으면 건너뜀). 반환: 새로 넣은 행 수."""
+        """예측 행을 넣고 값이 비어 있는 기존 행을 복구한다."""
         rows = [dict(r, target_dd=_date(r["target_dd"]), prediction_at=_stamp(r["prediction_at"]),
                      load_dtm=datetime.now(timezone.utc)) for r in rows]
-        return self._insert_new(TABLE[obj], rows, KEY)
+        count = self._insert_new(TABLE[obj], rows, KEY)
+        if not self.write or count == len(rows):
+            return count
+        for row in rows:
+            if pd.isna(row.get(VALUE[obj])):
+                continue
+            key = {k: row[k] for k in KEY}
+            key[VALUE[obj]] = None
+            values = {k: v for k, v in row.items() if k not in KEY}
+            count += self._update(TABLE[obj], key, values)
+        return count
 
     def pred_read(self, obj: str, time_point: str | None = None, start=None, end=None, model_version: str | None = None) -> pd.DataFrame:
         """예측 행(json 열은 dict, prediction_at 은 UTC Timestamp)."""
@@ -120,7 +130,7 @@ class PredMixin:
         """해설 한 행(같은 대상일·시점·prediction_at 이 이미 있으면 건너뜀, 단 failed 행은 성공 해설로 덮어씀). 반환: 넣은/바꾼 행 수."""
         row = dict(row, target_dd=_date(row["target_dd"]), prediction_at=_stamp(row["prediction_at"]), created_at=datetime.now(timezone.utc))
         n = self._insert_new("pred_explain", [row], EXPLAIN_KEY)
-        if n == 0 and row.get("status") == "ok":                       # 실패한 해설은 재실행 성공으로 바꾼다(2026-11-13 사용자 결정)
+        if n == 0 and (row.get("status") == "ok" or (row.get("conclusion") and row.get("detail_reason"))):
             key = {k: row[k] for k in EXPLAIN_KEY}
             n = self._update("pred_explain", dict(key, status="failed"), {k: v for k, v in row.items() if k not in key})
         return n

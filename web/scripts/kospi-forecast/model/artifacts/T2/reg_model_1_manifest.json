@@ -248,7 +248,7 @@
   "smoke_test": "joblib reload and equal finite prediction; not an accuracy estimate",
   "model_version": "model_1_reg_2026_11_dbfull_46f3fa517955",
   "feature_version": "t2_features_v4_951ceb04923f",
-  "pipeline_sha256": "b402609b7d94fb8c3a77a01229f8828927c8963be55d5666fb0020c1a8165202",
+  "pipeline_sha256": "356446b07ff0831156dfab302baf67a20d058b3bf363babca8b1cde73a5df25f",
   "feature_columns": [
     "K_close_location",
     "K_intraday",

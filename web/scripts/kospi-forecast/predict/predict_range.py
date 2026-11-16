@@ -112,9 +112,10 @@ def kospi_close():
             con.execute(text('SET TRANSACTION READ ONLY'))
             for key in D.needed_keys():
                 if C.key_market()[key] == 'KR':
-                    s = standardize(db.read_table(con, key).astype('string'), db.TABLES[key].get('cols'))
-                    if key == C.KOSPI_KEY:                       # 예측 입력과 같은 KOSPI(krx_kospi_1001 우선)
-                        s = db_snapshot.fill_kospi_today(con, s)
+                    if key == C.KOSPI_KEY:
+                        s = db_snapshot.read_kospi(con)
+                    else:
+                        s = standardize(db.read_table(con, key).astype('string'), db.TABLES[key].get('cols'))
                     raw[key], _ = PP.clean_symbol_frame(s)
     lo = min(f.index.min() for f in raw.values())
     hi = max(f.index.max() for f in raw.values())

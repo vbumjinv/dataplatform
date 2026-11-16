@@ -180,7 +180,7 @@ class CsvStore(PredMixin):
         df = self._load(name)
         m = pd.Series(True, index=df.index)
         for k, v in key.items():
-            m &= df[k].map(_k) == _k(v)
+            m &= df[k].isna() if v is None else df[k].map(_k) == _k(v)
         for c, v in values.items():
             if c not in df:
                 df[c] = None

@@ -228,7 +228,7 @@ def openai_client():
     return ask
 
 
-def call_llm(payload, links, shap, cached, version, response_file=None, use_cache=True):
+def call_llm(payload, links, shap, cached, version, response_file=None, use_cache=True, allow_unvalidated=False):
     """cached = 이전 실행의 LLM 응답({request_sha256, structured, usage}) 또는 None. 돌려주는 result['response'] 를 기록에 저장한다."""
     path, prompt = prompt_text(version)
     raw = encoded(payload)
@@ -243,17 +243,33 @@ def call_llm(payload, links, shap, cached, version, response_file=None, use_cach
     model = ask.model
     req = digest({'provider': provider, 'model': model, 'prompt': prompt, 'input': payload})
 
+    fallback = None
+
     def generate(attempt, feedback):
+        nonlocal fallback
         if use_cache and cached and cached.get('request_sha256') == req and attempt == 1:   # use_cache=False: 소요 시간 측정용(time_pipeline.py)
             result = cached
             parsed = Explanation.model_validate(result['structured'])
         else:
             parsed, usage = ask(prompt + ('\n[수정 요청]\n' + feedback if feedback else ''), raw)
             result = {'request_sha256': req, 'structured': parsed.model_dump(), 'usage': usage}
-        answer, q = public_answer(parsed, payload, links, shap)
-        return {'answer': answer, 'quality': q, 'provider': provider, 'model': model, 'prompt_version': version, 'prompt_sha256': sha(path),
-                'request_sha256': req, 'usage': result.get('usage'), 'response': result}
-    return run_with_retry(generate, on_retry=lambda e: print(f"해설 재시도 {e['next_attempt']}/3: {e['error_type']}", flush=True))
+        metadata = {'provider': provider, 'model': model, 'prompt_version': version, 'prompt_sha256': sha(path),
+                    'request_sha256': req, 'usage': result.get('usage')}
+        try:
+            answer, q = public_answer(parsed, payload, links, shap)
+        except OutputValidationError as exc:
+            answer = parsed.model_dump()
+            if all(answer[field].strip() for field in ('conclusion', 'detail_reason')):
+                fallback = {**metadata, 'answer': answer, 'validation_error': str(exc)}
+            raise
+        return {**metadata, 'answer': answer, 'quality': q, 'response': result}
+
+    try:
+        return run_with_retry(generate)
+    except OutputValidationError:
+        if allow_unvalidated and fallback is not None:
+            return fallback
+        raise
 
 
 # ------------------------------------------------------------------ 저장
@@ -368,18 +384,11 @@ def main():
     base = {'target_dd': target, 'time_point': a.tp, 'prediction_at': inp['prediction_at'], 'cls_model_version': manifests['cls']['model_version'],
             'reg_model_version': manifests['reg']['model_version'], 'prompt_version': a.prompt_version}
     try:
-        result = call_llm(payload, news['links'], shap, prev.get('response') if same else None, a.prompt_version, a.response_file)
-    except Exception as e:                                               # 실패도 화면·점검이 알 수 있게 상태를 남긴다
-        old = st.explain_read(a.tp, target, target)
-        old = old[old.prediction_at == inp['prediction_at']] if len(old) else old
-        if old.empty:
-            st.explain_put({**base, 'status': 'failed', 'error': f'{type(e).__name__}: {e}'[:2000]})
-        # 성공한 기존 해설은 재호출 실패로 지우지 않는다.
-        if isinstance(e, OutputValidationError):                         # 해설 검사 3회 실패: 예측·범위·SHAP 은 이미 저장됐으니 멈추지 않고 해설만 건너뜀(2026-11-13 사용자 결정)
-            save_run(run_key, entry)
-            print(f'경고: 해설 검사를 3번 통과하지 못해 해설을 건너뜁니다(status=failed). {e}', flush=True)
-            return
-        raise
+        result = call_llm(payload, news['links'], shap, prev.get('response') if same else None, a.prompt_version, a.response_file, allow_unvalidated=True)
+    except Exception as e:
+        # The result store keeps the failure for a later run, while the prediction remains usable.
+        st.explain_put({**base, 'status': 'failed', 'error': f'{type(e).__name__}: {e}'[:2000]})
+        return
     timing['llm_sec'] = round(time.perf_counter() - t, 1)
     timing['total_sec'] = round(time.perf_counter() - t0, 1)
     result['timing'] = timing
@@ -389,9 +398,14 @@ def main():
     save_run(run_key, entry)
     ans = result['answer']
     tin, tout = tokens(result.get('usage'))
+    validation_error = result.get('validation_error')
     st.explain_put({**base, 'conclusion': ans['conclusion'], 'detail_reason': ans['detail_reason'],
                     'article_keys': [v['article_key'] for v in news['links'].values()], 'llm_model': result['model'],
-                    'status': 'ok', 'error': None, 'input_tokens': tin, 'output_tokens': tout})
+                    'status': 'failed' if validation_error else 'ok',
+                    'error': validation_error[:2000] if validation_error else None, 'input_tokens': tin, 'output_tokens': tout})
+    if validation_error:
+        print(ans['conclusion'], ans['detail_reason'], sep='\n\n', flush=True)
+        return
     print(f'해설 완료: {RUNS.name}[{run_key}]', '| 분량', result['quality']['characters'], '자', '| 권고', result['quality']['warnings'] or '없음')
 
 
