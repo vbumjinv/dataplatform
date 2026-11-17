@@ -78,7 +78,6 @@ def main():
     else:
         target, at = TPR.run_point(tp, TPR.run_day(tp))
     target, at = str(target.date()), at.isoformat()
-    print(f"시점 {tp} ({TPR.label(tp)}), 대상일 {target}, 기준 시각 {at}, 학습본 {a.source}", flush=True)
     src = ['--source', a.source]
     store = ['--write'] + (['--mode', a.mode] if a.mode else [])
     pa = ['--prediction-at', at]
@@ -86,7 +85,7 @@ def main():
     if tp == 'T2':      # 뉴스 처리 완료를 기다리지 않고 실행 시각까지 DB 에 적재된 피처로 예측한다(사용자 결정 2026-11-12)
         ready = a.ready_through or pd.Timestamp.now(tz=TPR.tz()).isoformat(timespec='seconds')
         pred += ['--ready-through', ready]
-    # (대상일, 시점, prediction_at) 예측·해설이 이미 있으면 그 단계는 조용히 건너뛴다(사용자 결정 2026-11-13)
+    # (대상일, 시점, prediction_at) 예측·해설이 이미 있으면 그 단계는 건너뛰고 한 줄로 알린다(사용자 결정 2026-11-13, 안내 문구 2026-11-16)
     have_pred, have_range, have_shap, have_explain = saved(tp, target, at, a.mode) if a.write else (False,) * 4
     commands = [] if a.explain_only or have_pred else [pred]
     if a.write:
@@ -95,6 +94,14 @@ def main():
         if not have_shap or not have_range or a.explain_only or a.refresh_shap or (a.llm and not have_explain):
             commands.append([EXPLAIN / 'explain_timepoint.py', '--tp', tp, '--target', target] + pa + src + store
                             + (['--llm'] if a.llm else []) + (['--refresh-shap'] if a.refresh_shap else []))
+        done = [n for n, h in zip(('예측', '범위', 'SHAP', '해설'), (have_pred, have_range, have_shap, have_explain)) if h]
+        if not commands:
+            print(f"이미 실행해 저장된 예측입니다({tp}, 대상일 {target}). 다시 실행하지 않습니다.", flush=True)
+            return
+    print(f"시점 {tp} ({TPR.label(tp)}), 대상일 {target}, 기준 시각 {at}, 학습본 {a.source}", flush=True)
+    if a.write:
+        if done and not a.explain_only:
+            print(f"이미 저장됨: {'·'.join(done)} → 건너뛰고 빠진 단계만 실행합니다.", flush=True)
     for command in commands:
         result = subprocess.run([sys.executable, '-B', *map(str, command)], cwd=HERE)
         if result.returncode:

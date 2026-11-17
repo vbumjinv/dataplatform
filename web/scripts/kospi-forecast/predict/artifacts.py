@@ -38,7 +38,9 @@ def pipeline_hash(tp):
         paths += [HERE / 't2_model.py', HERE / 'service_runtime.py']
     paths += sorted((SERVICE / 'features').glob('*.py'))
     paths += [SERVICE / 'db' / n for n in ('extract.py', 'standardize.py', 'tables.py')]
-    body = json.dumps({p.relative_to(SERVICE).as_posix(): sha(p) for p in paths}, sort_keys=True)
+    # 줄바꿈은 LF 로 맞춰 해시한다: PC(CRLF)·서버(LF) 어디서 받아도 같은 값(2026-11-17)
+    body = json.dumps({p.relative_to(SERVICE).as_posix(): hashlib.sha256(p.read_bytes().replace(b'\r\n', b'\n')).hexdigest()
+                       for p in paths}, sort_keys=True)
     return hashlib.sha256(body.encode()).hexdigest()
 
 

@@ -66,7 +66,7 @@
   "created": "2026-11-09T09:51:05.744771+00:00",
   "model_version": "model_1_t0_reg_2026_11_e124c2b212d0",
   "pipeline": "predict/engine.py",
-  "pipeline_sha256": "b8de23fd377ac05322ad5e83319e54c29f7597df1d435abe3686832aaebdeff9",
+  "pipeline_sha256": "994a6997e7e4f62eb0c8667f3d00dacd19c81b5fe904af1ec9e638de101db17a",
   "refit": {
     "source_snapshot_at": "2026-11-09 14:30:14.677965+09:00",
     "source_table": "dp.news_feature_orig",

@@ -206,7 +206,7 @@
   "created": "2026-11-10T03:43:22.455259+00:00",
   "model_version": "model_1_t1_reg_2026_11_b2e2239197b6",
   "pipeline": "predict/engine.py",
-  "pipeline_sha256": "89cb409785220f1c112b2bfe7f0394320e3eca514ff83068f924a0e217262deb",
+  "pipeline_sha256": "33de1ebc23f3c91e8b0bfa1645bb0c42c5fadd95a86895512fd8547366204e9d",
   "history": {
     "rows": 4140,
     "start": "2010-01-05",

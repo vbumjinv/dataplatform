@@ -6,13 +6,13 @@
     "artifact": "T0/cls_model_1.joblib",
     "artifact_sha256": "cbef36a4a60d9545c720141665251aa2e26f329a79d76db8d5b5efb787335ab2",
     "model_version": "model_1_t0_cls_2026_11_cbef36a4a60d",
-    "pipeline_sha256": "b8de23fd377ac05322ad5e83319e54c29f7597df1d435abe3686832aaebdeff9"
+    "pipeline_sha256": "994a6997e7e4f62eb0c8667f3d00dacd19c81b5fe904af1ec9e638de101db17a"
    },
    "reg": {
     "artifact": "T0/reg_model_1.joblib",
     "artifact_sha256": "e124c2b212d0a25f4a34fc7dec633701e3923ad847fc30f405f68f1b74ba7704",
     "model_version": "model_1_t0_reg_2026_11_e124c2b212d0",
-    "pipeline_sha256": "b8de23fd377ac05322ad5e83319e54c29f7597df1d435abe3686832aaebdeff9"
+    "pipeline_sha256": "994a6997e7e4f62eb0c8667f3d00dacd19c81b5fe904af1ec9e638de101db17a"
    }
   },
   "T1": {
@@ -20,13 +20,13 @@
     "artifact": "T1/cls_model_1.joblib",
     "artifact_sha256": "83cad497684ea16c8b737825fb8b0a892e37dbf9ce895b1423884b18f0960493",
     "model_version": "model_1_t1_cls_2026_11_83cad497684e",
-    "pipeline_sha256": "89cb409785220f1c112b2bfe7f0394320e3eca514ff83068f924a0e217262deb"
+    "pipeline_sha256": "33de1ebc23f3c91e8b0bfa1645bb0c42c5fadd95a86895512fd8547366204e9d"
    },
    "reg": {
     "artifact": "T1/reg_model_1.joblib",
     "artifact_sha256": "b2e2239197b60c7b7d4fa48eee8019b5c7316df45fde53a1edca3f485651ecaa",
     "model_version": "model_1_t1_reg_2026_11_b2e2239197b6",
-    "pipeline_sha256": "89cb409785220f1c112b2bfe7f0394320e3eca514ff83068f924a0e217262deb"
+    "pipeline_sha256": "33de1ebc23f3c91e8b0bfa1645bb0c42c5fadd95a86895512fd8547366204e9d"
    }
   },
   "T2": {
@@ -34,13 +34,13 @@
     "artifact": "T2/cls_model_1.joblib",
     "artifact_sha256": "05bdea652272a20b10cea9b9f2b675625271a1a3f90fb29adaded3a20897ef11",
     "model_version": "model_1_cls_2026_11_dbfull_05bdea652272",
-    "pipeline_sha256": "356446b07ff0831156dfab302baf67a20d058b3bf363babca8b1cde73a5df25f"
+    "pipeline_sha256": "929725473a1f6c2f02e8ca1607ad58fc9bff3bf4b2b5e78f2523182b99901c68"
    },
    "reg": {
     "artifact": "T2/reg_model_1.joblib",
     "artifact_sha256": "46f3fa5179556116af3cf1d775c27f289187bdc2c8906e7b59117bcc60a3717b",
     "model_version": "model_1_reg_2026_11_dbfull_46f3fa517955",
-    "pipeline_sha256": "356446b07ff0831156dfab302baf67a20d058b3bf363babca8b1cde73a5df25f"
+    "pipeline_sha256": "929725473a1f6c2f02e8ca1607ad58fc9bff3bf4b2b5e78f2523182b99901c68"
    }
   }
  },
