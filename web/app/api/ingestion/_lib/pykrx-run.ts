@@ -1,4 +1,5 @@
 import { spawn } from "child_process";
+import { existsSync } from "fs";
 import path from "path";
 
 export type PykrxRow = {
@@ -20,9 +21,13 @@ const resolvePaths = () => {
   const cwd = process.cwd();
   const webRoot = cwd.endsWith(`${path.sep}web`) ? cwd : path.join(cwd, "web");
   const repoRoot = path.resolve(webRoot, "..");
-  const python =
-    process.env.PYKRX_PYTHON?.trim() ||
-    path.join(repoRoot, "python-forecast-api", ".venv", "Scripts", "python.exe");
+  const configured = process.env.PYKRX_PYTHON?.trim();
+  const candidates = [
+    path.join(repoRoot, "python-forecast-api", ".venv", "Scripts", "python.exe"),
+    path.join(repoRoot, "python-forecast-api", ".venv", "bin", "python"),
+    path.join(repoRoot, "python-forecast-api", ".venv", "bin", "python3"),
+  ];
+  const python = configured || candidates.find((item) => existsSync(item)) || candidates[0];
   const script = path.join(repoRoot, "python-forecast-api", "pykrx_collect.py");
   return { python, script };
 };
