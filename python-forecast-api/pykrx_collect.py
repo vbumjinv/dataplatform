@@ -133,7 +133,9 @@ def collect(dataset: str, start: str, end: str, sample: bool = False) -> list[di
     end_ymd = end_dt.strftime("%Y%m%d")
 
     if dataset_id == "kospi":
-        frame = stock.get_index_ohlcv_by_date(start_ymd, end_ymd, "1001")
+        # name_display 는 시세 조회 뒤 지수명 표를 다시 읽는다. KRX 응답에 '지수명'이 없으면
+        # 시세가 있어도 KeyError 로 멈춘다. 이름은 아래에서 직접 넣는다.
+        frame = stock.get_index_ohlcv_by_date(start_ymd, end_ymd, "1001", name_display=False)
         return _rows_from_ohlcv(frame, "코스피", "1001")
 
     if sample:
@@ -173,8 +175,11 @@ def collect(dataset: str, start: str, end: str, sample: bool = False) -> list[di
     rows: list[dict] = []
     for ticker in tickers:
         try:
-            index_name = stock.get_index_ticker_name(ticker) or ticker
-            frame = stock.get_index_ohlcv_by_date(start_ymd, end_ymd, ticker)
+            try:
+                index_name = stock.get_index_ticker_name(ticker) or ticker
+            except Exception:  # noqa: BLE001
+                index_name = ticker
+            frame = stock.get_index_ohlcv_by_date(start_ymd, end_ymd, ticker, name_display=False)
         except Exception as error:  # noqa: BLE001
             raise RuntimeError(f"KOSPI 시리즈 조회 실패({ticker}): {error}") from error
         rows.extend(_rows_from_ohlcv(frame, str(index_name), str(ticker)))
