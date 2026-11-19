@@ -102,7 +102,7 @@ def run(tp, target, eng, st):
     factors = [{'variable': f['variable'], 'name': TPM.NAMES.get(f['variable'], ('', f['variable']))[1], 'pp': f['contribution_pp'] / (1 if o == 'cls' else 0.1)}
                for o in ('cls', 'reg') for f in shap[o]['features'][:8]]
     with eng.connect() as con:
-        news = news_pick.pick(con, inp['prediction_at'], factors, 3)
+        news = news_pick.pick(con, inp['prediction_at'], factors, inp['p'])
     clock.sec['news_pick'] = time.perf_counter() - t
     payload = E.llm_input(tp, target, inp, shap, news, 8, rng)
     t = time.perf_counter()

@@ -10,8 +10,11 @@
      - 분류 일치: 요인마다 이어지는 기사 분류(지역 origin_region·업종 primary_sector·경로 primary_channel, MATCH 표)
      - 키워드 일치: 요인마다 키워드(KEYWORDS 표, 예: 유럽 증시 → 유럽·STOXX·DAX)가 제목·요약에 있는지
      최종 점수 = 기본 점수 x (1 + 2 x 분류 일치 + 2 x 키워드 일치) → 예측을 크게 움직인 요인과 관련된 영향력 큰 기사가 앞에 온다.
-  ④ 제목이 거의 같은 기사(공백·기호 뺀 앞 24자)는 하나만
-  ⑤ 긍정·부정을 번갈아 점수 높은 순으로 최대 max_articles 건(기본 3) — 한쪽 기사만 고르지 않게
+  ④ 제목이 거의 같은 기사(공백·기호 뺀 앞 24자)는 하나만. 단 ⑤의 개수가 모자랄 때만 뺀 기사로 채운다(점수 순, 5번째에는 안 씀)
+  ⑤ 방향 모델 확신 강도(보이는 방향 확률)에 따라 같은 방향·반대 방향 기사 수를 정해 점수 높은 순으로 4건(TIERS, 2026-11-19 사용자 결정)
+     강함(>=60%) 같은 4·반대 0, 보통(55~60%) 같은 3·반대 1, 약함(<55%) 같은 2·반대 2.
+     같은 방향이 모자라면 반대로 채우지 않고 적게 보여 주고(반대 방향 수 <= 같은 방향 수), 반대 방향이 모자라면 같은 방향으로 채운다.
+  ⑥ 5번째는 앞 4건이 다루지 않은 SHAP 요인과 이어지고 점수가 앞 4건 최저의 EXTRA_MIN 배 이상인 기사만(강함·보통은 같은 방향, 약함은 mixed 포함 아무 방향)
 프롬프트 v11(2026-11-05)부터 기사는 LLM 에 보내지 않는다. 고른 기사의 제목·링크·점수는 news_links.json 과 해설 근거 기사로 코드가 붙인다.
 """
 from __future__ import annotations
@@ -67,6 +70,17 @@ KEYWORDS = {
 }
 
 
+# 확신 강도(|상승 확률 - 0.5|) 하한 → (이름, 같은 방향 수, 반대 방향 수). 근거: range_history 2011~2026-10 에서 T1·T2 가 구간별 약 1/3,
+# 적중률 약함 54~56% → 보통 58~61% → 강함 67~74%(세 시점 공통 고정 기준, 2026-11-19 사용자 결정)
+TIERS = ((0.10, 'strong', 4, 0), (0.05, 'medium', 3, 1), (0.0, 'weak', 2, 2))
+EXTRA_MIN = 0.5      # 5번째 기사 점수 하한 = 앞 4건 최저 점수 x 0.5
+
+
+def tier(p: float) -> tuple[str, int, int]:
+    s = abs(p - 0.5)
+    return next((name, same, opp) for cut, name, same, opp in TIERS if s >= cut)
+
+
 def rule(var, table=MATCH):
     for k in sorted(table, key=len, reverse=True):
         if var.startswith(k):
@@ -115,12 +129,45 @@ def _valid(url) -> bool:
     return valid_url(url)
 
 
-def pick(con, cutoff: pd.Timestamp, factors: list[dict] = (), max_articles: int = 3, summary_chars: int = 80) -> dict:
-    """factors: SHAP 상위 요인 [{'variable','name','pp'}](방향·수익률 합친 것). 반환: {'window', 'counts', 'articles'(LLM 에 보낼 짧은 기사),
-    'links'(번호 -> URL·기사 키·제목, 코드가 근거 기사로 붙임)}."""
+def choose(e: pd.DataFrame, p: float, dups: pd.DataFrame | None = None) -> tuple[list, dict]:
+    """점수 순 기사 표 e 에서 확신 강도 규칙(⑤·⑥)으로 고른 행 목록과 기록(강도·같은/반대 수·5번째 여부).
+    dups: 제목 중복으로 뺀 기사(점수 순). 방향마다 e 뒤에 붙여 e 만으로 개수가 모자랄 때만 쓰인다(④ 예외, 2026-11-19 사용자 결정)."""
+    name, n_same, n_opp = tier(p)
+    up = p > 0.5                                        # llm_input 과 같은 판정(0.5 는 하락)
+    dups = e.iloc[:0] if dups is None else dups
+    pick_side = lambda d: pd.concat([e[e.impact_direction == d], dups[dups.impact_direction == d]])
+    side = 'positive' if up else 'negative'
+    same = pick_side(side)
+    opp = pick_side('negative' if up else 'positive')
+    a = [r for _, r in same.head(n_same).iterrows()]
+    b = [r for _, r in opp.head(min(n_opp, len(a))).iterrows()]   # 반대 방향은 같은 방향보다 많지 않게(같은 방향 0건이면 반대만 보이지 않게)
+    a += [r for _, r in same.iloc[n_same:n_same + n_opp - len(b)].iterrows()]   # 반대가 모자라면 같은 방향으로
+    chosen = a + b
+    extra = False
+    if len(chosen) == n_same + n_opp:
+        used = {r.article_key for r in chosen}
+        covered = {n for r in chosen for n in r.linked}
+        pool = e if name == 'weak' else e[e.impact_direction == side]   # 5번째는 제목 중복 기사 제외
+        floor = EXTRA_MIN * min(r.score for r in chosen)
+        for _, r in pool[~pool.article_key.isin(used)].iterrows():
+            if r.score < floor:
+                break
+            if set(r.linked) - covered:
+                chosen.append(r)
+                extra = True
+                break
+    d = [r.impact_direction for r in chosen]
+    return chosen, {'tier': name, 'shown_prob_pct': round(max(p, 1 - p) * 100, 1), 'decision': 'up' if up else 'down',
+                    'n_same': d.count(side), 'n_opposite': sum(x not in (side, 'mixed') for x in d), 'n_mixed': d.count('mixed'), 'extra': extra,
+                    'n_dup_title': sum(r.article_key in set(dups.article_key) for r in chosen)}
+
+
+def pick(con, cutoff: pd.Timestamp, factors: list[dict], p: float, summary_chars: int = 80) -> dict:
+    """factors: SHAP 상위 요인 [{'variable','name','pp'}](방향·수익률 합친 것), p: 방향 모델 상승 확률.
+    반환: {'window', 'counts'(후보 수·강도·같은/반대 수), 'articles'(짧은 기사), 'links'(번호 -> URL·기사 키·제목, 코드가 근거 기사로 붙임)}."""
     lo, hi = window(cutoff)
     art = pd.read_sql(SQL, con, params={'lo': lo.to_pydatetime(), 'hi': hi.to_pydatetime()})
-    counts = {'in_window': int(len(art))}
+    counts = {'in_window': int(len(art)), 'tier': tier(p)[0]}
     if art.empty:
         return {'window': [lo.isoformat(), hi.isoformat()], 'counts': counts | {'eligible': 0}, 'articles': [], 'links': {}}
     ok = (art.article_role.ne('market_recap') & art.impact_strength.isin(['moderate', 'strong'])
@@ -136,17 +183,11 @@ def pick(con, cutoff: pd.Timestamp, factors: list[dict] = (), max_articles: int 
     e['keyword_share'] = [w / total for _, _, w in lk]          # 제목·요약 키워드 일치
     e['score'] = e.base * (1 + 2 * e.link_share + 2 * e.keyword_share)
     e = e.sort_values(['score', 'article_key'], ascending=[False, True])
-    e = e[~e.title.map(_norm_title).duplicated()]
+    dup = e.title.map(_norm_title).duplicated()
+    dups, e = e[dup], e[~dup]
     counts |= {'eligible': int(len(e)), 'linked_to_shap': int(((e.link_share > 0) | (e.keyword_share > 0)).sum()), **{f'n_{d}': int((e.impact_direction == d).sum()) for d in ('positive', 'negative', 'mixed')}}
-    pos, neg = e[e.impact_direction == 'positive'], e[e.impact_direction == 'negative']
-    order = []
-    for i in range(max_articles):                       # 긍정·부정 번갈아
-        for side in (pos, neg):
-            if i < len(side):
-                order.append(side.iloc[i])
-    rest = e[~e.article_key.isin([r.article_key for r in order])]
-    order += [r for _, r in rest.iterrows()]
-    chosen = order[:max_articles]
+    chosen, how = choose(e, p, dups)
+    counts |= how
     articles, links = [], {}
     for k, r in enumerate(chosen, 1):
         nid = f'n{k}'

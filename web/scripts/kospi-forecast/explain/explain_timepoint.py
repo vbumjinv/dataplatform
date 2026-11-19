@@ -4,7 +4,7 @@
   python explain/explain_timepoint.py --tp T1 --target 2026-10-30                 # SHAP + LLM 입력 만들기(무료, API 호출 없음, 저장 없음)
   python explain/explain_timepoint.py --tp T1 --target 2026-10-30 --llm --write   # + LLM 해설(기본 GPT: OPENAI_MODEL, 기본 gpt-5.6-sol, 유료) + 저장소에 쓰기
   python explain/explain_timepoint.py --tp T1 --target 2026-10-30 --response-file my.json   # API 대신 손으로 쓴 응답을 같은 검사·저장 과정으로 넣기
-  --mode csv|db(저장소, 기본 .env KOSPI_MLOPS_MODE), --source bundle(통합본), --top 8(LLM 에 보낼 SHAP 변수 수), --max-articles 3(근거 기사 수)
+  --mode csv|db(저장소, 기본 .env KOSPI_MLOPS_MODE), --source bundle(통합본), --top 8(LLM 에 보낼 SHAP 변수 수), 근거 기사 4~5건(news_pick 확신 강도 규칙)
 사전 준비: python explain/build_shap_background.py --tp <T> --write (배경, 행 수 shap_config.json — 재학습 스크립트가 배포 뒤 자동으로 다시 만듦),
   run_predict.py --tp <T> --write(예측·범위를 저장소에 저장: 해설은 저장된 예측 행의 모델 입력을 쓰고, 수익률은 점 예측 대신 범위로 설명)
 입력: 저장소 kospi_pred_cls·reg(예측·모델 입력·범위), model/artifacts/<T>/{cls,reg}_model_1(최종 학습본), outputs/explain/shap_background/<T>/{cls,reg}_background.*,
@@ -16,7 +16,7 @@
 방향·수익률: 분류 = 상승확률(0.5 초과 상승), 회귀 = 방향 맞춤(K1, 수익률 부호를 방향에 맞춤) 후 값. 회귀 SHAP 은 맞춤 전 수익률 모델 출력을 설명한다.
 수익률 해설: 점 예측 값 대신 80% 범위(직전 종가 대비 %, 지수)와 평소 대비 폭(그 시점 과거 범위 폭의 백분위)·기운 쪽만 넘긴다(2026-11-05 사용자 요청).
 LLM: OpenAI(OPENAI_MODEL, 기본 gpt-5.6-sol). 다른 제공자 전환 기능은 2026-11-11 삭제(사용자 요청).
-토큰 절약: ① SHAP 상위 --top 개 변수 + 나머지 합만, 쉬운 이름·짧은 뜻만 보낸다 ② 관련 기사는 코드가 SHAP 핵심 요인과 이어지는 기사로 고른 최대 --max-articles 건
+토큰 절약: ① SHAP 상위 --top 개 변수 + 나머지 합만, 쉬운 이름·짧은 뜻만 보낸다 ② 관련 기사는 코드가 SHAP 핵심 요인과 이어지는 기사로 고른 4건(확신 강도별 같은·반대 방향 수, 조건 맞으면 5건)
   (뉴스 DB 영향력 x SHAP 요인 분류·키워드 일치 점수, news_pick.py). 기사는 LLM 에 보내지 않고 근거 기사 링크로 코드가 붙인다 ③ 짧은 프롬프트 v12(출력은 핵심 결론·상세 사유 두 항목, 기사는 LLM 에 보내지 않음, 입력에 없는 숫자·덧붙인 반대 요인 문장은 코드가 막음)
   ④ 같은 요청의 응답이 explain_timepoint_runs.json 에 있으면 다시 부르지 않는다(SHAP 도 같은 입력이면 다시 계산하지 않음).
 """
@@ -319,7 +319,6 @@ def main():
     ap.add_argument('--write', action='store_true', help='SHAP·해설을 저장소에 쓴다(없으면 화면·캐시만)')
     ap.add_argument('--permutations', type=int, default=8)
     ap.add_argument('--top', type=int, default=8, help='LLM 에 보낼 SHAP 상위 변수 수(나머지는 합계 하나)')
-    ap.add_argument('--max-articles', type=int, default=3)
     ap.add_argument('--refresh-shap', action='store_true', help='저장된 SHAP 이 있어도 다시 계산(소요 시간 측정용)')
     ap.add_argument('--prompt-version', default='v12')
     g = ap.add_mutually_exclusive_group()
@@ -362,7 +361,7 @@ def main():
     factors = [{'variable': f['variable'], 'name': TPM.NAMES.get(f['variable'], ('', f['variable']))[1], 'pp': f['contribution_pp'] / (1 if o == 'cls' else 0.1)}
                for o in ('cls', 'reg') for f in shap[o]['features'][:a.top]]   # 수익률 기여는 크기가 1/10 수준이라 10배로 맞춰 함께 본다
     with eng.connect() as con:
-        news = news_pick.pick(con, inp['prediction_at'], factors, a.max_articles)
+        news = news_pick.pick(con, inp['prediction_at'], factors, inp['p'])
     timing['news_sec'] = round(time.perf_counter() - t, 1)
     payload = llm_input(a.tp, target, inp, shap, news, a.top, rng)
     entry = {'input_key': key, 'shap': shap, 'llm_input': payload,                 # llm_input = LLM 에 보낸 그대로(점검·보고서용)
