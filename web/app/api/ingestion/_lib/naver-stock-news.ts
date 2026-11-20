@@ -6,8 +6,8 @@ import type { Client } from "pg";
 import { connectNewsClient } from "./news-collect";
 
 const LIST_URL = "https://stock.naver.com/api/domestic/news/list";
-const PAGE_SIZE = 100;
-const MAX_PAGES = 80;
+const PAGE_SIZE = 20;
+const MAX_LIST_ITEMS = 8000;
 const MIN_BODY_CHARS = 200;
 const LIST_DELAY_MS = 80;
 const BODY_CONCURRENCY = 8;
@@ -142,9 +142,12 @@ const fetchText = async (url: string) => {
   return response;
 };
 
-const LIST_PAGE_SIZES = [100, 50, 20, 10, 1];
+const LIST_PAGE_SIZES = [20, 10, 1];
 
 const isServerError = (error: unknown) => error instanceof Error && /^HTTP 5\d\d$/.test(error.message);
+
+const isShrinkableListError = (error: unknown) =>
+  isServerError(error) || (error instanceof Error && error.message === "HTTP 400");
 
 const fetchListPage = async (categoryCode: string, yyyymmdd: string, page: number, pageSize: number) => {
   const url = new URL(LIST_URL);
@@ -210,7 +213,7 @@ const collectCategory = async (categoryKey: string, categoryCode: string, day: s
   const yyyymmdd = day.replaceAll("-", "");
   const rows: ListRow[] = [];
   const seen = new Set<string>();
-  const maxItems = MAX_PAGES * PAGE_SIZE;
+  const maxItems = MAX_LIST_ITEMS;
 
   const readWindow = async (
     offset: number,
@@ -226,8 +229,10 @@ const collectCategory = async (categoryKey: string, categoryCode: string, day: s
           : await fetchListPage(categoryCode, yyyymmdd, page, size);
       return { items, consumed: items.length, done: items.length < size };
     } catch (error) {
-      if (!isServerError(error)) throw error;
-      if (size <= 1) return { items: [], consumed: 1, done: false };
+      if (!isShrinkableListError(error) || size <= 1) {
+        if (isServerError(error) && size <= 1) return { items: [], consumed: 1, done: false };
+        throw error;
+      }
       const smaller = LIST_PAGE_SIZES.find((candidate) => candidate < size) ?? 1;
       const items: Array<Record<string, unknown>> = [];
       let cursor = offset;
