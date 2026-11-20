@@ -1,6 +1,7 @@
 import cron, { type ScheduledTask } from "node-cron";
 import { Client } from "pg";
-import { executeKospiForecast, type TimePoint } from "./execute";
+import { cronForWeekdayTime, readEveningSchedule, writeEveningSchedule, type EveningSchedule } from "./evening-schedule";
+import { executeKospiEvening, executeKospiForecast, type TimePoint } from "./execute";
 import { appendForecastLog } from "./run-log";
 import { cronForTime, readPointSchedules, writePointSchedule, type PointSchedule } from "./schedule-store";
 
@@ -12,14 +13,18 @@ type Job = { timePoint: TimePoint; task: ScheduledTask };
 type State = {
   initialized: boolean;
   jobs: Job[];
+  evening: ScheduledTask | null;
   running: Set<TimePoint>;
+  eveningRunning: boolean;
 };
 
 const globalState = globalThis as typeof globalThis & { __kospiForecastScheduler?: State };
 const state = globalState.__kospiForecastScheduler ?? (globalState.__kospiForecastScheduler = {
   initialized: false,
   jobs: [],
+  evening: null,
   running: new Set(),
+  eveningRunning: false,
 });
 
 const envClient = () => {
@@ -128,6 +133,41 @@ const runPoint = async (point: PointSchedule) => {
   }
 };
 
+export const runEvening = async (schedule: EveningSchedule, trigger: "manual" | "schedule") => {
+  if (state.eveningRunning) return { ok: false, error: "저녁 작업이 이미 실행 중입니다." };
+  if (!schedule.dbSettingId) return { ok: false, error: "DB 연결을 선택하세요." };
+  state.eveningRunning = true;
+  const startedAt = new Date().toISOString();
+  await writeEveningSchedule({ ...schedule, lastRunAt: startedAt, lastStatus: "running", lastError: "" });
+  try {
+    const result = await executeKospiEvening(schedule.dbSettingId);
+    await writeEveningSchedule({ lastStatus: "success", lastError: "" });
+    console.log(`[kospi-forecast] 저녁 작업(${trigger}) 완료`);
+    return { ok: true, output: result.output };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "저녁 작업에 실패했습니다.";
+    await writeEveningSchedule({ lastStatus: "failure", lastError: message.slice(-500) });
+    console.error(`[kospi-forecast] 저녁 작업 실패:`, message.slice(-500));
+    return { ok: false, error: message.slice(-4000) };
+  } finally {
+    state.eveningRunning = false;
+  }
+};
+
+const registerEvening = (schedule: EveningSchedule) => {
+  state.evening?.stop();
+  state.evening = null;
+  if (!schedule.enabled || !schedule.dbSettingId) return;
+  const expression = cronForWeekdayTime(schedule.time);
+  if (!cron.validate(expression)) return;
+  state.evening = cron.schedule(expression, () => {
+    void (async () => {
+      const latest = await readEveningSchedule();
+      if (latest.enabled && latest.dbSettingId) await runEvening(latest, "schedule");
+    })();
+  }, { timezone: "Asia/Seoul", name: "kospi-forecast-evening", noOverlap: true });
+};
+
 const registerJobs = (points: PointSchedule[]) => {
   stopJobs();
   points.forEach((point) => {
@@ -145,8 +185,9 @@ const registerJobs = (points: PointSchedule[]) => {
 };
 
 export const refreshKospiForecastScheduler = async () => {
-  const points = await readPointSchedules();
+  const [points, evening] = await Promise.all([readPointSchedules(), readEveningSchedule()]);
   registerJobs(points);
+  registerEvening(evening);
   state.initialized = true;
 };
 

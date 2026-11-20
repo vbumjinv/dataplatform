@@ -156,3 +156,22 @@ export const executeKospiForecast = async (input: {
     output: output.slice(-12000),
   };
 };
+
+export const executeKospiEvening = async (dbSettingId: number) => {
+  const script = path.join(SCRIPT_DIR, "run_automation.py");
+  if (!existsSync(script)) throw new Error("저녁 작업 소스를 찾지 못했습니다.");
+  const db = await resolveDbConfig({ settingId: dbSettingId });
+  if (!db) throw new Error("선택한 DB 연결 설정을 찾을 수 없습니다.");
+  const output = await runPython([script, "evening", "--write", "--mode", "db"], {
+    ...process.env,
+    DP_DB_URL: db.url,
+    DP_DB_NAME: db.database,
+    DP_DB_USER: db.user,
+    DP_DB_PASSWORD: db.password,
+    KOSPI_MLOPS_MODE: "db",
+    KOSPI_PRED_MODE: "db",
+    PYTHONIOENCODING: "utf-8",
+    PYTHONUTF8: "1",
+  });
+  return { output: output.slice(-12000) };
+};
