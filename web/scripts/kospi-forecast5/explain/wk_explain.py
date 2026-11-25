@@ -87,6 +87,10 @@ def load_series(names) -> dict:
     with get_engine().connect() as c:
         c.execute(text("SET TRANSACTION READ ONLY"))
         for n in sorted(set(names)):
+            if n == "코스피":                                          # 예측과 같은 종가(1001 우선 + krx_kospi_dd_trd, db.extract.with_today)
+                import wk_data
+                out[n] = wk_data.kospi_close()
+                continue
             kind, table, cond, _, _ = SERIES[n]
             q, prm = _sql(kind, table, cond)
             d = pd.read_sql(text(q), c, params=prm)

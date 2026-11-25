@@ -38,7 +38,7 @@ def features(tp: str, *, write=False, news_cutoff=None) -> pd.DataFrame:
 
 
 def close_ready(base) -> bool:
-    """해당 KOSPI 기준일의 양수 종가가 원천 DB에 도착했는지 확인한다."""
+    """해당 KOSPI 기준일의 양수 종가가 원천 DB(당일 krx_kospi_1001 또는 일별 krx_kospi_dd_trd)에 도착했는지 확인한다."""
     from db import get_engine, settings
     from sqlalchemy import text
     eng = get_engine()
@@ -46,8 +46,8 @@ def close_ready(base) -> bool:
     day = pd.Timestamp(base).normalize()
     with eng.connect() as con:
         con.execute(text("SET TRANSACTION READ ONLY"))
-        vals = con.execute(text(f"SELECT clsprc_idx FROM {schema}.krx_kospi_dd_trd "
-                                "WHERE idx_nm = '코스피' AND bas_dd = :day"),
+        vals = con.execute(text(f"SELECT clsprc_idx FROM {schema}.krx_kospi_dd_trd WHERE idx_nm = '코스피' AND bas_dd = :day "
+                                f"UNION ALL SELECT close FROM {schema}.krx_kospi_1001 WHERE date = :day"),
                            {"day": day.date()}).scalars().all()
     import math
     nums = pd.to_numeric(pd.Series(vals, dtype=object), errors="coerce")

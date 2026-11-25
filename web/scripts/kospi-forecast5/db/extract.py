@@ -38,6 +38,24 @@ def read_table(engine, key: str, start: str | None = None, end: str | None = Non
 MEM: dict[str, pd.DataFrame] = {}                                        # 이번 실행에 받은 원본(프로세스가 끝나면 사라짐)
 
 
+def with_today(engine, df: pd.DataFrame) -> pd.DataFrame:
+    """kospi 원본에 당일 테이블(krx_kospi_1001)을 합친다: 1001에 있는 날짜는 1001 값, 나머지는 krx_kospi_dd_trd(일별 service_daily db_snapshot.read_kospi 와 같은 규칙, 2026-11-25).
+    1001 열은 등록부 cols 로 dd_trd 열 이름에 맞춘다(그 밖의 열은 비움). 같은 날짜가 여러 행이면 load_dtm 이 가장 늦은 행."""
+    today = read_table(engine, "kospi_today")
+    if "load_dtm" in today:
+        today = today.sort_values("load_dtm", kind="stable", na_position="first")
+    src, dst = T["kospi_today"]["cols"], T["kospi"]["cols"]
+    today = today.dropna(subset=[src["Date"], src["Close"]]).drop_duplicates(src["Date"], keep="last")
+    if today.empty:
+        return df
+    add = pd.DataFrame({dst[k]: today[src[k]].to_numpy() for k in src if k in dst})
+    add[dst["Date"]] = pd.to_datetime(add[dst["Date"]].astype(str)).dt.strftime("%Y-%m-%d")
+    for col, val in (T["kospi"].get("where") or {}).items():
+        add[col] = val
+    df = df.assign(**{dst["Date"]: pd.to_datetime(df[dst["Date"]].astype(str)).dt.strftime("%Y-%m-%d")})   # 날짜 표기를 같게(원본은 save_raw 에서 어차피 문자열)
+    return pd.concat([df[~df[dst["Date"]].isin(add[dst["Date"]])], add], ignore_index=True).sort_values(dst["Date"], kind="stable").reset_index(drop=True)
+
+
 def save_raw(key: str, df: pd.DataFrame):
     out = df.copy()
     for c in out.columns:
@@ -53,6 +71,8 @@ def load_raw(key: str) -> pd.DataFrame | None:
         with get_engine().connect() as conn:
             conn.execute(text("SET TRANSACTION READ ONLY"))
             df = read_table(conn, key)
+            if key == "kospi":
+                df = with_today(conn, df)
         if df.empty:
             return None
         save_raw(key, df)
@@ -72,6 +92,8 @@ def extract(engine, keys=None, start=None, end=None, skip_existing=False) -> pd.
             continue
         try:
             df = read_table(engine, key, start, end)
+            if key == "kospi":
+                df = with_today(engine, df)
         except Exception as exc:
             rows.append({"key": key, "table": T[key]["table"], "rows": 0, "note": f"{type(exc).__name__}: {str(exc)[:100]}"})
             continue
