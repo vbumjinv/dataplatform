@@ -1,0 +1,23 @@
+# service_5 실행에 필요한 패키지(판은 service_daily/requirements.txt 와 같게 맞춤, 2026-11-19)
+pandas==3.0.6
+numpy==2.5.3
+pyarrow==26.0.0
+exchange_calendars==4.13.2
+sqlalchemy==2.1.4
+psycopg2-binary==2.9.13
+python-dotenv==1.2.3
+# 학습본 읽기·재학습·비교(predict.py·retrain.py·evaluate.py). 학습본(joblib)을 만든 라이브러리와 같은 판이어야 읽힌다 — service_daily 와 같은 판
+scipy==1.18.1
+scikit-learn==1.9.1
+joblib==1.6.0
+xgboost==3.4.1
+lightgbm==4.7.0
+catboost==1.2.10
+# 1차 학습본(2026-11-20)의 W2 수익률 구성원 GRU 를 읽고 예측하려면 필요(학습본을 만든 판과 같게, CPU 판)
+torch==2.14.0
+# 뉴스 키워드 변수(wk_news, 기사 제목·요약 형태소) — 학습 때와 같은 판
+kiwipiepy==0.24.1
+# 분기 재탐색과 선택적 GPT 해설
+optuna==5.0.0
+pydantic==2.13.5
+openai==3.26.0

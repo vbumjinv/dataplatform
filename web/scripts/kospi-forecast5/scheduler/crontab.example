@@ -1,0 +1,8 @@
+# [주별] crontab -e 에 일별 줄 아래로 붙여 넣는다(경로는 서버 위치로). scheduler/make_schedule.py --write 가 time_points.json 으로 만든 파일.
+# W0·W2 = 매일(주말·휴일 포함, W0는 당일 종가 또는 직전 종가, W2는 직전 종가, 대상일 = 기준일 + 5거래일), 저녁 = 거래일(휴장일은 run_automation.py 가 건너뜀).
+# W0·W2는 기준일 종가를 최대 90분 확인한다. W0·W2는 각자 예약 시각까지 DB에 적재된 뉴스를 쓴다.
+# 서버 시간대가 Asia/Seoul 이 아니면: CRON_TZ 를 지원하는 cron(cronie)인지 확인하거나, 서버를 KST 로 두거나, 아래 시각을 UTC 로 바꾼다(Debian/Ubuntu 기본 cron 은 CRON_TZ 를 무시).
+CRON_TZ=Asia/Seoul
+30 8  * * *    /bin/bash /opt/kospi_pred/service_5/scheduler/w2.sh
+30 16 * * *    /bin/bash /opt/kospi_pred/service_5/scheduler/w0.sh
+0  19 * * 1-5  /bin/bash /opt/kospi_pred/service_5/scheduler/evening.sh

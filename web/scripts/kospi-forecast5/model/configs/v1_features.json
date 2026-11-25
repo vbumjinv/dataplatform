@@ -1,0 +1,9620 @@
+[
+  {
+    "slot": "W0_cls",
+    "component": "s_rollL1",
+    "order": 0,
+    "feature": "EU_DAX_ma_gap_20"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_rollL1",
+    "order": 1,
+    "feature": "EU_DAX_ret_5d"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_rollL1",
+    "order": 2,
+    "feature": "EU_STOXX600_ret_1d"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_rollL1",
+    "order": 3,
+    "feature": "K_close_location"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_rollL1",
+    "order": 4,
+    "feature": "K_intraday"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_rollL1",
+    "order": 5,
+    "feature": "K_log_volume_change"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_rollL1",
+    "order": 6,
+    "feature": "K_open_gap"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_rollL1",
+    "order": 7,
+    "feature": "K_range"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_rollL1",
+    "order": 8,
+    "feature": "K_ret_1d"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_rollL1",
+    "order": 9,
+    "feature": "MACRO_DXY_ma_gap_20"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_rollL1",
+    "order": 10,
+    "feature": "MACRO_DXY_ret_10d"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_rollL1",
+    "order": 11,
+    "feature": "MACRO_DXY_ret_1d"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_rollL1",
+    "order": 12,
+    "feature": "MACRO_GOLD_ret_3d"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_rollL1",
+    "order": 13,
+    "feature": "MACRO_OIL_ret_1d"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_rollL1",
+    "order": 14,
+    "feature": "SECTOR_AUTO_ma_gap_20"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_rollL1",
+    "order": 15,
+    "feature": "SECTOR_FASHION_ret_20d"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_rollL1",
+    "order": 16,
+    "feature": "SECTOR_INTERNET_ma_gap_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_rollL1",
+    "order": 17,
+    "feature": "SECTOR_LIVING_ma_gap_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_rollL1",
+    "order": 18,
+    "feature": "TA_SMA10_gap"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_rollL1",
+    "order": 19,
+    "feature": "US_SOX_ret_1d"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_rollL1",
+    "order": 20,
+    "feature": "US_SP500_ret_1d"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_cwLGBM",
+    "order": 0,
+    "feature": "EU_DAX_ma_gap_20"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_cwLGBM",
+    "order": 1,
+    "feature": "EU_DAX_ret_5d"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_cwLGBM",
+    "order": 2,
+    "feature": "EU_STOXX600_ret_1d"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_cwLGBM",
+    "order": 3,
+    "feature": "K_close_location"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_cwLGBM",
+    "order": 4,
+    "feature": "K_intraday"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_cwLGBM",
+    "order": 5,
+    "feature": "K_log_volume_change"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_cwLGBM",
+    "order": 6,
+    "feature": "K_open_gap"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_cwLGBM",
+    "order": 7,
+    "feature": "K_range"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_cwLGBM",
+    "order": 8,
+    "feature": "K_ret_1d"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_cwLGBM",
+    "order": 9,
+    "feature": "MACRO_DXY_ma_gap_20"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_cwLGBM",
+    "order": 10,
+    "feature": "MACRO_DXY_ret_10d"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_cwLGBM",
+    "order": 11,
+    "feature": "MACRO_DXY_ret_1d"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_cwLGBM",
+    "order": 12,
+    "feature": "MACRO_GOLD_ret_3d"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_cwLGBM",
+    "order": 13,
+    "feature": "MACRO_OIL_ret_1d"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_cwLGBM",
+    "order": 14,
+    "feature": "SECTOR_AUTO_ma_gap_20"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_cwLGBM",
+    "order": 15,
+    "feature": "SECTOR_FASHION_ret_20d"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_cwLGBM",
+    "order": 16,
+    "feature": "SECTOR_INTERNET_ma_gap_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_cwLGBM",
+    "order": 17,
+    "feature": "SECTOR_LIVING_ma_gap_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_cwLGBM",
+    "order": 18,
+    "feature": "TA_SMA10_gap"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_cwLGBM",
+    "order": 19,
+    "feature": "US_SOX_ret_1d"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_cwLGBM",
+    "order": 20,
+    "feature": "US_SP500_ret_1d"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_cwGB",
+    "order": 0,
+    "feature": "EU_DAX_ma_gap_20"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_cwGB",
+    "order": 1,
+    "feature": "EU_DAX_ret_5d"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_cwGB",
+    "order": 2,
+    "feature": "EU_STOXX600_ret_1d"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_cwGB",
+    "order": 3,
+    "feature": "K_close_location"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_cwGB",
+    "order": 4,
+    "feature": "K_intraday"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_cwGB",
+    "order": 5,
+    "feature": "K_log_volume_change"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_cwGB",
+    "order": 6,
+    "feature": "K_open_gap"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_cwGB",
+    "order": 7,
+    "feature": "K_range"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_cwGB",
+    "order": 8,
+    "feature": "K_ret_1d"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_cwGB",
+    "order": 9,
+    "feature": "MACRO_DXY_ma_gap_20"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_cwGB",
+    "order": 10,
+    "feature": "MACRO_DXY_ret_10d"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_cwGB",
+    "order": 11,
+    "feature": "MACRO_DXY_ret_1d"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_cwGB",
+    "order": 12,
+    "feature": "MACRO_GOLD_ret_3d"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_cwGB",
+    "order": 13,
+    "feature": "MACRO_OIL_ret_1d"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_cwGB",
+    "order": 14,
+    "feature": "SECTOR_AUTO_ma_gap_20"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_cwGB",
+    "order": 15,
+    "feature": "SECTOR_FASHION_ret_20d"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_cwGB",
+    "order": 16,
+    "feature": "SECTOR_INTERNET_ma_gap_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_cwGB",
+    "order": 17,
+    "feature": "SECTOR_LIVING_ma_gap_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_cwGB",
+    "order": 18,
+    "feature": "TA_SMA10_gap"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_cwGB",
+    "order": 19,
+    "feature": "US_SOX_ret_1d"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_cwGB",
+    "order": 20,
+    "feature": "US_SP500_ret_1d"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_ET",
+    "order": 0,
+    "feature": "K_close_location"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_ET",
+    "order": 1,
+    "feature": "K_intraday"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_ET",
+    "order": 2,
+    "feature": "K_log_volume_change"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_ET",
+    "order": 3,
+    "feature": "K_open_gap"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_ET",
+    "order": 4,
+    "feature": "K_range"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_ET",
+    "order": 5,
+    "feature": "K_ret_1d"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_ET",
+    "order": 6,
+    "feature": "TECH_dd_250"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_ET",
+    "order": 7,
+    "feature": "TECH_ret_60d"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_ET",
+    "order": 8,
+    "feature": "TECH_vol_60"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_RF",
+    "order": 0,
+    "feature": "EU_DAX_ma_gap_20"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_RF",
+    "order": 1,
+    "feature": "EU_DAX_ret_5d"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_RF",
+    "order": 2,
+    "feature": "EU_STOXX600_ret_1d"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_RF",
+    "order": 3,
+    "feature": "K_close_location"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_RF",
+    "order": 4,
+    "feature": "K_intraday"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_RF",
+    "order": 5,
+    "feature": "K_log_volume_change"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_RF",
+    "order": 6,
+    "feature": "K_open_gap"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_RF",
+    "order": 7,
+    "feature": "K_range"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_RF",
+    "order": 8,
+    "feature": "K_ret_1d"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_RF",
+    "order": 9,
+    "feature": "MACRO_DXY_ma_gap_20"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_RF",
+    "order": 10,
+    "feature": "MACRO_DXY_ret_10d"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_RF",
+    "order": 11,
+    "feature": "MACRO_DXY_ret_1d"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_RF",
+    "order": 12,
+    "feature": "MACRO_GOLD_ret_3d"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_RF",
+    "order": 13,
+    "feature": "MACRO_OIL_ret_1d"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_RF",
+    "order": 14,
+    "feature": "SECTOR_AUTO_ma_gap_20"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_RF",
+    "order": 15,
+    "feature": "SECTOR_FASHION_ret_20d"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_RF",
+    "order": 16,
+    "feature": "SECTOR_INTERNET_ma_gap_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_RF",
+    "order": 17,
+    "feature": "SECTOR_LIVING_ma_gap_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_RF",
+    "order": 18,
+    "feature": "TA_SMA10_gap"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_RF",
+    "order": 19,
+    "feature": "US_SOX_ret_1d"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_RF",
+    "order": 20,
+    "feature": "US_SP500_ret_1d"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 0,
+    "feature": "KWS_AI"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 1,
+    "feature": "KWS_ETF"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 2,
+    "feature": "KWS_FOMC"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 3,
+    "feature": "KWS_Fed"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 4,
+    "feature": "KWS_IB"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 5,
+    "feature": "KWS_IPO"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 6,
+    "feature": "KWS_IT"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 7,
+    "feature": "KWS_KB"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 8,
+    "feature": "KWS_LG"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 9,
+    "feature": "KWS_NH"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 10,
+    "feature": "KWS_SK"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 11,
+    "feature": "KWS_TV"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 12,
+    "feature": "KWS_가격"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 13,
+    "feature": "KWS_가능"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 14,
+    "feature": "KWS_가운데"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 15,
+    "feature": "KWS_가치"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 16,
+    "feature": "KWS_간담회"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 17,
+    "feature": "KWS_감독원"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 18,
+    "feature": "KWS_감소"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 19,
+    "feature": "KWS_강세"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 20,
+    "feature": "KWS_강화"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 21,
+    "feature": "KWS_개발"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 22,
+    "feature": "KWS_개선"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 23,
+    "feature": "KWS_개인"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 24,
+    "feature": "KWS_개최"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 25,
+    "feature": "KWS_개편"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 26,
+    "feature": "KWS_거래"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 27,
+    "feature": "KWS_거래소"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 28,
+    "feature": "KWS_거래일"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 29,
+    "feature": "KWS_건설"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 30,
+    "feature": "KWS_검토"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 31,
+    "feature": "KWS_결과"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 32,
+    "feature": "KWS_결정"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 33,
+    "feature": "KWS_경기"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 34,
+    "feature": "KWS_경영"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 35,
+    "feature": "KWS_경우"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 36,
+    "feature": "KWS_경쟁"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 37,
+    "feature": "KWS_경쟁력"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 38,
+    "feature": "KWS_경제"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 39,
+    "feature": "KWS_계약"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 40,
+    "feature": "KWS_계열사"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 41,
+    "feature": "KWS_계획"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 42,
+    "feature": "KWS_고객"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 43,
+    "feature": "KWS_고려"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 44,
+    "feature": "KWS_고용"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 45,
+    "feature": "KWS_공개"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 46,
+    "feature": "KWS_공급"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 47,
+    "feature": "KWS_공동"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 48,
+    "feature": "KWS_공매도"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 49,
+    "feature": "KWS_공모"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 50,
+    "feature": "KWS_공사"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 51,
+    "feature": "KWS_공시"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 52,
+    "feature": "KWS_공장"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 53,
+    "feature": "KWS_공정"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 54,
+    "feature": "KWS_과정"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 55,
+    "feature": "KWS_관련"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 56,
+    "feature": "KWS_관리"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 57,
+    "feature": "KWS_관심"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 58,
+    "feature": "KWS_구조"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 59,
+    "feature": "KWS_국가"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 60,
+    "feature": "KWS_국내"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 61,
+    "feature": "KWS_국내외"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 62,
+    "feature": "KWS_국면"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 63,
+    "feature": "KWS_국민"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 64,
+    "feature": "KWS_국민연금"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 65,
+    "feature": "KWS_국제"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 66,
+    "feature": "KWS_국채"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 67,
+    "feature": "KWS_국회"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 68,
+    "feature": "KWS_규모"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 69,
+    "feature": "KWS_규제"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 70,
+    "feature": "KWS_그룹"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 71,
+    "feature": "KWS_글로벌"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 72,
+    "feature": "KWS_금감원"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 73,
+    "feature": "KWS_금리"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 74,
+    "feature": "KWS_금액"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 75,
+    "feature": "KWS_금융"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 76,
+    "feature": "KWS_금융위"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 77,
+    "feature": "KWS_금융투자협회"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 78,
+    "feature": "KWS_급등"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 79,
+    "feature": "KWS_급락"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 80,
+    "feature": "KWS_급증"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 81,
+    "feature": "KWS_긍정"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 82,
+    "feature": "KWS_기간"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 83,
+    "feature": "KWS_기관"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 84,
+    "feature": "KWS_기대"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 85,
+    "feature": "KWS_기대감"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 86,
+    "feature": "KWS_기록"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 87,
+    "feature": "KWS_기반"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 88,
+    "feature": "KWS_기사"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 89,
+    "feature": "KWS_기술"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 90,
+    "feature": "KWS_기업"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 91,
+    "feature": "KWS_기자"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 92,
+    "feature": "KWS_기조"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 93,
+    "feature": "KWS_기존"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 94,
+    "feature": "KWS_기준"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 95,
+    "feature": "KWS_기회"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 96,
+    "feature": "KWS_내년"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 97,
+    "feature": "KWS_내용"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 98,
+    "feature": "KWS_논란"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 99,
+    "feature": "KWS_논의"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 100,
+    "feature": "KWS_뉴스"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 101,
+    "feature": "KWS_뉴욕"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 102,
+    "feature": "KWS_다음"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 103,
+    "feature": "KWS_단계"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 104,
+    "feature": "KWS_단기"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 105,
+    "feature": "KWS_달러"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 106,
+    "feature": "KWS_달성"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 107,
+    "feature": "KWS_당국"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 108,
+    "feature": "KWS_당기"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 109,
+    "feature": "KWS_대비"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 110,
+    "feature": "KWS_대상"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 111,
+    "feature": "KWS_대신"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 112,
+    "feature": "KWS_대신증권"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 113,
+    "feature": "KWS_대응"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 114,
+    "feature": "KWS_대출"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 115,
+    "feature": "KWS_대통령"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 116,
+    "feature": "KWS_대표"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 117,
+    "feature": "KWS_대형"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 118,
+    "feature": "KWS_도입"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 119,
+    "feature": "KWS_돌파"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 120,
+    "feature": "KWS_동기"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 121,
+    "feature": "KWS_동시"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 122,
+    "feature": "KWS_동안"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 123,
+    "feature": "KWS_둔화"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 124,
+    "feature": "KWS_등급"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 125,
+    "feature": "KWS_랠리"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 126,
+    "feature": "KWS_리스크"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 127,
+    "feature": "KWS_마감"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 128,
+    "feature": "KWS_마련"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 129,
+    "feature": "KWS_마켓"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 130,
+    "feature": "KWS_만기"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 131,
+    "feature": "KWS_매각"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 132,
+    "feature": "KWS_매도"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 133,
+    "feature": "KWS_매력"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 134,
+    "feature": "KWS_매매"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 135,
+    "feature": "KWS_매수"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 136,
+    "feature": "KWS_매입"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 137,
+    "feature": "KWS_매출"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 138,
+    "feature": "KWS_매출액"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 139,
+    "feature": "KWS_머니투데이"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 140,
+    "feature": "KWS_모멘텀"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 141,
+    "feature": "KWS_모바일"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 142,
+    "feature": "KWS_모습"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 143,
+    "feature": "KWS_목표"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 144,
+    "feature": "KWS_무역"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 145,
+    "feature": "KWS_문제"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 146,
+    "feature": "KWS_물가"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 147,
+    "feature": "KWS_물량"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 148,
+    "feature": "KWS_미국"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 149,
+    "feature": "KWS_미래에셋"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 150,
+    "feature": "KWS_바이오"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 151,
+    "feature": "KWS_반도체"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 152,
+    "feature": "KWS_반등"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 153,
+    "feature": "KWS_반면"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 154,
+    "feature": "KWS_반영"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 155,
+    "feature": "KWS_발생"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 156,
+    "feature": "KWS_발표"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 157,
+    "feature": "KWS_발행"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 158,
+    "feature": "KWS_방송"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 159,
+    "feature": "KWS_방식"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 160,
+    "feature": "KWS_방안"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 161,
+    "feature": "KWS_방향"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 162,
+    "feature": "KWS_배당"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 163,
+    "feature": "KWS_법인"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 164,
+    "feature": "KWS_변경"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 165,
+    "feature": "KWS_변동"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 166,
+    "feature": "KWS_변수"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 167,
+    "feature": "KWS_변화"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 168,
+    "feature": "KWS_보고서"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 169,
+    "feature": "KWS_보도"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 170,
+    "feature": "KWS_보유"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 171,
+    "feature": "KWS_보호"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 172,
+    "feature": "KWS_본격"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 173,
+    "feature": "KWS_부각"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 174,
+    "feature": "KWS_부담"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 175,
+    "feature": "KWS_부동산"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 176,
+    "feature": "KWS_부문"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 177,
+    "feature": "KWS_부분"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 178,
+    "feature": "KWS_부정"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 179,
+    "feature": "KWS_부진"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 180,
+    "feature": "KWS_부채"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 181,
+    "feature": "KWS_부품"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 182,
+    "feature": "KWS_분기"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 183,
+    "feature": "KWS_분석"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 184,
+    "feature": "KWS_불안"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 185,
+    "feature": "KWS_불확실"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 186,
+    "feature": "KWS_비용"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 187,
+    "feature": "KWS_비율"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 188,
+    "feature": "KWS_비중"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 189,
+    "feature": "KWS_사모"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 190,
+    "feature": "KWS_사상"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 191,
+    "feature": "KWS_사실"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 192,
+    "feature": "KWS_사업"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 193,
+    "feature": "KWS_사진"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 194,
+    "feature": "KWS_사태"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 195,
+    "feature": "KWS_산업"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 196,
+    "feature": "KWS_삼성"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 197,
+    "feature": "KWS_삼성전자"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 198,
+    "feature": "KWS_삼성증권"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 199,
+    "feature": "KWS_상대"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 200,
+    "feature": "KWS_상반기"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 201,
+    "feature": "KWS_상승"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 202,
+    "feature": "KWS_상승세"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 203,
+    "feature": "KWS_상장"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 204,
+    "feature": "KWS_상장사"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 205,
+    "feature": "KWS_상품"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 206,
+    "feature": "KWS_상향"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 207,
+    "feature": "KWS_상황"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 208,
+    "feature": "KWS_상회"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 209,
+    "feature": "KWS_생산"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 210,
+    "feature": "KWS_서비스"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 211,
+    "feature": "KWS_서울"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 212,
+    "feature": "KWS_선물"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 213,
+    "feature": "KWS_선정"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 214,
+    "feature": "KWS_선호"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 215,
+    "feature": "KWS_설명"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 216,
+    "feature": "KWS_성공"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 217,
+    "feature": "KWS_성장"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 218,
+    "feature": "KWS_세계"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 219,
+    "feature": "KWS_소비"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 220,
+    "feature": "KWS_소비자"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 221,
+    "feature": "KWS_소식"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 222,
+    "feature": "KWS_속도"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 223,
+    "feature": "KWS_손실"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 224,
+    "feature": "KWS_수급"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 225,
+    "feature": "KWS_수요"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 226,
+    "feature": "KWS_수익"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 227,
+    "feature": "KWS_수주"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 228,
+    "feature": "KWS_수준"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 229,
+    "feature": "KWS_수출"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 230,
+    "feature": "KWS_수혜"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 231,
+    "feature": "KWS_순이익"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 232,
+    "feature": "KWS_스마트폰"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 233,
+    "feature": "KWS_시가"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 234,
+    "feature": "KWS_시간"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 235,
+    "feature": "KWS_시대"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 236,
+    "feature": "KWS_시스템"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 237,
+    "feature": "KWS_시작"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 238,
+    "feature": "KWS_시장"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 239,
+    "feature": "KWS_시점"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 240,
+    "feature": "KWS_시즌"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 241,
+    "feature": "KWS_시행"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 242,
+    "feature": "KWS_신규"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 243,
+    "feature": "KWS_신용"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 244,
+    "feature": "KWS_신종"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 245,
+    "feature": "KWS_신청"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 246,
+    "feature": "KWS_신한금융투자"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 247,
+    "feature": "KWS_실시"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 248,
+    "feature": "KWS_실적"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 249,
+    "feature": "KWS_심리"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 250,
+    "feature": "KWS_아시아"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 251,
+    "feature": "KWS_아시아경제"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 252,
+    "feature": "KWS_악재"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 253,
+    "feature": "KWS_악화"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 254,
+    "feature": "KWS_안정"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 255,
+    "feature": "KWS_애널리스트"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 256,
+    "feature": "KWS_약세"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 257,
+    "feature": "KWS_양호"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 258,
+    "feature": "KWS_어닝"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 259,
+    "feature": "KWS_업계"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 260,
+    "feature": "KWS_업무"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 261,
+    "feature": "KWS_업종"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 262,
+    "feature": "KWS_업체"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 263,
+    "feature": "KWS_업황"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 264,
+    "feature": "KWS_에너지"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 265,
+    "feature": "KWS_여부"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 266,
+    "feature": "KWS_여의도"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 267,
+    "feature": "KWS_여파"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 268,
+    "feature": "KWS_역대"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 269,
+    "feature": "KWS_연간"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 270,
+    "feature": "KWS_연결"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 271,
+    "feature": "KWS_연구원"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 272,
+    "feature": "KWS_연금"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 273,
+    "feature": "KWS_연말"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 274,
+    "feature": "KWS_연방"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 275,
+    "feature": "KWS_연방공개시장위원회"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 276,
+    "feature": "KWS_연속"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 277,
+    "feature": "KWS_연준"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 278,
+    "feature": "KWS_연초"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 279,
+    "feature": "KWS_연합뉴스"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 280,
+    "feature": "KWS_영업"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 281,
+    "feature": "KWS_영업익"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 282,
+    "feature": "KWS_영향"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 283,
+    "feature": "KWS_예고"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 284,
+    "feature": "KWS_예상"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 285,
+    "feature": "KWS_예정"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 286,
+    "feature": "KWS_오늘"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 287,
+    "feature": "KWS_오전"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 288,
+    "feature": "KWS_오후"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 289,
+    "feature": "KWS_올해"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 290,
+    "feature": "KWS_완화"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 291,
+    "feature": "KWS_외국인"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 292,
+    "feature": "KWS_외환"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 293,
+    "feature": "KWS_요구"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 294,
+    "feature": "KWS_요인"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 295,
+    "feature": "KWS_우려"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 296,
+    "feature": "KWS_운영"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 297,
+    "feature": "KWS_운용"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 298,
+    "feature": "KWS_운용사"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 299,
+    "feature": "KWS_위기"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 300,
+    "feature": "KWS_위원회"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 301,
+    "feature": "KWS_위험"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 302,
+    "feature": "KWS_유가"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 303,
+    "feature": "KWS_유동"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 304,
+    "feature": "KWS_유럽"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 305,
+    "feature": "KWS_유상"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 306,
+    "feature": "KWS_유입"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 307,
+    "feature": "KWS_유지"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 308,
+    "feature": "KWS_은행"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 309,
+    "feature": "KWS_의견"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 310,
+    "feature": "KWS_의무"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 311,
+    "feature": "KWS_이날"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 312,
+    "feature": "KWS_이달"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 313,
+    "feature": "KWS_이데일리"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 314,
+    "feature": "KWS_이번"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 315,
+    "feature": "KWS_이사"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 316,
+    "feature": "KWS_이상"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 317,
+    "feature": "KWS_이슈"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 318,
+    "feature": "KWS_이유"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 319,
+    "feature": "KWS_이익"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 320,
+    "feature": "KWS_이하"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 321,
+    "feature": "KWS_이후"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 322,
+    "feature": "KWS_인공"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 323,
+    "feature": "KWS_인상"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 324,
+    "feature": "KWS_인수"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 325,
+    "feature": "KWS_인플레이션"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 326,
+    "feature": "KWS_인하"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 327,
+    "feature": "KWS_일본"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 328,
+    "feature": "KWS_일부"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 329,
+    "feature": "KWS_일정"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 330,
+    "feature": "KWS_자금"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 331,
+    "feature": "KWS_자동차"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 332,
+    "feature": "KWS_자료"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 333,
+    "feature": "KWS_자본"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 334,
+    "feature": "KWS_자사"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 335,
+    "feature": "KWS_자산"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 336,
+    "feature": "KWS_자회사"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 337,
+    "feature": "KWS_작년"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 338,
+    "feature": "KWS_작용"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 339,
+    "feature": "KWS_잠정"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 340,
+    "feature": "KWS_장기"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 341,
+    "feature": "KWS_장세"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 342,
+    "feature": "KWS_재무"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 343,
+    "feature": "KWS_재정"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 344,
+    "feature": "KWS_적극"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 345,
+    "feature": "KWS_적용"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 346,
+    "feature": "KWS_적자"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 347,
+    "feature": "KWS_전기"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 348,
+    "feature": "KWS_전날"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 349,
+    "feature": "KWS_전년"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 350,
+    "feature": "KWS_전략"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 351,
+    "feature": "KWS_전망"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 352,
+    "feature": "KWS_전문"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 353,
+    "feature": "KWS_전문가"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 354,
+    "feature": "KWS_전반"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 355,
+    "feature": "KWS_전일"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 356,
+    "feature": "KWS_전자"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 357,
+    "feature": "KWS_전쟁"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 358,
+    "feature": "KWS_전체"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 359,
+    "feature": "KWS_전환"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 360,
+    "feature": "KWS_점검"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 361,
+    "feature": "KWS_정보"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 362,
+    "feature": "KWS_정부"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 363,
+    "feature": "KWS_정상"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 364,
+    "feature": "KWS_정책"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 365,
+    "feature": "KWS_정치"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 366,
+    "feature": "KWS_제고"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 367,
+    "feature": "KWS_제공"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 368,
+    "feature": "KWS_제기"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 369,
+    "feature": "KWS_제도"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 370,
+    "feature": "KWS_제시"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 371,
+    "feature": "KWS_제외"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 372,
+    "feature": "KWS_제품"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 373,
+    "feature": "KWS_제한"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 374,
+    "feature": "KWS_조달"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 375,
+    "feature": "KWS_조사"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 376,
+    "feature": "KWS_조선"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 377,
+    "feature": "KWS_조정"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 378,
+    "feature": "KWS_조치"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 379,
+    "feature": "KWS_종목"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 380,
+    "feature": "KWS_종합"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 381,
+    "feature": "KWS_주가"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 382,
+    "feature": "KWS_주간"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 383,
+    "feature": "KWS_주도"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 384,
+    "feature": "KWS_주목"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 385,
+    "feature": "KWS_주식"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 386,
+    "feature": "KWS_주요"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 387,
+    "feature": "KWS_주주"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 388,
+    "feature": "KWS_주택"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 389,
+    "feature": "KWS_준비"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 390,
+    "feature": "KWS_중국"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 391,
+    "feature": "KWS_중단"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 392,
+    "feature": "KWS_중심"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 393,
+    "feature": "KWS_중앙은행"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 394,
+    "feature": "KWS_증가"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 395,
+    "feature": "KWS_증권"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 396,
+    "feature": "KWS_증권가"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 397,
+    "feature": "KWS_증권사"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 398,
+    "feature": "KWS_증시"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 399,
+    "feature": "KWS_증자"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 400,
+    "feature": "KWS_지난달"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 401,
+    "feature": "KWS_지난주"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 402,
+    "feature": "KWS_지난해"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 403,
+    "feature": "KWS_지능"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 404,
+    "feature": "KWS_지배"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 405,
+    "feature": "KWS_지분"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 406,
+    "feature": "KWS_지속"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 407,
+    "feature": "KWS_지수"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 408,
+    "feature": "KWS_지역"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 409,
+    "feature": "KWS_지원"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 410,
+    "feature": "KWS_지적"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 411,
+    "feature": "KWS_지주"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 412,
+    "feature": "KWS_지표"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 413,
+    "feature": "KWS_진단"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 414,
+    "feature": "KWS_진입"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 415,
+    "feature": "KWS_진행"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 416,
+    "feature": "KWS_집계"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 417,
+    "feature": "KWS_집중"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 418,
+    "feature": "KWS_참여"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 419,
+    "feature": "KWS_채권"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 420,
+    "feature": "KWS_처음"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 421,
+    "feature": "KWS_체결"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 422,
+    "feature": "KWS_총액"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 423,
+    "feature": "KWS_총회"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 424,
+    "feature": "KWS_최고"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 425,
+    "feature": "KWS_최근"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 426,
+    "feature": "KWS_최대"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 427,
+    "feature": "KWS_추가"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 428,
+    "feature": "KWS_추세"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 429,
+    "feature": "KWS_추정"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 430,
+    "feature": "KWS_추진"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 431,
+    "feature": "KWS_추천"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 432,
+    "feature": "KWS_축소"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 433,
+    "feature": "KWS_출발"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 434,
+    "feature": "KWS_출시"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 435,
+    "feature": "KWS_취득"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 436,
+    "feature": "KWS_침체"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 437,
+    "feature": "KWS_컨센서스"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 438,
+    "feature": "KWS_코로나"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 439,
+    "feature": "KWS_코스닥"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 440,
+    "feature": "KWS_코스피"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 441,
+    "feature": "KWS_키움증권"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 442,
+    "feature": "KWS_통신"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 443,
+    "feature": "KWS_통화"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 444,
+    "feature": "KWS_투자"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 445,
+    "feature": "KWS_투자업"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 446,
+    "feature": "KWS_투자자"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 447,
+    "feature": "KWS_트럼프"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 448,
+    "feature": "KWS_판단"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 449,
+    "feature": "KWS_판매"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 450,
+    "feature": "KWS_펀드"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 451,
+    "feature": "KWS_편입"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 452,
+    "feature": "KWS_평가"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 453,
+    "feature": "KWS_평균"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 454,
+    "feature": "KWS_포인트"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 455,
+    "feature": "KWS_포함"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 456,
+    "feature": "KWS_필요"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 457,
+    "feature": "KWS_하락"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 458,
+    "feature": "KWS_하루"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 459,
+    "feature": "KWS_하반기"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 460,
+    "feature": "KWS_하이닉스"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 461,
+    "feature": "KWS_하향"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 462,
+    "feature": "KWS_한국"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 463,
+    "feature": "KWS_한국거래소"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 464,
+    "feature": "KWS_한국은행"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 465,
+    "feature": "KWS_한국투자증권"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 466,
+    "feature": "KWS_합병"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 467,
+    "feature": "KWS_해당"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 468,
+    "feature": "KWS_해소"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 469,
+    "feature": "KWS_해외"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 470,
+    "feature": "KWS_핵심"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 471,
+    "feature": "KWS_행사"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 472,
+    "feature": "KWS_향후"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 473,
+    "feature": "KWS_헤럴드"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 474,
+    "feature": "KWS_현금"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 475,
+    "feature": "KWS_현대"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 476,
+    "feature": "KWS_현대차"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 477,
+    "feature": "KWS_현상"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 478,
+    "feature": "KWS_현지"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 479,
+    "feature": "KWS_협상"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 480,
+    "feature": "KWS_호조"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 481,
+    "feature": "KWS_화학"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 482,
+    "feature": "KWS_확대"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 483,
+    "feature": "KWS_확보"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 484,
+    "feature": "KWS_확산"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 485,
+    "feature": "KWS_확실"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 486,
+    "feature": "KWS_확인"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 487,
+    "feature": "KWS_확정"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 488,
+    "feature": "KWS_환경"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 489,
+    "feature": "KWS_환율"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 490,
+    "feature": "KWS_활성"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 491,
+    "feature": "KWS_회계"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 492,
+    "feature": "KWS_회복"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 493,
+    "feature": "KWS_회사"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 494,
+    "feature": "KWS_회사채"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 495,
+    "feature": "KWS_회의"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 496,
+    "feature": "KWS_회장"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 497,
+    "feature": "KWS_효과"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 498,
+    "feature": "KWS_흐름"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "order": 499,
+    "feature": "KWS_흑자"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_w10_L2",
+    "order": 0,
+    "feature": "NEWS_w10_t1_impact"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_w10_L2",
+    "order": 1,
+    "feature": "NEWS_w10_t1_impact_kor"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_w10_L2",
+    "order": 2,
+    "feature": "NEWS_w10_t1_impact_std"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_w10_L2",
+    "order": 3,
+    "feature": "NEWS_w10_t1_impact_usa"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_w10_L2",
+    "order": 4,
+    "feature": "NEWS_w10_t1_log_n"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_w10_L2",
+    "order": 5,
+    "feature": "NEWS_w10_t1_log_recap_n"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_w10_L2",
+    "order": 6,
+    "feature": "NEWS_w10_t1_mix_share"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_w10_L2",
+    "order": 7,
+    "feature": "NEWS_w10_t1_neg_share"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_w10_L2",
+    "order": 8,
+    "feature": "NEWS_w10_t1_no_news"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_w10_L2",
+    "order": 9,
+    "feature": "NEWS_w10_t1_pos_share"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_w10_L2",
+    "order": 10,
+    "feature": "NEWS_w10_t1_recap_share"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_w10_L2",
+    "order": 11,
+    "feature": "NEWS_w10_t1_strength"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_w10_L2",
+    "order": 12,
+    "feature": "NEWS_w10_t1_surprise"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_w10_L2",
+    "order": 13,
+    "feature": "NEWS_w10_t1_unexpected"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_w10_L2",
+    "order": 14,
+    "feature": "NEWS_w10_t2_ch_earn"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_w10_L2",
+    "order": 15,
+    "feature": "NEWS_w10_t2_ch_etc"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_w10_L2",
+    "order": 16,
+    "feature": "NEWS_w10_t2_ch_flow"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_w10_L2",
+    "order": 17,
+    "feature": "NEWS_w10_t2_ch_fx"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_w10_L2",
+    "order": 18,
+    "feature": "NEWS_w10_t2_ch_geo"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_w10_L2",
+    "order": 19,
+    "feature": "NEWS_w10_t2_ch_rate"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_w10_L2",
+    "order": 20,
+    "feature": "NEWS_w10_t2_or_china"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_w10_L2",
+    "order": 21,
+    "feature": "NEWS_w10_t2_or_korea"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_w10_L2",
+    "order": 22,
+    "feature": "NEWS_w10_t2_or_other"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_w10_L2",
+    "order": 23,
+    "feature": "NEWS_w10_t2_or_usa"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_w10_L2",
+    "order": 24,
+    "feature": "NEWS_w10_t2_sec_etc"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_w10_L2",
+    "order": 25,
+    "feature": "NEWS_w10_t2_sec_fin"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_w10_L2",
+    "order": 26,
+    "feature": "NEWS_w10_t2_sec_mkt"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_w10_L2",
+    "order": 27,
+    "feature": "NEWS_w10_t2_sec_semi"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_w10_L2",
+    "order": 28,
+    "feature": "NEWS_w10_t3_ev_corp"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_w10_L2",
+    "order": 29,
+    "feature": "NEWS_w10_t3_ev_earn"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_w10_L2",
+    "order": 30,
+    "feature": "NEWS_w10_t3_ev_flow"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_w10_L2",
+    "order": 31,
+    "feature": "NEWS_w10_t3_ev_geo"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_w10_L2",
+    "order": 32,
+    "feature": "NEWS_w10_t3_ev_ind"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_w10_L2",
+    "order": 33,
+    "feature": "NEWS_w10_t3_ev_macro"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_w10_L2",
+    "order": 34,
+    "feature": "NEWS_w10_t3_ev_monpol"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_w10_L2",
+    "order": 35,
+    "feature": "NEWS_w10_t3_ev_policy"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_w10_L2",
+    "order": 36,
+    "feature": "NEWS_w10_t3_role_analysis_outlook"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_w10_L2",
+    "order": 37,
+    "feature": "NEWS_w10_t3_role_event_report"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_w10_L2",
+    "order": 38,
+    "feature": "NEWS_w10_t3_role_opinion_recommendation"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_w10_L2",
+    "order": 39,
+    "feature": "NEWS_w10_t3_role_scheduled_preview"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_w10_L2",
+    "order": 40,
+    "feature": "NEWS_w10_t3_st_confirmed"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_w10_L2",
+    "order": 41,
+    "feature": "NEWS_w10_t3_st_ongoing"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_w10_L2",
+    "order": 42,
+    "feature": "NEWS_w10_t3_st_rumor_or_outlook"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_w10_L2",
+    "order": 43,
+    "feature": "NEWS_w10_t3_st_scheduled"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 0,
+    "feature": "TOPIC_ch_earn_neg_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 1,
+    "feature": "TOPIC_ch_earn_pos_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 2,
+    "feature": "TOPIC_ch_earn_share_1"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 3,
+    "feature": "TOPIC_ch_earn_share_20"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 4,
+    "feature": "TOPIC_ch_earn_share_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 5,
+    "feature": "TOPIC_ch_etc_neg_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 6,
+    "feature": "TOPIC_ch_etc_pos_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 7,
+    "feature": "TOPIC_ch_etc_share_1"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 8,
+    "feature": "TOPIC_ch_etc_share_20"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 9,
+    "feature": "TOPIC_ch_etc_share_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 10,
+    "feature": "TOPIC_ch_flow_neg_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 11,
+    "feature": "TOPIC_ch_flow_pos_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 12,
+    "feature": "TOPIC_ch_flow_share_1"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 13,
+    "feature": "TOPIC_ch_flow_share_20"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 14,
+    "feature": "TOPIC_ch_flow_share_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 15,
+    "feature": "TOPIC_ch_fx_neg_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 16,
+    "feature": "TOPIC_ch_fx_pos_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 17,
+    "feature": "TOPIC_ch_fx_share_1"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 18,
+    "feature": "TOPIC_ch_fx_share_20"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 19,
+    "feature": "TOPIC_ch_fx_share_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 20,
+    "feature": "TOPIC_ch_geo_neg_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 21,
+    "feature": "TOPIC_ch_geo_pos_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 22,
+    "feature": "TOPIC_ch_geo_share_1"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 23,
+    "feature": "TOPIC_ch_geo_share_20"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 24,
+    "feature": "TOPIC_ch_geo_share_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 25,
+    "feature": "TOPIC_ch_rate_neg_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 26,
+    "feature": "TOPIC_ch_rate_pos_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 27,
+    "feature": "TOPIC_ch_rate_share_1"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 28,
+    "feature": "TOPIC_ch_rate_share_20"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 29,
+    "feature": "TOPIC_ch_rate_share_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 30,
+    "feature": "TOPIC_ev_corp_neg_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 31,
+    "feature": "TOPIC_ev_corp_pos_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 32,
+    "feature": "TOPIC_ev_corp_share_1"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 33,
+    "feature": "TOPIC_ev_corp_share_20"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 34,
+    "feature": "TOPIC_ev_corp_share_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 35,
+    "feature": "TOPIC_ev_earn_neg_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 36,
+    "feature": "TOPIC_ev_earn_pos_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 37,
+    "feature": "TOPIC_ev_earn_share_1"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 38,
+    "feature": "TOPIC_ev_earn_share_20"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 39,
+    "feature": "TOPIC_ev_earn_share_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 40,
+    "feature": "TOPIC_ev_flow_neg_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 41,
+    "feature": "TOPIC_ev_flow_pos_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 42,
+    "feature": "TOPIC_ev_flow_share_1"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 43,
+    "feature": "TOPIC_ev_flow_share_20"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 44,
+    "feature": "TOPIC_ev_flow_share_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 45,
+    "feature": "TOPIC_ev_geo_neg_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 46,
+    "feature": "TOPIC_ev_geo_pos_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 47,
+    "feature": "TOPIC_ev_geo_share_1"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 48,
+    "feature": "TOPIC_ev_geo_share_20"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 49,
+    "feature": "TOPIC_ev_geo_share_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 50,
+    "feature": "TOPIC_ev_ind_neg_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 51,
+    "feature": "TOPIC_ev_ind_pos_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 52,
+    "feature": "TOPIC_ev_ind_share_1"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 53,
+    "feature": "TOPIC_ev_ind_share_20"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 54,
+    "feature": "TOPIC_ev_ind_share_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 55,
+    "feature": "TOPIC_ev_macro_neg_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 56,
+    "feature": "TOPIC_ev_macro_pos_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 57,
+    "feature": "TOPIC_ev_macro_share_1"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 58,
+    "feature": "TOPIC_ev_macro_share_20"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 59,
+    "feature": "TOPIC_ev_macro_share_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 60,
+    "feature": "TOPIC_ev_monpol_neg_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 61,
+    "feature": "TOPIC_ev_monpol_pos_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 62,
+    "feature": "TOPIC_ev_monpol_share_1"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 63,
+    "feature": "TOPIC_ev_monpol_share_20"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 64,
+    "feature": "TOPIC_ev_monpol_share_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 65,
+    "feature": "TOPIC_ev_policy_neg_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 66,
+    "feature": "TOPIC_ev_policy_pos_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 67,
+    "feature": "TOPIC_ev_policy_share_1"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 68,
+    "feature": "TOPIC_ev_policy_share_20"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 69,
+    "feature": "TOPIC_ev_policy_share_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 70,
+    "feature": "TOPIC_or_china_neg_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 71,
+    "feature": "TOPIC_or_china_pos_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 72,
+    "feature": "TOPIC_or_china_share_1"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 73,
+    "feature": "TOPIC_or_china_share_20"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 74,
+    "feature": "TOPIC_or_china_share_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 75,
+    "feature": "TOPIC_or_korea_neg_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 76,
+    "feature": "TOPIC_or_korea_pos_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 77,
+    "feature": "TOPIC_or_korea_share_1"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 78,
+    "feature": "TOPIC_or_korea_share_20"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 79,
+    "feature": "TOPIC_or_korea_share_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 80,
+    "feature": "TOPIC_or_other_neg_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 81,
+    "feature": "TOPIC_or_other_pos_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 82,
+    "feature": "TOPIC_or_other_share_1"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 83,
+    "feature": "TOPIC_or_other_share_20"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 84,
+    "feature": "TOPIC_or_other_share_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 85,
+    "feature": "TOPIC_or_usa_neg_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 86,
+    "feature": "TOPIC_or_usa_pos_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 87,
+    "feature": "TOPIC_or_usa_share_1"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 88,
+    "feature": "TOPIC_or_usa_share_20"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 89,
+    "feature": "TOPIC_or_usa_share_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 90,
+    "feature": "TOPIC_sec_etc_neg_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 91,
+    "feature": "TOPIC_sec_etc_pos_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 92,
+    "feature": "TOPIC_sec_etc_share_1"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 93,
+    "feature": "TOPIC_sec_etc_share_20"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 94,
+    "feature": "TOPIC_sec_etc_share_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 95,
+    "feature": "TOPIC_sec_fin_neg_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 96,
+    "feature": "TOPIC_sec_fin_pos_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 97,
+    "feature": "TOPIC_sec_fin_share_1"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 98,
+    "feature": "TOPIC_sec_fin_share_20"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 99,
+    "feature": "TOPIC_sec_fin_share_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 100,
+    "feature": "TOPIC_sec_mkt_neg_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 101,
+    "feature": "TOPIC_sec_mkt_pos_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 102,
+    "feature": "TOPIC_sec_mkt_share_1"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 103,
+    "feature": "TOPIC_sec_mkt_share_20"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 104,
+    "feature": "TOPIC_sec_mkt_share_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 105,
+    "feature": "TOPIC_sec_semi_neg_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 106,
+    "feature": "TOPIC_sec_semi_pos_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 107,
+    "feature": "TOPIC_sec_semi_share_1"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 108,
+    "feature": "TOPIC_sec_semi_share_20"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 109,
+    "feature": "TOPIC_sec_semi_share_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 110,
+    "feature": "TOPIC_st_confirmed_neg_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 111,
+    "feature": "TOPIC_st_confirmed_pos_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 112,
+    "feature": "TOPIC_st_confirmed_share_1"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 113,
+    "feature": "TOPIC_st_confirmed_share_20"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 114,
+    "feature": "TOPIC_st_confirmed_share_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 115,
+    "feature": "TOPIC_st_ongoing_neg_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 116,
+    "feature": "TOPIC_st_ongoing_pos_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 117,
+    "feature": "TOPIC_st_ongoing_share_1"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 118,
+    "feature": "TOPIC_st_ongoing_share_20"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 119,
+    "feature": "TOPIC_st_ongoing_share_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 120,
+    "feature": "TOPIC_st_rumor_or_outlook_neg_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 121,
+    "feature": "TOPIC_st_rumor_or_outlook_pos_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 122,
+    "feature": "TOPIC_st_rumor_or_outlook_share_1"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 123,
+    "feature": "TOPIC_st_rumor_or_outlook_share_20"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 124,
+    "feature": "TOPIC_st_rumor_or_outlook_share_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 125,
+    "feature": "TOPIC_st_scheduled_neg_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 126,
+    "feature": "TOPIC_st_scheduled_pos_5"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 127,
+    "feature": "TOPIC_st_scheduled_share_1"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 128,
+    "feature": "TOPIC_st_scheduled_share_20"
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "order": 129,
+    "feature": "TOPIC_st_scheduled_share_5"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "s_XGBvk",
+    "order": 0,
+    "feature": "K_close_location"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "s_XGBvk",
+    "order": 1,
+    "feature": "K_intraday"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "s_XGBvk",
+    "order": 2,
+    "feature": "K_log_volume_change"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "s_XGBvk",
+    "order": 3,
+    "feature": "K_open_gap"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "s_XGBvk",
+    "order": 4,
+    "feature": "K_range"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "s_XGBvk",
+    "order": 5,
+    "feature": "K_ret_1d"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "s_XGBvk",
+    "order": 6,
+    "feature": "NEW_KR_VKOSPI_level"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "s_XGBvk",
+    "order": 7,
+    "feature": "NEW_KR_VKOSPI_level_z_250"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "s_XGBvk",
+    "order": 8,
+    "feature": "NEW_KR_VKOSPI_ret_60d"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_R",
+    "order": 0,
+    "feature": "NEWS_w10_t2_ch_geo"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_R",
+    "order": 1,
+    "feature": "NEWS_w10_t2_or_other"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_R",
+    "order": 2,
+    "feature": "NEWS_w3_t1_impact_usa"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_R",
+    "order": 3,
+    "feature": "NEWS_w3_t1_recap_share"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_R",
+    "order": 4,
+    "feature": "NEWS_w3_t2_ch_etc"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_R",
+    "order": 5,
+    "feature": "NEWS_w3_t2_or_other"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_R",
+    "order": 6,
+    "feature": "NEWS_w3_t3_ev_geo"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_R",
+    "order": 7,
+    "feature": "NEWS_w5_t1_recap_share"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_R",
+    "order": 8,
+    "feature": "NEWS_w5_t2_ch_geo"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_R",
+    "order": 9,
+    "feature": "NEWS_w5_t2_or_other"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_R",
+    "order": 10,
+    "feature": "TOPIC_ch_rate_pos_5"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_R",
+    "order": 11,
+    "feature": "TOPIC_ev_geo_neg_5"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_R",
+    "order": 12,
+    "feature": "TOPIC_or_korea_share_1"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_R",
+    "order": 13,
+    "feature": "TOPIC_or_other_neg_5"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_R",
+    "order": 14,
+    "feature": "TOPIC_or_other_share_1"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_R",
+    "order": 15,
+    "feature": "TOPIC_or_usa_neg_5"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_R",
+    "order": 16,
+    "feature": "TOPIC_sec_etc_share_20"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_R",
+    "order": 17,
+    "feature": "TOPIC_sec_etc_share_5"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_R",
+    "order": 18,
+    "feature": "TOPIC_sec_fin_pos_5"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_R",
+    "order": 19,
+    "feature": "TOPIC_sec_mkt_share_5"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_EN",
+    "order": 0,
+    "feature": "NEWS_w10_t2_ch_geo"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_EN",
+    "order": 1,
+    "feature": "NEWS_w10_t2_or_other"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_EN",
+    "order": 2,
+    "feature": "NEWS_w3_t1_impact_usa"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_EN",
+    "order": 3,
+    "feature": "NEWS_w3_t1_recap_share"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_EN",
+    "order": 4,
+    "feature": "NEWS_w3_t2_ch_etc"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_EN",
+    "order": 5,
+    "feature": "NEWS_w3_t2_or_other"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_EN",
+    "order": 6,
+    "feature": "NEWS_w3_t3_ev_geo"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_EN",
+    "order": 7,
+    "feature": "NEWS_w5_t1_recap_share"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_EN",
+    "order": 8,
+    "feature": "NEWS_w5_t2_ch_geo"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_EN",
+    "order": 9,
+    "feature": "NEWS_w5_t2_or_other"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_EN",
+    "order": 10,
+    "feature": "TOPIC_ch_rate_pos_5"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_EN",
+    "order": 11,
+    "feature": "TOPIC_ev_geo_neg_5"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_EN",
+    "order": 12,
+    "feature": "TOPIC_or_korea_share_1"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_EN",
+    "order": 13,
+    "feature": "TOPIC_or_other_neg_5"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_EN",
+    "order": 14,
+    "feature": "TOPIC_or_other_share_1"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_EN",
+    "order": 15,
+    "feature": "TOPIC_or_usa_neg_5"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_EN",
+    "order": 16,
+    "feature": "TOPIC_sec_etc_share_20"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_EN",
+    "order": 17,
+    "feature": "TOPIC_sec_etc_share_5"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_EN",
+    "order": 18,
+    "feature": "TOPIC_sec_fin_pos_5"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_EN",
+    "order": 19,
+    "feature": "TOPIC_sec_mkt_share_5"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_LA",
+    "order": 0,
+    "feature": "NEWS_w10_t2_ch_geo"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_LA",
+    "order": 1,
+    "feature": "NEWS_w10_t2_or_other"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_LA",
+    "order": 2,
+    "feature": "NEWS_w3_t1_impact_usa"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_LA",
+    "order": 3,
+    "feature": "NEWS_w3_t1_recap_share"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_LA",
+    "order": 4,
+    "feature": "NEWS_w3_t2_ch_etc"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_LA",
+    "order": 5,
+    "feature": "NEWS_w3_t2_or_other"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_LA",
+    "order": 6,
+    "feature": "NEWS_w3_t3_ev_geo"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_LA",
+    "order": 7,
+    "feature": "NEWS_w5_t1_recap_share"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_LA",
+    "order": 8,
+    "feature": "NEWS_w5_t2_ch_geo"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_LA",
+    "order": 9,
+    "feature": "NEWS_w5_t2_or_other"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_LA",
+    "order": 10,
+    "feature": "TOPIC_ch_rate_pos_5"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_LA",
+    "order": 11,
+    "feature": "TOPIC_ev_geo_neg_5"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_LA",
+    "order": 12,
+    "feature": "TOPIC_or_korea_share_1"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_LA",
+    "order": 13,
+    "feature": "TOPIC_or_other_neg_5"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_LA",
+    "order": 14,
+    "feature": "TOPIC_or_other_share_1"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_LA",
+    "order": 15,
+    "feature": "TOPIC_or_usa_neg_5"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_LA",
+    "order": 16,
+    "feature": "TOPIC_sec_etc_share_20"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_LA",
+    "order": 17,
+    "feature": "TOPIC_sec_etc_share_5"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_LA",
+    "order": 18,
+    "feature": "TOPIC_sec_fin_pos_5"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_LA",
+    "order": 19,
+    "feature": "TOPIC_sec_mkt_share_5"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_L2",
+    "order": 0,
+    "feature": "KR_RATE_KORIBOR6M_upcnt_10"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_L2",
+    "order": 1,
+    "feature": "K_close_location"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_L2",
+    "order": 2,
+    "feature": "K_intraday"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_L2",
+    "order": 3,
+    "feature": "K_log_volume_change"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_L2",
+    "order": 4,
+    "feature": "K_open_gap"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_L2",
+    "order": 5,
+    "feature": "K_range"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_L2",
+    "order": 6,
+    "feature": "K_ret_1d"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_L2",
+    "order": 7,
+    "feature": "TECH_dd_250"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_L2",
+    "order": 8,
+    "feature": "TECH_ret_60d"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_L2",
+    "order": 9,
+    "feature": "TECH_vol_60"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_L2",
+    "order": 10,
+    "feature": "USETF_HYG_z_5"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_L2",
+    "order": 11,
+    "feature": "US_AMAT_ret_1d"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_L2",
+    "order": 12,
+    "feature": "US_NASDAQ_ret_1d"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_L2",
+    "order": 13,
+    "feature": "US_RUSSELL2000_ret_1d"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_L2",
+    "order": 14,
+    "feature": "US_VVIX_z_5"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_XGB",
+    "order": 0,
+    "feature": "KRX_K200_STAPLE_ret_10d"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_XGB",
+    "order": 1,
+    "feature": "KR_KORU_upcnt_5"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_XGB",
+    "order": 2,
+    "feature": "K_close_location"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_XGB",
+    "order": 3,
+    "feature": "K_intraday"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_XGB",
+    "order": 4,
+    "feature": "K_log_volume_change"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_XGB",
+    "order": 5,
+    "feature": "K_open_gap"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_XGB",
+    "order": 6,
+    "feature": "K_range"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_XGB",
+    "order": 7,
+    "feature": "K_ret_1d"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_XGB",
+    "order": 8,
+    "feature": "TECH_dd_250"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_XGB",
+    "order": 9,
+    "feature": "TECH_ret_60d"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_XGB",
+    "order": 10,
+    "feature": "TECH_vol_60"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_XGB",
+    "order": 11,
+    "feature": "USETF_HYG_z_10"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_XGB",
+    "order": 12,
+    "feature": "USETF_HYG_z_5"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_XGB",
+    "order": 13,
+    "feature": "US_SOX_ret_1d"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_XGB",
+    "order": 14,
+    "feature": "US_VXN_ret_1d"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_cwL1",
+    "order": 0,
+    "feature": "KR_RATE_KORIBOR6M_upcnt_10"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_cwL1",
+    "order": 1,
+    "feature": "K_close_location"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_cwL1",
+    "order": 2,
+    "feature": "K_intraday"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_cwL1",
+    "order": 3,
+    "feature": "K_log_volume_change"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_cwL1",
+    "order": 4,
+    "feature": "K_open_gap"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_cwL1",
+    "order": 5,
+    "feature": "K_range"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_cwL1",
+    "order": 6,
+    "feature": "K_ret_1d"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_cwL1",
+    "order": 7,
+    "feature": "TECH_dd_250"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_cwL1",
+    "order": 8,
+    "feature": "TECH_ret_60d"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_cwL1",
+    "order": 9,
+    "feature": "TECH_vol_60"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_cwL1",
+    "order": 10,
+    "feature": "USETF_HYG_z_5"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_cwL1",
+    "order": 11,
+    "feature": "US_AMAT_z_10"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_cwL1",
+    "order": 12,
+    "feature": "US_NASDAQ_ret_1d"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_ic10_ET",
+    "order": 0,
+    "feature": "NEWS_w10_t2_ch_geo"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_ic10_ET",
+    "order": 1,
+    "feature": "NEWS_w3_t1_recap_share"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_ic10_ET",
+    "order": 2,
+    "feature": "NEWS_w3_t3_ev_geo"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_ic10_ET",
+    "order": 3,
+    "feature": "NEWS_w5_t1_recap_share"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_ic10_ET",
+    "order": 4,
+    "feature": "TOPIC_or_korea_share_1"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_ic10_ET",
+    "order": 5,
+    "feature": "TOPIC_or_korea_share_5"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_ic10_ET",
+    "order": 6,
+    "feature": "TOPIC_or_other_neg_5"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_ic10_ET",
+    "order": 7,
+    "feature": "TOPIC_or_other_share_5"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_ic10_ET",
+    "order": 8,
+    "feature": "TOPIC_or_usa_neg_5"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_ic10_ET",
+    "order": 9,
+    "feature": "TOPIC_sec_fin_pos_5"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 0,
+    "feature": "KWS_AI"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 1,
+    "feature": "KWS_ETF"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 2,
+    "feature": "KWS_FOMC"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 3,
+    "feature": "KWS_Fed"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 4,
+    "feature": "KWS_IB"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 5,
+    "feature": "KWS_IPO"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 6,
+    "feature": "KWS_IT"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 7,
+    "feature": "KWS_KB"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 8,
+    "feature": "KWS_LG"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 9,
+    "feature": "KWS_NH"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 10,
+    "feature": "KWS_SK"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 11,
+    "feature": "KWS_TV"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 12,
+    "feature": "KWS_가격"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 13,
+    "feature": "KWS_가능"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 14,
+    "feature": "KWS_가운데"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 15,
+    "feature": "KWS_가치"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 16,
+    "feature": "KWS_간담회"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 17,
+    "feature": "KWS_감독원"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 18,
+    "feature": "KWS_감소"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 19,
+    "feature": "KWS_강세"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 20,
+    "feature": "KWS_강화"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 21,
+    "feature": "KWS_개발"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 22,
+    "feature": "KWS_개선"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 23,
+    "feature": "KWS_개인"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 24,
+    "feature": "KWS_개최"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 25,
+    "feature": "KWS_개편"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 26,
+    "feature": "KWS_거래"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 27,
+    "feature": "KWS_거래소"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 28,
+    "feature": "KWS_거래일"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 29,
+    "feature": "KWS_건설"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 30,
+    "feature": "KWS_검토"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 31,
+    "feature": "KWS_결과"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 32,
+    "feature": "KWS_결정"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 33,
+    "feature": "KWS_경기"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 34,
+    "feature": "KWS_경영"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 35,
+    "feature": "KWS_경우"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 36,
+    "feature": "KWS_경쟁"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 37,
+    "feature": "KWS_경쟁력"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 38,
+    "feature": "KWS_경제"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 39,
+    "feature": "KWS_계약"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 40,
+    "feature": "KWS_계열사"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 41,
+    "feature": "KWS_계획"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 42,
+    "feature": "KWS_고객"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 43,
+    "feature": "KWS_고려"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 44,
+    "feature": "KWS_고용"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 45,
+    "feature": "KWS_공개"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 46,
+    "feature": "KWS_공급"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 47,
+    "feature": "KWS_공동"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 48,
+    "feature": "KWS_공매도"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 49,
+    "feature": "KWS_공모"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 50,
+    "feature": "KWS_공사"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 51,
+    "feature": "KWS_공시"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 52,
+    "feature": "KWS_공장"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 53,
+    "feature": "KWS_공정"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 54,
+    "feature": "KWS_과정"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 55,
+    "feature": "KWS_관련"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 56,
+    "feature": "KWS_관리"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 57,
+    "feature": "KWS_관심"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 58,
+    "feature": "KWS_구조"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 59,
+    "feature": "KWS_국가"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 60,
+    "feature": "KWS_국내"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 61,
+    "feature": "KWS_국내외"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 62,
+    "feature": "KWS_국면"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 63,
+    "feature": "KWS_국민"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 64,
+    "feature": "KWS_국민연금"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 65,
+    "feature": "KWS_국제"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 66,
+    "feature": "KWS_국채"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 67,
+    "feature": "KWS_국회"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 68,
+    "feature": "KWS_규모"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 69,
+    "feature": "KWS_규제"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 70,
+    "feature": "KWS_그룹"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 71,
+    "feature": "KWS_글로벌"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 72,
+    "feature": "KWS_금감원"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 73,
+    "feature": "KWS_금리"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 74,
+    "feature": "KWS_금액"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 75,
+    "feature": "KWS_금융"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 76,
+    "feature": "KWS_금융위"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 77,
+    "feature": "KWS_금융투자협회"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 78,
+    "feature": "KWS_급등"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 79,
+    "feature": "KWS_급락"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 80,
+    "feature": "KWS_급증"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 81,
+    "feature": "KWS_긍정"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 82,
+    "feature": "KWS_기간"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 83,
+    "feature": "KWS_기관"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 84,
+    "feature": "KWS_기대"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 85,
+    "feature": "KWS_기대감"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 86,
+    "feature": "KWS_기록"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 87,
+    "feature": "KWS_기반"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 88,
+    "feature": "KWS_기사"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 89,
+    "feature": "KWS_기술"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 90,
+    "feature": "KWS_기업"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 91,
+    "feature": "KWS_기자"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 92,
+    "feature": "KWS_기조"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 93,
+    "feature": "KWS_기존"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 94,
+    "feature": "KWS_기준"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 95,
+    "feature": "KWS_기회"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 96,
+    "feature": "KWS_내년"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 97,
+    "feature": "KWS_내용"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 98,
+    "feature": "KWS_논란"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 99,
+    "feature": "KWS_논의"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 100,
+    "feature": "KWS_뉴스"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 101,
+    "feature": "KWS_뉴욕"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 102,
+    "feature": "KWS_다음"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 103,
+    "feature": "KWS_단계"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 104,
+    "feature": "KWS_단기"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 105,
+    "feature": "KWS_달러"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 106,
+    "feature": "KWS_달성"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 107,
+    "feature": "KWS_당국"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 108,
+    "feature": "KWS_당기"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 109,
+    "feature": "KWS_대비"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 110,
+    "feature": "KWS_대상"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 111,
+    "feature": "KWS_대신"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 112,
+    "feature": "KWS_대신증권"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 113,
+    "feature": "KWS_대응"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 114,
+    "feature": "KWS_대출"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 115,
+    "feature": "KWS_대통령"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 116,
+    "feature": "KWS_대표"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 117,
+    "feature": "KWS_대형"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 118,
+    "feature": "KWS_도입"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 119,
+    "feature": "KWS_돌파"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 120,
+    "feature": "KWS_동기"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 121,
+    "feature": "KWS_동시"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 122,
+    "feature": "KWS_동안"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 123,
+    "feature": "KWS_둔화"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 124,
+    "feature": "KWS_등급"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 125,
+    "feature": "KWS_랠리"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 126,
+    "feature": "KWS_리스크"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 127,
+    "feature": "KWS_마감"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 128,
+    "feature": "KWS_마련"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 129,
+    "feature": "KWS_마켓"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 130,
+    "feature": "KWS_만기"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 131,
+    "feature": "KWS_매각"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 132,
+    "feature": "KWS_매도"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 133,
+    "feature": "KWS_매력"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 134,
+    "feature": "KWS_매매"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 135,
+    "feature": "KWS_매수"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 136,
+    "feature": "KWS_매입"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 137,
+    "feature": "KWS_매출"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 138,
+    "feature": "KWS_매출액"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 139,
+    "feature": "KWS_머니투데이"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 140,
+    "feature": "KWS_모멘텀"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 141,
+    "feature": "KWS_모바일"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 142,
+    "feature": "KWS_모습"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 143,
+    "feature": "KWS_목표"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 144,
+    "feature": "KWS_무역"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 145,
+    "feature": "KWS_문제"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 146,
+    "feature": "KWS_물가"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 147,
+    "feature": "KWS_물량"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 148,
+    "feature": "KWS_미국"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 149,
+    "feature": "KWS_미래에셋"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 150,
+    "feature": "KWS_바이오"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 151,
+    "feature": "KWS_반도체"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 152,
+    "feature": "KWS_반등"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 153,
+    "feature": "KWS_반면"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 154,
+    "feature": "KWS_반영"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 155,
+    "feature": "KWS_발생"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 156,
+    "feature": "KWS_발표"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 157,
+    "feature": "KWS_발행"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 158,
+    "feature": "KWS_방송"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 159,
+    "feature": "KWS_방식"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 160,
+    "feature": "KWS_방안"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 161,
+    "feature": "KWS_방향"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 162,
+    "feature": "KWS_배당"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 163,
+    "feature": "KWS_법인"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 164,
+    "feature": "KWS_변경"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 165,
+    "feature": "KWS_변동"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 166,
+    "feature": "KWS_변수"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 167,
+    "feature": "KWS_변화"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 168,
+    "feature": "KWS_보고서"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 169,
+    "feature": "KWS_보도"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 170,
+    "feature": "KWS_보유"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 171,
+    "feature": "KWS_보호"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 172,
+    "feature": "KWS_본격"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 173,
+    "feature": "KWS_부각"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 174,
+    "feature": "KWS_부담"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 175,
+    "feature": "KWS_부동산"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 176,
+    "feature": "KWS_부문"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 177,
+    "feature": "KWS_부분"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 178,
+    "feature": "KWS_부정"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 179,
+    "feature": "KWS_부진"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 180,
+    "feature": "KWS_부채"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 181,
+    "feature": "KWS_부품"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 182,
+    "feature": "KWS_분기"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 183,
+    "feature": "KWS_분석"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 184,
+    "feature": "KWS_불안"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 185,
+    "feature": "KWS_불확실"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 186,
+    "feature": "KWS_비용"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 187,
+    "feature": "KWS_비율"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 188,
+    "feature": "KWS_비중"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 189,
+    "feature": "KWS_사모"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 190,
+    "feature": "KWS_사상"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 191,
+    "feature": "KWS_사실"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 192,
+    "feature": "KWS_사업"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 193,
+    "feature": "KWS_사진"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 194,
+    "feature": "KWS_사태"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 195,
+    "feature": "KWS_산업"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 196,
+    "feature": "KWS_삼성"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 197,
+    "feature": "KWS_삼성전자"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 198,
+    "feature": "KWS_삼성증권"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 199,
+    "feature": "KWS_상대"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 200,
+    "feature": "KWS_상반기"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 201,
+    "feature": "KWS_상승"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 202,
+    "feature": "KWS_상승세"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 203,
+    "feature": "KWS_상장"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 204,
+    "feature": "KWS_상장사"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 205,
+    "feature": "KWS_상품"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 206,
+    "feature": "KWS_상향"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 207,
+    "feature": "KWS_상황"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 208,
+    "feature": "KWS_상회"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 209,
+    "feature": "KWS_생산"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 210,
+    "feature": "KWS_서비스"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 211,
+    "feature": "KWS_서울"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 212,
+    "feature": "KWS_선물"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 213,
+    "feature": "KWS_선정"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 214,
+    "feature": "KWS_선호"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 215,
+    "feature": "KWS_설명"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 216,
+    "feature": "KWS_성공"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 217,
+    "feature": "KWS_성장"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 218,
+    "feature": "KWS_세계"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 219,
+    "feature": "KWS_소비"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 220,
+    "feature": "KWS_소비자"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 221,
+    "feature": "KWS_소식"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 222,
+    "feature": "KWS_속도"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 223,
+    "feature": "KWS_손실"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 224,
+    "feature": "KWS_수급"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 225,
+    "feature": "KWS_수요"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 226,
+    "feature": "KWS_수익"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 227,
+    "feature": "KWS_수주"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 228,
+    "feature": "KWS_수준"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 229,
+    "feature": "KWS_수출"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 230,
+    "feature": "KWS_수혜"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 231,
+    "feature": "KWS_순이익"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 232,
+    "feature": "KWS_스마트폰"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 233,
+    "feature": "KWS_시가"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 234,
+    "feature": "KWS_시간"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 235,
+    "feature": "KWS_시대"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 236,
+    "feature": "KWS_시스템"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 237,
+    "feature": "KWS_시작"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 238,
+    "feature": "KWS_시장"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 239,
+    "feature": "KWS_시점"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 240,
+    "feature": "KWS_시즌"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 241,
+    "feature": "KWS_시행"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 242,
+    "feature": "KWS_신규"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 243,
+    "feature": "KWS_신용"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 244,
+    "feature": "KWS_신종"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 245,
+    "feature": "KWS_신청"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 246,
+    "feature": "KWS_신한금융투자"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 247,
+    "feature": "KWS_실시"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 248,
+    "feature": "KWS_실적"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 249,
+    "feature": "KWS_심리"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 250,
+    "feature": "KWS_아시아"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 251,
+    "feature": "KWS_아시아경제"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 252,
+    "feature": "KWS_악재"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 253,
+    "feature": "KWS_악화"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 254,
+    "feature": "KWS_안정"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 255,
+    "feature": "KWS_애널리스트"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 256,
+    "feature": "KWS_약세"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 257,
+    "feature": "KWS_양호"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 258,
+    "feature": "KWS_어닝"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 259,
+    "feature": "KWS_업계"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 260,
+    "feature": "KWS_업무"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 261,
+    "feature": "KWS_업종"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 262,
+    "feature": "KWS_업체"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 263,
+    "feature": "KWS_업황"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 264,
+    "feature": "KWS_에너지"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 265,
+    "feature": "KWS_여부"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 266,
+    "feature": "KWS_여의도"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 267,
+    "feature": "KWS_여파"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 268,
+    "feature": "KWS_역대"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 269,
+    "feature": "KWS_연간"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 270,
+    "feature": "KWS_연결"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 271,
+    "feature": "KWS_연구원"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 272,
+    "feature": "KWS_연금"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 273,
+    "feature": "KWS_연말"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 274,
+    "feature": "KWS_연방"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 275,
+    "feature": "KWS_연방공개시장위원회"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 276,
+    "feature": "KWS_연속"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 277,
+    "feature": "KWS_연준"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 278,
+    "feature": "KWS_연초"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 279,
+    "feature": "KWS_연합뉴스"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 280,
+    "feature": "KWS_영업"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 281,
+    "feature": "KWS_영업익"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 282,
+    "feature": "KWS_영향"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 283,
+    "feature": "KWS_예고"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 284,
+    "feature": "KWS_예상"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 285,
+    "feature": "KWS_예정"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 286,
+    "feature": "KWS_오늘"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 287,
+    "feature": "KWS_오전"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 288,
+    "feature": "KWS_오후"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 289,
+    "feature": "KWS_올해"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 290,
+    "feature": "KWS_완화"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 291,
+    "feature": "KWS_외국인"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 292,
+    "feature": "KWS_외환"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 293,
+    "feature": "KWS_요구"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 294,
+    "feature": "KWS_요인"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 295,
+    "feature": "KWS_우려"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 296,
+    "feature": "KWS_운영"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 297,
+    "feature": "KWS_운용"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 298,
+    "feature": "KWS_운용사"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 299,
+    "feature": "KWS_위기"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 300,
+    "feature": "KWS_위원회"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 301,
+    "feature": "KWS_위험"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 302,
+    "feature": "KWS_유가"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 303,
+    "feature": "KWS_유동"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 304,
+    "feature": "KWS_유럽"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 305,
+    "feature": "KWS_유상"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 306,
+    "feature": "KWS_유입"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 307,
+    "feature": "KWS_유지"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 308,
+    "feature": "KWS_은행"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 309,
+    "feature": "KWS_의견"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 310,
+    "feature": "KWS_의무"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 311,
+    "feature": "KWS_이날"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 312,
+    "feature": "KWS_이달"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 313,
+    "feature": "KWS_이데일리"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 314,
+    "feature": "KWS_이번"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 315,
+    "feature": "KWS_이사"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 316,
+    "feature": "KWS_이상"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 317,
+    "feature": "KWS_이슈"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 318,
+    "feature": "KWS_이유"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 319,
+    "feature": "KWS_이익"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 320,
+    "feature": "KWS_이하"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 321,
+    "feature": "KWS_이후"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 322,
+    "feature": "KWS_인공"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 323,
+    "feature": "KWS_인상"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 324,
+    "feature": "KWS_인수"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 325,
+    "feature": "KWS_인플레이션"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 326,
+    "feature": "KWS_인하"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 327,
+    "feature": "KWS_일본"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 328,
+    "feature": "KWS_일부"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 329,
+    "feature": "KWS_일정"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 330,
+    "feature": "KWS_자금"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 331,
+    "feature": "KWS_자동차"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 332,
+    "feature": "KWS_자료"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 333,
+    "feature": "KWS_자본"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 334,
+    "feature": "KWS_자사"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 335,
+    "feature": "KWS_자산"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 336,
+    "feature": "KWS_자회사"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 337,
+    "feature": "KWS_작년"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 338,
+    "feature": "KWS_작용"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 339,
+    "feature": "KWS_잠정"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 340,
+    "feature": "KWS_장기"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 341,
+    "feature": "KWS_장세"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 342,
+    "feature": "KWS_재무"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 343,
+    "feature": "KWS_재정"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 344,
+    "feature": "KWS_적극"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 345,
+    "feature": "KWS_적용"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 346,
+    "feature": "KWS_적자"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 347,
+    "feature": "KWS_전기"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 348,
+    "feature": "KWS_전날"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 349,
+    "feature": "KWS_전년"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 350,
+    "feature": "KWS_전략"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 351,
+    "feature": "KWS_전망"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 352,
+    "feature": "KWS_전문"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 353,
+    "feature": "KWS_전문가"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 354,
+    "feature": "KWS_전반"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 355,
+    "feature": "KWS_전일"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 356,
+    "feature": "KWS_전자"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 357,
+    "feature": "KWS_전쟁"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 358,
+    "feature": "KWS_전체"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 359,
+    "feature": "KWS_전환"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 360,
+    "feature": "KWS_점검"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 361,
+    "feature": "KWS_정보"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 362,
+    "feature": "KWS_정부"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 363,
+    "feature": "KWS_정상"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 364,
+    "feature": "KWS_정책"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 365,
+    "feature": "KWS_정치"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 366,
+    "feature": "KWS_제고"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 367,
+    "feature": "KWS_제공"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 368,
+    "feature": "KWS_제기"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 369,
+    "feature": "KWS_제도"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 370,
+    "feature": "KWS_제시"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 371,
+    "feature": "KWS_제외"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 372,
+    "feature": "KWS_제품"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 373,
+    "feature": "KWS_제한"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 374,
+    "feature": "KWS_조달"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 375,
+    "feature": "KWS_조사"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 376,
+    "feature": "KWS_조선"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 377,
+    "feature": "KWS_조정"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 378,
+    "feature": "KWS_조치"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 379,
+    "feature": "KWS_종목"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 380,
+    "feature": "KWS_종합"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 381,
+    "feature": "KWS_주가"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 382,
+    "feature": "KWS_주간"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 383,
+    "feature": "KWS_주도"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 384,
+    "feature": "KWS_주목"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 385,
+    "feature": "KWS_주식"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 386,
+    "feature": "KWS_주요"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 387,
+    "feature": "KWS_주주"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 388,
+    "feature": "KWS_주택"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 389,
+    "feature": "KWS_준비"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 390,
+    "feature": "KWS_중국"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 391,
+    "feature": "KWS_중단"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 392,
+    "feature": "KWS_중심"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 393,
+    "feature": "KWS_중앙은행"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 394,
+    "feature": "KWS_증가"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 395,
+    "feature": "KWS_증권"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 396,
+    "feature": "KWS_증권가"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 397,
+    "feature": "KWS_증권사"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 398,
+    "feature": "KWS_증시"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 399,
+    "feature": "KWS_증자"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 400,
+    "feature": "KWS_지난달"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 401,
+    "feature": "KWS_지난주"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 402,
+    "feature": "KWS_지난해"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 403,
+    "feature": "KWS_지능"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 404,
+    "feature": "KWS_지배"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 405,
+    "feature": "KWS_지분"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 406,
+    "feature": "KWS_지속"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 407,
+    "feature": "KWS_지수"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 408,
+    "feature": "KWS_지역"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 409,
+    "feature": "KWS_지원"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 410,
+    "feature": "KWS_지적"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 411,
+    "feature": "KWS_지주"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 412,
+    "feature": "KWS_지표"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 413,
+    "feature": "KWS_진단"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 414,
+    "feature": "KWS_진입"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 415,
+    "feature": "KWS_진행"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 416,
+    "feature": "KWS_집계"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 417,
+    "feature": "KWS_집중"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 418,
+    "feature": "KWS_참여"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 419,
+    "feature": "KWS_채권"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 420,
+    "feature": "KWS_처음"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 421,
+    "feature": "KWS_체결"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 422,
+    "feature": "KWS_총액"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 423,
+    "feature": "KWS_총회"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 424,
+    "feature": "KWS_최고"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 425,
+    "feature": "KWS_최근"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 426,
+    "feature": "KWS_최대"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 427,
+    "feature": "KWS_추가"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 428,
+    "feature": "KWS_추세"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 429,
+    "feature": "KWS_추정"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 430,
+    "feature": "KWS_추진"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 431,
+    "feature": "KWS_추천"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 432,
+    "feature": "KWS_축소"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 433,
+    "feature": "KWS_출발"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 434,
+    "feature": "KWS_출시"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 435,
+    "feature": "KWS_취득"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 436,
+    "feature": "KWS_침체"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 437,
+    "feature": "KWS_컨센서스"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 438,
+    "feature": "KWS_코로나"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 439,
+    "feature": "KWS_코스닥"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 440,
+    "feature": "KWS_코스피"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 441,
+    "feature": "KWS_키움증권"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 442,
+    "feature": "KWS_통신"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 443,
+    "feature": "KWS_통화"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 444,
+    "feature": "KWS_투자"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 445,
+    "feature": "KWS_투자업"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 446,
+    "feature": "KWS_투자자"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 447,
+    "feature": "KWS_트럼프"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 448,
+    "feature": "KWS_판단"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 449,
+    "feature": "KWS_판매"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 450,
+    "feature": "KWS_펀드"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 451,
+    "feature": "KWS_편입"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 452,
+    "feature": "KWS_평가"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 453,
+    "feature": "KWS_평균"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 454,
+    "feature": "KWS_포인트"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 455,
+    "feature": "KWS_포함"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 456,
+    "feature": "KWS_필요"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 457,
+    "feature": "KWS_하락"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 458,
+    "feature": "KWS_하루"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 459,
+    "feature": "KWS_하반기"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 460,
+    "feature": "KWS_하이닉스"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 461,
+    "feature": "KWS_하향"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 462,
+    "feature": "KWS_한국"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 463,
+    "feature": "KWS_한국거래소"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 464,
+    "feature": "KWS_한국은행"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 465,
+    "feature": "KWS_한국투자증권"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 466,
+    "feature": "KWS_합병"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 467,
+    "feature": "KWS_해당"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 468,
+    "feature": "KWS_해소"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 469,
+    "feature": "KWS_해외"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 470,
+    "feature": "KWS_핵심"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 471,
+    "feature": "KWS_행사"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 472,
+    "feature": "KWS_향후"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 473,
+    "feature": "KWS_헤럴드"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 474,
+    "feature": "KWS_현금"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 475,
+    "feature": "KWS_현대"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 476,
+    "feature": "KWS_현대차"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 477,
+    "feature": "KWS_현상"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 478,
+    "feature": "KWS_현지"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 479,
+    "feature": "KWS_협상"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 480,
+    "feature": "KWS_호조"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 481,
+    "feature": "KWS_화학"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 482,
+    "feature": "KWS_확대"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 483,
+    "feature": "KWS_확보"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 484,
+    "feature": "KWS_확산"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 485,
+    "feature": "KWS_확실"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 486,
+    "feature": "KWS_확인"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 487,
+    "feature": "KWS_확정"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 488,
+    "feature": "KWS_환경"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 489,
+    "feature": "KWS_환율"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 490,
+    "feature": "KWS_활성"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 491,
+    "feature": "KWS_회계"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 492,
+    "feature": "KWS_회복"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 493,
+    "feature": "KWS_회사"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 494,
+    "feature": "KWS_회사채"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 495,
+    "feature": "KWS_회의"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 496,
+    "feature": "KWS_회장"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 497,
+    "feature": "KWS_효과"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 498,
+    "feature": "KWS_흐름"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "order": 499,
+    "feature": "KWS_흑자"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "s_LGBM",
+    "order": 0,
+    "feature": "ASIA_HSI_ret_20d"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "s_LGBM",
+    "order": 1,
+    "feature": "K_close_location"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "s_LGBM",
+    "order": 2,
+    "feature": "K_intraday"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "s_LGBM",
+    "order": 3,
+    "feature": "K_log_volume_change"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "s_LGBM",
+    "order": 4,
+    "feature": "K_range"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "s_LGBM",
+    "order": 5,
+    "feature": "K_ret_1d"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "s_LGBM",
+    "order": 6,
+    "feature": "SECTOR_FASHION_dd_20"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "s_LGBM",
+    "order": 7,
+    "feature": "TECH_ret_60d"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "s_LGBM",
+    "order": 8,
+    "feature": "TECH_vol_60"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "s_LGBM",
+    "order": 9,
+    "feature": "USETF_HYG_ma_gap_5"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "s_LGBM",
+    "order": 10,
+    "feature": "USETF_XLU_dd_250"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "s_LGBM",
+    "order": 11,
+    "feature": "US_W5000_ret_1d"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "s_GRU",
+    "order": 0,
+    "feature": "EU_STOXX600_ret_1d"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "s_GRU",
+    "order": 1,
+    "feature": "K_close_location"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "s_GRU",
+    "order": 2,
+    "feature": "K_intraday"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "s_GRU",
+    "order": 3,
+    "feature": "K_log_volume_change"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "s_GRU",
+    "order": 4,
+    "feature": "K_open_gap"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "s_GRU",
+    "order": 5,
+    "feature": "K_range"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "s_GRU",
+    "order": 6,
+    "feature": "K_ret_1d"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "s_GRU",
+    "order": 7,
+    "feature": "MACRO_DXY_ret_1d"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "s_GRU",
+    "order": 8,
+    "feature": "US_SP500_ret_1d"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nF_t3_LGBM",
+    "order": 0,
+    "feature": "NEWS_w10_t3_ev_corp"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nF_t3_LGBM",
+    "order": 1,
+    "feature": "NEWS_w10_t3_ev_earn"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nF_t3_LGBM",
+    "order": 2,
+    "feature": "NEWS_w10_t3_ev_flow"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nF_t3_LGBM",
+    "order": 3,
+    "feature": "NEWS_w10_t3_ev_geo"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nF_t3_LGBM",
+    "order": 4,
+    "feature": "NEWS_w10_t3_ev_ind"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nF_t3_LGBM",
+    "order": 5,
+    "feature": "NEWS_w10_t3_ev_macro"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nF_t3_LGBM",
+    "order": 6,
+    "feature": "NEWS_w10_t3_ev_monpol"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nF_t3_LGBM",
+    "order": 7,
+    "feature": "NEWS_w10_t3_ev_policy"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nF_t3_LGBM",
+    "order": 8,
+    "feature": "NEWS_w10_t3_role_analysis_outlook"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nF_t3_LGBM",
+    "order": 9,
+    "feature": "NEWS_w10_t3_role_event_report"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nF_t3_LGBM",
+    "order": 10,
+    "feature": "NEWS_w10_t3_role_opinion_recommendation"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nF_t3_LGBM",
+    "order": 11,
+    "feature": "NEWS_w10_t3_role_scheduled_preview"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nF_t3_LGBM",
+    "order": 12,
+    "feature": "NEWS_w10_t3_st_confirmed"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nF_t3_LGBM",
+    "order": 13,
+    "feature": "NEWS_w10_t3_st_ongoing"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nF_t3_LGBM",
+    "order": 14,
+    "feature": "NEWS_w10_t3_st_rumor_or_outlook"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nF_t3_LGBM",
+    "order": 15,
+    "feature": "NEWS_w10_t3_st_scheduled"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nF_t3_LGBM",
+    "order": 16,
+    "feature": "NEWS_w1_t3_ev_corp"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nF_t3_LGBM",
+    "order": 17,
+    "feature": "NEWS_w1_t3_ev_earn"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nF_t3_LGBM",
+    "order": 18,
+    "feature": "NEWS_w1_t3_ev_flow"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nF_t3_LGBM",
+    "order": 19,
+    "feature": "NEWS_w1_t3_ev_geo"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nF_t3_LGBM",
+    "order": 20,
+    "feature": "NEWS_w1_t3_ev_ind"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nF_t3_LGBM",
+    "order": 21,
+    "feature": "NEWS_w1_t3_ev_macro"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nF_t3_LGBM",
+    "order": 22,
+    "feature": "NEWS_w1_t3_ev_monpol"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nF_t3_LGBM",
+    "order": 23,
+    "feature": "NEWS_w1_t3_ev_policy"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nF_t3_LGBM",
+    "order": 24,
+    "feature": "NEWS_w1_t3_role_analysis_outlook"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nF_t3_LGBM",
+    "order": 25,
+    "feature": "NEWS_w1_t3_role_event_report"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nF_t3_LGBM",
+    "order": 26,
+    "feature": "NEWS_w1_t3_role_opinion_recommendation"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nF_t3_LGBM",
+    "order": 27,
+    "feature": "NEWS_w1_t3_role_scheduled_preview"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nF_t3_LGBM",
+    "order": 28,
+    "feature": "NEWS_w1_t3_st_confirmed"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nF_t3_LGBM",
+    "order": 29,
+    "feature": "NEWS_w1_t3_st_ongoing"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nF_t3_LGBM",
+    "order": 30,
+    "feature": "NEWS_w1_t3_st_rumor_or_outlook"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nF_t3_LGBM",
+    "order": 31,
+    "feature": "NEWS_w1_t3_st_scheduled"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nF_t3_LGBM",
+    "order": 32,
+    "feature": "NEWS_w5_t3_ev_corp"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nF_t3_LGBM",
+    "order": 33,
+    "feature": "NEWS_w5_t3_ev_earn"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nF_t3_LGBM",
+    "order": 34,
+    "feature": "NEWS_w5_t3_ev_flow"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nF_t3_LGBM",
+    "order": 35,
+    "feature": "NEWS_w5_t3_ev_geo"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nF_t3_LGBM",
+    "order": 36,
+    "feature": "NEWS_w5_t3_ev_ind"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nF_t3_LGBM",
+    "order": 37,
+    "feature": "NEWS_w5_t3_ev_macro"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nF_t3_LGBM",
+    "order": 38,
+    "feature": "NEWS_w5_t3_ev_monpol"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nF_t3_LGBM",
+    "order": 39,
+    "feature": "NEWS_w5_t3_ev_policy"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nF_t3_LGBM",
+    "order": 40,
+    "feature": "NEWS_w5_t3_role_analysis_outlook"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nF_t3_LGBM",
+    "order": 41,
+    "feature": "NEWS_w5_t3_role_event_report"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nF_t3_LGBM",
+    "order": 42,
+    "feature": "NEWS_w5_t3_role_opinion_recommendation"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nF_t3_LGBM",
+    "order": 43,
+    "feature": "NEWS_w5_t3_role_scheduled_preview"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nF_t3_LGBM",
+    "order": 44,
+    "feature": "NEWS_w5_t3_st_confirmed"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nF_t3_LGBM",
+    "order": 45,
+    "feature": "NEWS_w5_t3_st_ongoing"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nF_t3_LGBM",
+    "order": 46,
+    "feature": "NEWS_w5_t3_st_rumor_or_outlook"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nF_t3_LGBM",
+    "order": 47,
+    "feature": "NEWS_w5_t3_st_scheduled"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM",
+    "order": 0,
+    "feature": "NEWS_w10_t3_ev_corp"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM",
+    "order": 1,
+    "feature": "NEWS_w10_t3_ev_earn"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM",
+    "order": 2,
+    "feature": "NEWS_w10_t3_ev_flow"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM",
+    "order": 3,
+    "feature": "NEWS_w10_t3_ev_geo"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM",
+    "order": 4,
+    "feature": "NEWS_w10_t3_ev_ind"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM",
+    "order": 5,
+    "feature": "NEWS_w10_t3_ev_macro"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM",
+    "order": 6,
+    "feature": "NEWS_w10_t3_ev_monpol"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM",
+    "order": 7,
+    "feature": "NEWS_w10_t3_ev_policy"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM",
+    "order": 8,
+    "feature": "NEWS_w10_t3_role_analysis_outlook"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM",
+    "order": 9,
+    "feature": "NEWS_w10_t3_role_event_report"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM",
+    "order": 10,
+    "feature": "NEWS_w10_t3_role_opinion_recommendation"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM",
+    "order": 11,
+    "feature": "NEWS_w10_t3_role_scheduled_preview"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM",
+    "order": 12,
+    "feature": "NEWS_w10_t3_st_confirmed"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM",
+    "order": 13,
+    "feature": "NEWS_w10_t3_st_ongoing"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM",
+    "order": 14,
+    "feature": "NEWS_w10_t3_st_rumor_or_outlook"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM",
+    "order": 15,
+    "feature": "NEWS_w10_t3_st_scheduled"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM",
+    "order": 16,
+    "feature": "NEWS_w1_t3_ev_corp"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM",
+    "order": 17,
+    "feature": "NEWS_w1_t3_ev_earn"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM",
+    "order": 18,
+    "feature": "NEWS_w1_t3_ev_flow"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM",
+    "order": 19,
+    "feature": "NEWS_w1_t3_ev_geo"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM",
+    "order": 20,
+    "feature": "NEWS_w1_t3_ev_ind"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM",
+    "order": 21,
+    "feature": "NEWS_w1_t3_ev_macro"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM",
+    "order": 22,
+    "feature": "NEWS_w1_t3_ev_monpol"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM",
+    "order": 23,
+    "feature": "NEWS_w1_t3_ev_policy"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM",
+    "order": 24,
+    "feature": "NEWS_w1_t3_role_analysis_outlook"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM",
+    "order": 25,
+    "feature": "NEWS_w1_t3_role_event_report"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM",
+    "order": 26,
+    "feature": "NEWS_w1_t3_role_opinion_recommendation"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM",
+    "order": 27,
+    "feature": "NEWS_w1_t3_role_scheduled_preview"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM",
+    "order": 28,
+    "feature": "NEWS_w1_t3_st_confirmed"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM",
+    "order": 29,
+    "feature": "NEWS_w1_t3_st_ongoing"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM",
+    "order": 30,
+    "feature": "NEWS_w1_t3_st_rumor_or_outlook"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM",
+    "order": 31,
+    "feature": "NEWS_w1_t3_st_scheduled"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM",
+    "order": 32,
+    "feature": "NEWS_w5_t3_ev_corp"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM",
+    "order": 33,
+    "feature": "NEWS_w5_t3_ev_earn"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM",
+    "order": 34,
+    "feature": "NEWS_w5_t3_ev_flow"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM",
+    "order": 35,
+    "feature": "NEWS_w5_t3_ev_geo"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM",
+    "order": 36,
+    "feature": "NEWS_w5_t3_ev_ind"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM",
+    "order": 37,
+    "feature": "NEWS_w5_t3_ev_macro"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM",
+    "order": 38,
+    "feature": "NEWS_w5_t3_ev_monpol"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM",
+    "order": 39,
+    "feature": "NEWS_w5_t3_ev_policy"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM",
+    "order": 40,
+    "feature": "NEWS_w5_t3_role_analysis_outlook"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM",
+    "order": 41,
+    "feature": "NEWS_w5_t3_role_event_report"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM",
+    "order": 42,
+    "feature": "NEWS_w5_t3_role_opinion_recommendation"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM",
+    "order": 43,
+    "feature": "NEWS_w5_t3_role_scheduled_preview"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM",
+    "order": 44,
+    "feature": "NEWS_w5_t3_st_confirmed"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM",
+    "order": 45,
+    "feature": "NEWS_w5_t3_st_ongoing"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM",
+    "order": 46,
+    "feature": "NEWS_w5_t3_st_rumor_or_outlook"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM",
+    "order": 47,
+    "feature": "NEWS_w5_t3_st_scheduled"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "s_HuberLGBM",
+    "order": 0,
+    "feature": "K_close_location"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "s_HuberLGBM",
+    "order": 1,
+    "feature": "K_intraday"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "s_HuberLGBM",
+    "order": 2,
+    "feature": "K_log_volume_change"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "s_HuberLGBM",
+    "order": 3,
+    "feature": "K_open_gap"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "s_HuberLGBM",
+    "order": 4,
+    "feature": "K_range"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "s_HuberLGBM",
+    "order": 5,
+    "feature": "K_ret_1d"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "s_HuberLGBM",
+    "order": 6,
+    "feature": "NEW_KR_VKOSPI_level"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "s_HuberLGBM",
+    "order": 7,
+    "feature": "NEW_KR_VKOSPI_level_z_250"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "s_HuberLGBM",
+    "order": 8,
+    "feature": "NEW_KR_VKOSPI_ret_60d"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "s_HuberLGBM",
+    "order": 9,
+    "feature": "exp_chip_spread"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "s_HuberLGBM",
+    "order": 10,
+    "feature": "exp_sector_dispersion"
+  },
+  {
+    "slot": "W0_reg",
+    "component": "s_HuberLGBM",
+    "order": 11,
+    "feature": "exp_fx_vol"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_XGB5",
+    "order": 0,
+    "feature": "KRX_K200_STAPLE_ret_10d"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_XGB5",
+    "order": 1,
+    "feature": "KR_KORU_upcnt_5"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_XGB5",
+    "order": 2,
+    "feature": "K_close_location"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_XGB5",
+    "order": 3,
+    "feature": "K_intraday"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_XGB5",
+    "order": 4,
+    "feature": "K_log_volume_change"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_XGB5",
+    "order": 5,
+    "feature": "K_open_gap"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_XGB5",
+    "order": 6,
+    "feature": "K_range"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_XGB5",
+    "order": 7,
+    "feature": "K_ret_1d"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_XGB5",
+    "order": 8,
+    "feature": "TECH_dd_250"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_XGB5",
+    "order": 9,
+    "feature": "TECH_ret_60d"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_XGB5",
+    "order": 10,
+    "feature": "TECH_vol_60"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_XGB5",
+    "order": 11,
+    "feature": "USETF_HYG_z_10"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_XGB5",
+    "order": 12,
+    "feature": "USETF_HYG_z_5"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_XGB5",
+    "order": 13,
+    "feature": "US_SOX_ret_1d"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_XGB5",
+    "order": 14,
+    "feature": "US_VXN_ret_1d"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_ic10_ET5",
+    "order": 0,
+    "feature": "NEWS_w10_t2_ch_geo"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_ic10_ET5",
+    "order": 1,
+    "feature": "NEWS_w3_t1_recap_share"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_ic10_ET5",
+    "order": 2,
+    "feature": "NEWS_w3_t3_ev_geo"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_ic10_ET5",
+    "order": 3,
+    "feature": "NEWS_w5_t1_recap_share"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_ic10_ET5",
+    "order": 4,
+    "feature": "TOPIC_or_korea_share_1"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_ic10_ET5",
+    "order": 5,
+    "feature": "TOPIC_or_korea_share_5"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_ic10_ET5",
+    "order": 6,
+    "feature": "TOPIC_or_other_neg_5"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_ic10_ET5",
+    "order": 7,
+    "feature": "TOPIC_or_other_share_5"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_ic10_ET5",
+    "order": 8,
+    "feature": "TOPIC_or_usa_neg_5"
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_ic10_ET5",
+    "order": 9,
+    "feature": "TOPIC_sec_fin_pos_5"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "s_LGBM5",
+    "order": 0,
+    "feature": "ASIA_HSI_ret_20d"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "s_LGBM5",
+    "order": 1,
+    "feature": "K_close_location"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "s_LGBM5",
+    "order": 2,
+    "feature": "K_intraday"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "s_LGBM5",
+    "order": 3,
+    "feature": "K_log_volume_change"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "s_LGBM5",
+    "order": 4,
+    "feature": "K_range"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "s_LGBM5",
+    "order": 5,
+    "feature": "K_ret_1d"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "s_LGBM5",
+    "order": 6,
+    "feature": "SECTOR_FASHION_dd_20"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "s_LGBM5",
+    "order": 7,
+    "feature": "TECH_ret_60d"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "s_LGBM5",
+    "order": 8,
+    "feature": "TECH_vol_60"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "s_LGBM5",
+    "order": 9,
+    "feature": "USETF_HYG_ma_gap_5"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "s_LGBM5",
+    "order": 10,
+    "feature": "USETF_XLU_dd_250"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "s_LGBM5",
+    "order": 11,
+    "feature": "US_W5000_ret_1d"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM5",
+    "order": 0,
+    "feature": "NEWS_w10_t3_ev_corp"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM5",
+    "order": 1,
+    "feature": "NEWS_w10_t3_ev_earn"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM5",
+    "order": 2,
+    "feature": "NEWS_w10_t3_ev_flow"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM5",
+    "order": 3,
+    "feature": "NEWS_w10_t3_ev_geo"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM5",
+    "order": 4,
+    "feature": "NEWS_w10_t3_ev_ind"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM5",
+    "order": 5,
+    "feature": "NEWS_w10_t3_ev_macro"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM5",
+    "order": 6,
+    "feature": "NEWS_w10_t3_ev_monpol"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM5",
+    "order": 7,
+    "feature": "NEWS_w10_t3_ev_policy"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM5",
+    "order": 8,
+    "feature": "NEWS_w10_t3_role_analysis_outlook"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM5",
+    "order": 9,
+    "feature": "NEWS_w10_t3_role_event_report"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM5",
+    "order": 10,
+    "feature": "NEWS_w10_t3_role_opinion_recommendation"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM5",
+    "order": 11,
+    "feature": "NEWS_w10_t3_role_scheduled_preview"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM5",
+    "order": 12,
+    "feature": "NEWS_w10_t3_st_confirmed"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM5",
+    "order": 13,
+    "feature": "NEWS_w10_t3_st_ongoing"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM5",
+    "order": 14,
+    "feature": "NEWS_w10_t3_st_rumor_or_outlook"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM5",
+    "order": 15,
+    "feature": "NEWS_w10_t3_st_scheduled"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM5",
+    "order": 16,
+    "feature": "NEWS_w1_t3_ev_corp"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM5",
+    "order": 17,
+    "feature": "NEWS_w1_t3_ev_earn"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM5",
+    "order": 18,
+    "feature": "NEWS_w1_t3_ev_flow"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM5",
+    "order": 19,
+    "feature": "NEWS_w1_t3_ev_geo"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM5",
+    "order": 20,
+    "feature": "NEWS_w1_t3_ev_ind"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM5",
+    "order": 21,
+    "feature": "NEWS_w1_t3_ev_macro"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM5",
+    "order": 22,
+    "feature": "NEWS_w1_t3_ev_monpol"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM5",
+    "order": 23,
+    "feature": "NEWS_w1_t3_ev_policy"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM5",
+    "order": 24,
+    "feature": "NEWS_w1_t3_role_analysis_outlook"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM5",
+    "order": 25,
+    "feature": "NEWS_w1_t3_role_event_report"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM5",
+    "order": 26,
+    "feature": "NEWS_w1_t3_role_opinion_recommendation"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM5",
+    "order": 27,
+    "feature": "NEWS_w1_t3_role_scheduled_preview"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM5",
+    "order": 28,
+    "feature": "NEWS_w1_t3_st_confirmed"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM5",
+    "order": 29,
+    "feature": "NEWS_w1_t3_st_ongoing"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM5",
+    "order": 30,
+    "feature": "NEWS_w1_t3_st_rumor_or_outlook"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM5",
+    "order": 31,
+    "feature": "NEWS_w1_t3_st_scheduled"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM5",
+    "order": 32,
+    "feature": "NEWS_w5_t3_ev_corp"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM5",
+    "order": 33,
+    "feature": "NEWS_w5_t3_ev_earn"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM5",
+    "order": 34,
+    "feature": "NEWS_w5_t3_ev_flow"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM5",
+    "order": 35,
+    "feature": "NEWS_w5_t3_ev_geo"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM5",
+    "order": 36,
+    "feature": "NEWS_w5_t3_ev_ind"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM5",
+    "order": 37,
+    "feature": "NEWS_w5_t3_ev_macro"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM5",
+    "order": 38,
+    "feature": "NEWS_w5_t3_ev_monpol"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM5",
+    "order": 39,
+    "feature": "NEWS_w5_t3_ev_policy"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM5",
+    "order": 40,
+    "feature": "NEWS_w5_t3_role_analysis_outlook"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM5",
+    "order": 41,
+    "feature": "NEWS_w5_t3_role_event_report"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM5",
+    "order": 42,
+    "feature": "NEWS_w5_t3_role_opinion_recommendation"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM5",
+    "order": 43,
+    "feature": "NEWS_w5_t3_role_scheduled_preview"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM5",
+    "order": 44,
+    "feature": "NEWS_w5_t3_st_confirmed"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM5",
+    "order": 45,
+    "feature": "NEWS_w5_t3_st_ongoing"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM5",
+    "order": 46,
+    "feature": "NEWS_w5_t3_st_rumor_or_outlook"
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM5",
+    "order": 47,
+    "feature": "NEWS_w5_t3_st_scheduled"
+  }
+]

@@ -1,0 +1,28 @@
+{
+  "_설명": "주별 예측 시점 등록부(service_daily/time_points.json 과 같은 형식). 시각을 바꿀 때는 이 파일의 time(예측 기준 시각)·evening_run 만 고친다. 모든 코드는 시점 이름(W0·W2)만 받고 시각은 여기서 읽는다(features/timepoints.py).",
+  "_주의": "checkpoint_id 는 학습본·실험 기록에 남은 이름표라 시각과 관계없이 그대로 둔다. 시각을 바꾸면 학습 때와 다른 시각 자료로 예측하게 되므로 변경 이유를 세션 기록에 남긴다.",
+  "timezone": "Asia/Seoul",
+  "market_close": "15:30",
+  "evening_run": "19:00",
+  "_evening_run": "저녁 작업(정답 결합·지표·경고·챔피언/챌린저 비교) 예약 시각. 시점이 아니라 운영 작업 시각(거래일만)",
+  "_market_close": "코스피 장 마감(참고)",
+  "models": {
+    "5": {
+      "horizon": "5BD",
+      "objectives": {"cls": "DIR_5D", "reg": "RET_5D"},
+      "time_points": {
+        "W0": {"anchor": "base_day", "time": "16:00", "run_delay_minutes": 30, "name": "코스피 장 마감 뒤",
+               "when": "기준일 당일", "checkpoint_id": "W0_1600"},
+        "W2": {"anchor": "next_trading_day", "time": "08:30", "run_delay_minutes": 0, "name": "미국 장 마감 뒤",
+               "when": "기준일 다음 거래일", "checkpoint_id": "W2_0830"}
+      }
+    }
+  },
+  "_항목": {
+    "horizon": "예측 기간(5BD = 기준일 뒤 5번째 거래일 종가). objectives 는 DB objective 열 값",
+    "anchor": "base_day = 기준일 b 당일 time 에 예측, next_trading_day = b 다음 거래일 time 에 예측. 주말·휴일 실행은 실행일 time(기준일 = 직전 거래일)",
+    "time": "예측 기준 시각(KST). 이 시각까지 확정된 자료만 쓴다. 바꾸면 예측 시각·뉴스 창·예약 시각이 함께 바뀐다",
+    "run_delay_minutes": "예약 실행 시각 = time + 이 분. W2 뉴스 마감도 예약 실행 시각과 같다.",
+    "name·when": "화면·해설에 쓰는 이름"
+  }
+}

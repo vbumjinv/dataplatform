@@ -1,0 +1,442 @@
+[
+  {
+    "feature": "ASIA_HSI_ret_20d",
+    "time_points": "W2",
+    "used_in": "W2_reg",
+    "source_id": "ASIA_HSI",
+    "db": "yfinance_hsi",
+    "sql": "select date, close from dp.yfinance_hsi",
+    "value_rule": "hk_close",
+    "lag_days": 0
+  },
+  {
+    "feature": "EU_DAX_ma_gap_20",
+    "time_points": "W0,W2",
+    "used_in": "W0_cls,W2_cls,W2_reg",
+    "source_id": "EU_DAX",
+    "db": "eu_dax=yfinance_gdaxi",
+    "sql": null,
+    "value_rule": "eu_close",
+    "lag_days": 0
+  },
+  {
+    "feature": "EU_DAX_ret_5d",
+    "time_points": "W0,W2",
+    "used_in": "W0_cls,W2_reg",
+    "source_id": "EU_DAX",
+    "db": "eu_dax=yfinance_gdaxi",
+    "sql": null,
+    "value_rule": "eu_close",
+    "lag_days": 0
+  },
+  {
+    "feature": "EU_STOXX600_ret_1d",
+    "time_points": "W0,W2",
+    "used_in": "W0_cls,W2_cls,W2_reg",
+    "source_id": "EU_STOXX600",
+    "db": "eu_stoxx600=yfinance_stoxx",
+    "sql": null,
+    "value_rule": "eu_close",
+    "lag_days": 0
+  },
+  {
+    "feature": "KRX_K200_STAPLE_ret_10d",
+    "time_points": "W2",
+    "used_in": "W2_cls",
+    "source_id": "KRX_K200_STAPLE",
+    "db": "krx_kospi_dd_trd",
+    "sql": "select bas_dd as date, clsprc_idx as close from dp.krx_kospi_dd_trd where idx_nm = '코스피 200 생활소비재'",
+    "value_rule": "krx_close",
+    "lag_days": 0
+  },
+  {
+    "feature": "KR_KORU_upcnt_5",
+    "time_points": "W2",
+    "used_in": "W2_cls",
+    "source_id": "KR_KORU",
+    "db": "yfinance_koru",
+    "sql": "select date, close from dp.yfinance_koru",
+    "value_rule": "us_close",
+    "lag_days": 0
+  },
+  {
+    "feature": "KR_RATE_KORIBOR6M_upcnt_10",
+    "time_points": "W2",
+    "used_in": "W2_cls",
+    "source_id": "KR_RATE_KORIBOR6M",
+    "db": "bok_817y002",
+    "sql": "select time as date, data_value as close from dp.bok_817y002 where item_code1 = '010151000'",
+    "value_rule": "kst_eod",
+    "lag_days": 1
+  },
+  {
+    "feature": "K_close_location",
+    "time_points": "W0,W2",
+    "used_in": "W0_cls,W0_reg,W2_cls,W2_reg",
+    "source_id": "KOSPI",
+    "db": "kospi=krx_kospi_dd_trd {'idx_nm': '코스피'}",
+    "sql": null,
+    "value_rule": "krx_close",
+    "lag_days": 0
+  },
+  {
+    "feature": "K_intraday",
+    "time_points": "W0,W2",
+    "used_in": "W0_cls,W0_reg,W2_cls,W2_reg",
+    "source_id": "KOSPI",
+    "db": "kospi=krx_kospi_dd_trd {'idx_nm': '코스피'}",
+    "sql": null,
+    "value_rule": "krx_close",
+    "lag_days": 0
+  },
+  {
+    "feature": "K_log_volume_change",
+    "time_points": "W0,W2",
+    "used_in": "W0_cls,W0_reg,W2_cls,W2_reg",
+    "source_id": "KOSPI",
+    "db": "kospi=krx_kospi_dd_trd {'idx_nm': '코스피'}",
+    "sql": null,
+    "value_rule": "krx_close",
+    "lag_days": 0
+  },
+  {
+    "feature": "K_open_gap",
+    "time_points": "W0,W2",
+    "used_in": "W0_cls,W0_reg,W2_cls,W2_reg",
+    "source_id": "KOSPI",
+    "db": "kospi=krx_kospi_dd_trd {'idx_nm': '코스피'}",
+    "sql": null,
+    "value_rule": "krx_close",
+    "lag_days": 0
+  },
+  {
+    "feature": "K_range",
+    "time_points": "W0,W2",
+    "used_in": "W0_cls,W0_reg,W2_cls,W2_reg",
+    "source_id": "KOSPI",
+    "db": "kospi=krx_kospi_dd_trd {'idx_nm': '코스피'}",
+    "sql": null,
+    "value_rule": "krx_close",
+    "lag_days": 0
+  },
+  {
+    "feature": "K_ret_1d",
+    "time_points": "W0,W2",
+    "used_in": "W0_cls,W0_reg,W2_cls,W2_reg",
+    "source_id": "KOSPI",
+    "db": "kospi=krx_kospi_dd_trd {'idx_nm': '코스피'}",
+    "sql": null,
+    "value_rule": "krx_close",
+    "lag_days": 0
+  },
+  {
+    "feature": "MACRO_DXY_ma_gap_20",
+    "time_points": "W0,W2",
+    "used_in": "W0_cls,W2_cls,W2_reg",
+    "source_id": "MACRO_DXY",
+    "db": "macro_dxy=fred_dtwexbgs",
+    "sql": null,
+    "value_rule": "us_close",
+    "lag_days": 0
+  },
+  {
+    "feature": "MACRO_DXY_ret_10d",
+    "time_points": "W0,W2",
+    "used_in": "W0_cls,W2_reg",
+    "source_id": "MACRO_DXY",
+    "db": "macro_dxy=fred_dtwexbgs",
+    "sql": null,
+    "value_rule": "us_close",
+    "lag_days": 0
+  },
+  {
+    "feature": "MACRO_DXY_ret_1d",
+    "time_points": "W0,W2",
+    "used_in": "W0_cls,W2_reg",
+    "source_id": "MACRO_DXY",
+    "db": "macro_dxy=fred_dtwexbgs",
+    "sql": null,
+    "value_rule": "us_close",
+    "lag_days": 0
+  },
+  {
+    "feature": "MACRO_GOLD_ret_3d",
+    "time_points": "W0,W2",
+    "used_in": "W0_cls,W2_reg",
+    "source_id": "MACRO_GOLD",
+    "db": "macro_gold=yfinance_gcf",
+    "sql": null,
+    "value_rule": "us_close",
+    "lag_days": 0
+  },
+  {
+    "feature": "MACRO_OIL_ret_1d",
+    "time_points": "W0,W2",
+    "used_in": "W0_cls,W2_cls,W2_reg",
+    "source_id": "MACRO_OIL",
+    "db": "macro_oil=fred_dcoilwtico",
+    "sql": null,
+    "value_rule": "us_close",
+    "lag_days": 0
+  },
+  {
+    "feature": "NEW_KR_VKOSPI_level",
+    "time_points": "W2",
+    "used_in": "W2_reg",
+    "source_id": "KR_VKOSPI",
+    "db": "krx_drvprod_dd_trd",
+    "sql": "select bas_dd as date, clsprc_idx as close from dp.krx_drvprod_dd_trd where idx_nm = '코스피 200 변동성지수'",
+    "value_rule": "krx_close",
+    "lag_days": 0
+  },
+  {
+    "feature": "NEW_KR_VKOSPI_level_z_250",
+    "time_points": "W2",
+    "used_in": "W2_reg",
+    "source_id": "KR_VKOSPI",
+    "db": "krx_drvprod_dd_trd",
+    "sql": "select bas_dd as date, clsprc_idx as close from dp.krx_drvprod_dd_trd where idx_nm = '코스피 200 변동성지수'",
+    "value_rule": "krx_close",
+    "lag_days": 0
+  },
+  {
+    "feature": "NEW_KR_VKOSPI_ret_60d",
+    "time_points": "W2",
+    "used_in": "W2_reg",
+    "source_id": "KR_VKOSPI",
+    "db": "krx_drvprod_dd_trd",
+    "sql": "select bas_dd as date, clsprc_idx as close from dp.krx_drvprod_dd_trd where idx_nm = '코스피 200 변동성지수'",
+    "value_rule": "krx_close",
+    "lag_days": 0
+  },
+  {
+    "feature": "SECTOR_AUTO_ma_gap_20",
+    "time_points": "W0,W2",
+    "used_in": "W0_cls,W2_cls,W2_reg",
+    "source_id": "SECTOR_AUTO",
+    "db": "sec_auto=yfinance_091180ks",
+    "sql": null,
+    "value_rule": "krx_close",
+    "lag_days": 0
+  },
+  {
+    "feature": "SECTOR_FASHION_dd_20",
+    "time_points": "W2",
+    "used_in": "W2_reg",
+    "source_id": "SECTOR_FASHION",
+    "db": "sec_fashion_1=yfinance_383220ks;sec_fashion_2=yfinance_020000ks",
+    "sql": null,
+    "value_rule": "krx_close",
+    "lag_days": 0
+  },
+  {
+    "feature": "SECTOR_FASHION_ret_20d",
+    "time_points": "W0,W2",
+    "used_in": "W0_cls,W2_cls,W2_reg",
+    "source_id": "SECTOR_FASHION",
+    "db": "sec_fashion_1=yfinance_383220ks;sec_fashion_2=yfinance_020000ks",
+    "sql": null,
+    "value_rule": "krx_close",
+    "lag_days": 0
+  },
+  {
+    "feature": "SECTOR_INTERNET_ma_gap_5",
+    "time_points": "W0,W2",
+    "used_in": "W0_cls,W2_cls,W2_reg",
+    "source_id": "SECTOR_INTERNET",
+    "db": "sec_internet_1=yfinance_035420ks;sec_internet_2=yfinance_035720ks",
+    "sql": null,
+    "value_rule": "krx_close",
+    "lag_days": 0
+  },
+  {
+    "feature": "SECTOR_LIVING_ma_gap_5",
+    "time_points": "W0,W2",
+    "used_in": "W0_cls,W2_cls,W2_reg",
+    "source_id": "SECTOR_LIVING",
+    "db": "sec_living_1=yfinance_051900ks;sec_living_2=yfinance_090430ks",
+    "sql": null,
+    "value_rule": "krx_close",
+    "lag_days": 0
+  },
+  {
+    "feature": "TA_SMA10_gap",
+    "time_points": "W0,W2",
+    "used_in": "W0_cls,W2_cls,W2_reg",
+    "source_id": "KOSPI",
+    "db": "kospi=krx_kospi_dd_trd {'idx_nm': '코스피'}",
+    "sql": null,
+    "value_rule": "krx_close",
+    "lag_days": 0
+  },
+  {
+    "feature": "TECH_dd_250",
+    "time_points": "W0,W2",
+    "used_in": "W0_reg,W2_cls",
+    "source_id": "KOSPI",
+    "db": "kospi=krx_kospi_dd_trd {'idx_nm': '코스피'}",
+    "sql": null,
+    "value_rule": "krx_close",
+    "lag_days": 0
+  },
+  {
+    "feature": "TECH_ret_60d",
+    "time_points": "W0,W2",
+    "used_in": "W0_reg,W2_cls,W2_reg",
+    "source_id": "KOSPI",
+    "db": "kospi=krx_kospi_dd_trd {'idx_nm': '코스피'}",
+    "sql": null,
+    "value_rule": "krx_close",
+    "lag_days": 0
+  },
+  {
+    "feature": "TECH_vol_60",
+    "time_points": "W0,W2",
+    "used_in": "W0_reg,W2_cls,W2_reg",
+    "source_id": "KOSPI",
+    "db": "kospi=krx_kospi_dd_trd {'idx_nm': '코스피'}",
+    "sql": null,
+    "value_rule": "krx_close",
+    "lag_days": 0
+  },
+  {
+    "feature": "USETF_HYG_ma_gap_5",
+    "time_points": "W2",
+    "used_in": "W2_reg",
+    "source_id": "USETF_HYG",
+    "db": "yfinance_hyg",
+    "sql": "select date, close from dp.yfinance_hyg",
+    "value_rule": "us_close",
+    "lag_days": 0
+  },
+  {
+    "feature": "USETF_HYG_z_10",
+    "time_points": "W2",
+    "used_in": "W2_cls",
+    "source_id": "USETF_HYG",
+    "db": "yfinance_hyg",
+    "sql": "select date, close from dp.yfinance_hyg",
+    "value_rule": "us_close",
+    "lag_days": 0
+  },
+  {
+    "feature": "USETF_HYG_z_5",
+    "time_points": "W2",
+    "used_in": "W2_cls",
+    "source_id": "USETF_HYG",
+    "db": "yfinance_hyg",
+    "sql": "select date, close from dp.yfinance_hyg",
+    "value_rule": "us_close",
+    "lag_days": 0
+  },
+  {
+    "feature": "USETF_XLU_dd_250",
+    "time_points": "W2",
+    "used_in": "W2_reg",
+    "source_id": "USETF_XLU",
+    "db": "yfinance_xlu",
+    "sql": "select date, close from dp.yfinance_xlu",
+    "value_rule": "us_close",
+    "lag_days": 0
+  },
+  {
+    "feature": "US_AMAT_ret_1d",
+    "time_points": "W2",
+    "used_in": "W2_cls",
+    "source_id": "US_AMAT",
+    "db": "yfinance_amat",
+    "sql": "select date, close from dp.yfinance_amat",
+    "value_rule": "us_close",
+    "lag_days": 0
+  },
+  {
+    "feature": "US_AMAT_z_10",
+    "time_points": "W2",
+    "used_in": "W2_cls",
+    "source_id": "US_AMAT",
+    "db": "yfinance_amat",
+    "sql": "select date, close from dp.yfinance_amat",
+    "value_rule": "us_close",
+    "lag_days": 0
+  },
+  {
+    "feature": "US_NASDAQ_ret_1d",
+    "time_points": "W2",
+    "used_in": "W2_cls",
+    "source_id": "US_NASDAQ",
+    "db": "us_nasdaq=fred_nasdaqcom",
+    "sql": null,
+    "value_rule": "us_close",
+    "lag_days": 0
+  },
+  {
+    "feature": "US_RUSSELL2000_ret_1d",
+    "time_points": "W2",
+    "used_in": "W2_cls",
+    "source_id": "US_RUSSELL2000",
+    "db": "yfinance_rut",
+    "sql": "select date, close from dp.yfinance_rut",
+    "value_rule": "us_close",
+    "lag_days": 0
+  },
+  {
+    "feature": "US_SOX_ret_1d",
+    "time_points": "W0,W2",
+    "used_in": "W0_cls,W2_cls,W2_reg",
+    "source_id": "US_SOX",
+    "db": "us_sox=yfinance_sox",
+    "sql": null,
+    "value_rule": "us_close",
+    "lag_days": 0
+  },
+  {
+    "feature": "US_SOX_ret_3d",
+    "time_points": "W2",
+    "used_in": "W2_reg",
+    "source_id": "US_SOX",
+    "db": "us_sox=yfinance_sox",
+    "sql": null,
+    "value_rule": "us_close",
+    "lag_days": 0
+  },
+  {
+    "feature": "US_SP500_ret_1d",
+    "time_points": "W0,W2",
+    "used_in": "W0_cls,W2_cls,W2_reg",
+    "source_id": "US_SP500",
+    "db": "us_sp500=yfinance_sp500",
+    "sql": null,
+    "value_rule": "us_close",
+    "lag_days": 0
+  },
+  {
+    "feature": "US_VVIX_z_5",
+    "time_points": "W2",
+    "used_in": "W2_cls",
+    "source_id": "US_VVIX",
+    "db": "yfinance_vvix",
+    "sql": "select date, close from dp.yfinance_vvix",
+    "value_rule": "us_close",
+    "lag_days": 0
+  },
+  {
+    "feature": "US_VXN_ret_1d",
+    "time_points": "W2",
+    "used_in": "W2_cls",
+    "source_id": "US_VXN",
+    "db": "yfinance_vxn",
+    "sql": "select date, close from dp.yfinance_vxn",
+    "value_rule": "us_close",
+    "lag_days": 0
+  },
+  {
+    "feature": "US_W5000_ret_1d",
+    "time_points": "W2",
+    "used_in": "W2_reg",
+    "source_id": "US_W5000",
+    "db": "us_w5000=yfinance_w5000",
+    "sql": null,
+    "value_rule": "us_close",
+    "lag_days": 0
+  }
+]

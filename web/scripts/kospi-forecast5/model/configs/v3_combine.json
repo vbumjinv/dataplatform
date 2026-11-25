@@ -1,0 +1,86 @@
+{
+ "_note": "v3(2026-11-24, 사용자 결정 '시드 평균 기준'으로 v2 를 넘은 후보, 근거 experiments/5/outputs/test/seed_bag_20261124/fair_scores*.csv). W0 방향 = v2 그대로(사용자 결정 2026-11-24: 후보 개선이 시드 흔들림 수준이고 구조만 복잡해짐). W0 수익률 = LightGBM Huber(% 단위) + 시장 관계 변수 3개, 파라미터 고정(시드평균 기준 2.38/1.56% → 2.99/2.38%, K1). W2 방향·수익률 = v2 와 같은 구조, 확률적 구성 모델만 시드 5개 평균(.196/.158 → .204/.183, 4.69/3.57% → 5.00/3.85%). 구성 모델 정의 v1_components.csv(seeds 열)·v1_features.csv, 파라미터 v3_params.json.",
+ "W0_cls": {
+  "kind": "mean_groups",
+  "groups": [
+   [
+    [
+     "s_rollL1"
+    ],
+    [
+     "s_cwLGBM",
+     "s_cwGB",
+     "s_ET"
+    ],
+    [
+     "nT_kw_L1"
+    ],
+    [
+     "nT_w10_L2"
+    ]
+   ],
+   [
+    [
+     "s_RF"
+    ],
+    [
+     "nT_kw_L1"
+    ],
+    [
+     "nT_top_L2"
+    ],
+    [
+     "nT_w10_L2"
+    ]
+   ],
+   [
+    [
+     "s_rollL1"
+    ],
+    [
+     "nT_kw_L1"
+    ],
+    [
+     "nT_top_L2"
+    ],
+    [
+     "nT_w10_L2"
+    ]
+   ]
+  ]
+ },
+ "W0_reg": {
+  "kind": "mean_groups",
+  "groups": [
+   [
+    [
+     "s_HuberLGBM"
+    ]
+   ]
+  ]
+ },
+ "W2_cls": {
+  "kind": "logit",
+  "struct": [
+   "s_L2",
+   "s_XGB5",
+   "s_cwL1"
+  ],
+  "news": [
+   "nF_ic10_ET5",
+   "nF_kw_L2"
+  ],
+  "w": 0.9
+ },
+ "W2_reg": {
+  "kind": "regime_conf",
+  "struct": [
+   "s_LGBM5",
+   "s_GRU"
+  ],
+  "news": [
+   "nT_t3_LGBM5"
+  ],
+  "min_cell": 60
+ }
+}

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { cutoffOf, formatStamp, suggestedPoint, suggestedTargets, type TimeKey as ForecastTimeKey } from "./forecast-dates";
+import Forecast5Panel from "./forecast5-panel";
 
 const DB_SETTING_STORAGE_KEY = "ingestion-selected-db-setting-id";
 
@@ -106,6 +107,7 @@ export default function KospiForecastPage() {
   const [logFilter, setLogFilter] = useState<TimeKey | "ALL">("ALL");
   const [pythonStatus, setPythonStatus] = useState("");
   const [selectedLogId, setSelectedLogId] = useState("");
+  const [horizon, setHorizon] = useState<"1d" | "5d">("1d");
 
   const fetchDbSettings = useCallback(async () => {
     setDbSettingsError("");
@@ -199,7 +201,8 @@ export default function KospiForecastPage() {
     window.localStorage.setItem(DB_SETTING_STORAGE_KEY, dbSettingId);
   }, [dbSettingId]);
 
-  const visibleLogs = logs.filter((log) => logFilter === "ALL" || log.timePoint === logFilter);
+  const dayLogs = logs.filter((log) => log.timePoint === "T0" || log.timePoint === "T1" || log.timePoint === "T2");
+  const visibleLogs = dayLogs.filter((log) => logFilter === "ALL" || log.timePoint === logFilter);
   const selectedLog = visibleLogs.find((log) => log.id === selectedLogId) ?? visibleLogs[0];
 
   const scheduleOf = (key: TimeKey) =>
@@ -308,6 +311,25 @@ export default function KospiForecastPage() {
 
   return (
     <div className="space-y-6">
+      <div className="inline-flex rounded-full bg-slate-100 p-1">
+        {([
+          ["1d", "1거래일"],
+          ["5d", "5거래일"],
+        ] as const).map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setHorizon(key)}
+            className={`rounded-full px-4 py-1.5 text-sm font-semibold ${
+              horizon === key ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      {horizon === "5d" ? <Forecast5Panel /> : (
+      <>
       <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
@@ -621,6 +643,8 @@ export default function KospiForecastPage() {
           </div>
         )}
       </section>
+      </>
+      )}
     </div>
   );
 }

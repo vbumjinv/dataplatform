@@ -42,6 +42,11 @@ next-env.d.ts
 
 # 코스피 예측 전용 파이썬 환경
 /scripts/kospi-forecast/.venv/
+/scripts/kospi-forecast5/.venv/
+/scripts/kospi-forecast5/.env
+/scripts/kospi-forecast5/outputs/
+/scripts/kospi-forecast5/model/artifacts/W2_cls/champion.joblib
+/data/kospi-forecast5/
 
 # GitHub 파일 한도(100MB)를 넘는 이전 통합본. 화면 예측은 시점별 joblib을 쓴다.
 /scripts/kospi-forecast/model/artifacts/bundle/kospi_models_target_202610.joblib

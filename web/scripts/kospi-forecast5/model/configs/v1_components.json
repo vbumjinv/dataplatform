@@ -1,0 +1,262 @@
+[
+  {
+    "slot": "W0_cls",
+    "component": "s_rollL1",
+    "model": "RollingLogisticL1_cls",
+    "kind": "s",
+    "cw": 0,
+    "train_start": "2010-01-01",
+    "source": "structure_db_20261119/s1/W0/cls/RollingLogisticL1_cls",
+    "seeds": null
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_cwLGBM",
+    "model": "LightGBM_cls",
+    "kind": "s",
+    "cw": 1,
+    "train_start": "2010-01-01",
+    "source": "structure_db_20261119/s1/cw/W0/cls/LightGBM_cls",
+    "seeds": null
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_cwGB",
+    "model": "GradientBoosting_cls",
+    "kind": "s",
+    "cw": 1,
+    "train_start": "2010-01-01",
+    "source": "structure_db_20261119/s1/cw/W0/cls/GradientBoosting_cls",
+    "seeds": null
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_ET",
+    "model": "ExtraTrees_cls",
+    "kind": "s",
+    "cw": 0,
+    "train_start": "2010-01-01",
+    "source": "structure_db_20261119/s1/W0/cls/ExtraTrees_cls",
+    "seeds": null
+  },
+  {
+    "slot": "W0_cls",
+    "component": "s_RF",
+    "model": "RandomForest_cls",
+    "kind": "s",
+    "cw": 0,
+    "train_start": "2010-01-01",
+    "source": "structure_db_20261119/s1/W0/cls/RandomForest_cls",
+    "seeds": null
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_kw_L1",
+    "model": "LogisticL1_cls",
+    "kind": "n",
+    "cw": 0,
+    "train_start": "2010-07-01",
+    "source": "news_db_20261119/news_tuned/2010/kwtext/W0/cls/LogisticL1_cls",
+    "seeds": null
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_w10_L2",
+    "model": "LogisticL2_cls",
+    "kind": "n",
+    "cw": 0,
+    "train_start": "2010-07-01",
+    "source": "news_db_20261119/news_tuned/2010/w10/W0/cls/LogisticL2_cls",
+    "seeds": null
+  },
+  {
+    "slot": "W0_cls",
+    "component": "nT_top_L2",
+    "model": "LogisticL2_cls",
+    "kind": "n",
+    "cw": 0,
+    "train_start": "2010-07-01",
+    "source": "news_db_20261119/news_tuned/2010/topic/W0/cls/LogisticL2_cls",
+    "seeds": null
+  },
+  {
+    "slot": "W0_reg",
+    "component": "s_XGBvk",
+    "model": "XGBoost_reg",
+    "kind": "s",
+    "cw": 0,
+    "train_start": "2010-01-01",
+    "source": "structure_db_20261119/s1_vk/W0/reg/XGBoost_reg",
+    "seeds": null
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_R",
+    "model": "Ridge_reg",
+    "kind": "n",
+    "cw": 0,
+    "train_start": "2010-07-01",
+    "source": "news_db_20261119/news_tuned/2010/ic20/W0/reg/Ridge_reg",
+    "seeds": null
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_EN",
+    "model": "ElasticNet_reg",
+    "kind": "n",
+    "cw": 0,
+    "train_start": "2010-07-01",
+    "source": "news_db_20261119/news_tuned/2010/ic20/W0/reg/ElasticNet_reg",
+    "seeds": null
+  },
+  {
+    "slot": "W0_reg",
+    "component": "nT_ic20_LA",
+    "model": "LASSO_reg",
+    "kind": "n",
+    "cw": 0,
+    "train_start": "2010-07-01",
+    "source": "news_db_20261119/news_tuned/2010/ic20/W0/reg/LASSO_reg",
+    "seeds": null
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_L2",
+    "model": "LogisticL2_cls",
+    "kind": "s",
+    "cw": 0,
+    "train_start": "2010-01-01",
+    "source": "structure_db_20261119/s1/W2/cls/LogisticL2_cls",
+    "seeds": null
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_XGB",
+    "model": "XGBoost_cls",
+    "kind": "s",
+    "cw": 0,
+    "train_start": "2010-01-01",
+    "source": "structure_db_20261119/s1/W2/cls/XGBoost_cls",
+    "seeds": null
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_cwL1",
+    "model": "LogisticL1_cls",
+    "kind": "s",
+    "cw": 1,
+    "train_start": "2010-01-01",
+    "source": "structure_db_20261119/s1/cw/W2/cls/LogisticL1_cls",
+    "seeds": null
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_ic10_ET",
+    "model": "ExtraTrees_cls",
+    "kind": "n",
+    "cw": 0,
+    "train_start": "2010-07-01",
+    "source": "news_db_20261119/news_fixed/2010/ic10/W2/cls/ExtraTrees_cls",
+    "seeds": null
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_kw_L2",
+    "model": "LogisticL2_cls",
+    "kind": "n",
+    "cw": 0,
+    "train_start": "2010-07-01",
+    "source": "news_db_20261119/news_fixed/2010/kwtext/W2/cls/LogisticL2_cls",
+    "seeds": null
+  },
+  {
+    "slot": "W2_reg",
+    "component": "s_LGBM",
+    "model": "LightGBM_reg",
+    "kind": "s",
+    "cw": 0,
+    "train_start": "2010-01-01",
+    "source": "structure_db_20261119/s1/W2/reg/LightGBM_reg",
+    "seeds": null
+  },
+  {
+    "slot": "W2_reg",
+    "component": "s_GRU",
+    "model": "GRU_reg",
+    "kind": "s",
+    "cw": 0,
+    "train_start": "2010-01-01",
+    "source": "structure_db_20261119/s1/W2/reg/GRU_reg",
+    "seeds": null
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nF_t3_LGBM",
+    "model": "LightGBM_reg",
+    "kind": "n",
+    "cw": 0,
+    "train_start": "2010-07-01",
+    "source": "news_db_20261119/news_fixed/2010/t3/W2/reg/LightGBM_reg",
+    "seeds": null
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM",
+    "model": "LightGBM_reg",
+    "kind": "n",
+    "cw": 0,
+    "train_start": "2010-07-01",
+    "source": "news_db_20261119/news_tuned/2010/t3/W2/reg/LightGBM_reg",
+    "seeds": null
+  },
+  {
+    "slot": "W0_reg",
+    "component": "s_HuberLGBM",
+    "model": "LightGBMHuber_reg",
+    "kind": "s",
+    "cw": 0,
+    "train_start": "2010-01-01",
+    "source": "robust_objectives_20261124 huber_loss (s_XGBvk 변수 + 시장 관계 3개, 파라미터 고정)",
+    "seeds": null
+  },
+  {
+    "slot": "W2_cls",
+    "component": "s_XGB5",
+    "model": "XGBoost_cls",
+    "kind": "s",
+    "cw": 0,
+    "train_start": "2010-01-01",
+    "source": "seed_bag_20261124 (v2 s_XGB 시드 0~4 평균)",
+    "seeds": 5.0
+  },
+  {
+    "slot": "W2_cls",
+    "component": "nF_ic10_ET5",
+    "model": "ExtraTrees_cls",
+    "kind": "n",
+    "cw": 0,
+    "train_start": "2010-07-01",
+    "source": "seed_bag_20261124 (v2 nF_ic10_ET 시드 0~4 평균)",
+    "seeds": 5.0
+  },
+  {
+    "slot": "W2_reg",
+    "component": "s_LGBM5",
+    "model": "LightGBM_reg",
+    "kind": "s",
+    "cw": 0,
+    "train_start": "2010-01-01",
+    "source": "seed_bag_20261124 (v2 s_LGBM 시드 0~4 평균)",
+    "seeds": 5.0
+  },
+  {
+    "slot": "W2_reg",
+    "component": "nT_t3_LGBM5",
+    "model": "LightGBM_reg",
+    "kind": "n",
+    "cw": 0,
+    "train_start": "2010-07-01",
+    "source": "seed_bag_20261124 (v2 nT_t3_LGBM 시드 0~4 평균)",
+    "seeds": 5.0
+  }
+]

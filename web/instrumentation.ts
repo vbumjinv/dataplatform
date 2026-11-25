@@ -7,10 +7,12 @@ export async function register() {
   const { initializeDartScheduler } = await import("./app/api/ingestion/_lib/dart-scheduler");
   const { initializeNytScheduler } = await import("./app/api/ingestion/_lib/nyt-scheduler");
   const { initializeKospiForecastScheduler } = await import("./app/api/kospi-forecast/_lib/scheduler");
+  const { initializeKospiForecast5Scheduler } = await import("./app/api/kospi-forecast5/_lib/scheduler");
   await initializeIngestionScheduler();
   await initializePipelineScheduler();
   await initializeNewsStockScheduler();
   await initializeDartScheduler();
   await initializeNytScheduler();
   await initializeKospiForecastScheduler();
+  await initializeKospiForecast5Scheduler();
 }

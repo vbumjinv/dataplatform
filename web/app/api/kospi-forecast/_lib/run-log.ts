@@ -2,11 +2,10 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { Client } from "pg";
 import { CONNECT_TIMEOUT_MS, buildConnectionString, resolveDbConfig } from "../../db/_lib/connection";
-import type { TimePoint } from "./execute";
 
 export type ForecastRunLog = {
   id: string;
-  timePoint: TimePoint;
+  timePoint: string;
   trigger: "manual" | "schedule";
   target: string;
   llm: boolean;
@@ -43,7 +42,7 @@ const withDb = async <T>(dbSettingId: number, run: (client: Client, schema: stri
 
 type DbLogRow = {
   id: string;
-  time_point: TimePoint;
+  time_point: string;
   trigger_type: "manual" | "schedule";
   target_dd: string | null;
   llm: boolean;
