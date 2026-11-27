@@ -89,7 +89,7 @@
    "^NEWS_"
   ],
   [
-   "시장 관계(반도체 강도·업종 분산·환율 변동)",
+   "시장 관계(미국 반도체 상대 강세·국내 업종 간 격차·원화 약세와 변동성)",
    "^exp_"
   ],
   [
@@ -97,5 +97,6 @@
    "."
   ]
  ],
- "groups_note": "2026-11-24: v3 W0 수익률(Huber) 입력 exp_chip_spread·exp_sector_dispersion·exp_fx_vol(features/wk_relation.py) 묶음 추가."
+ "groups_note": "2026-11-24: v3 W0 수익률(Huber) 입력 exp_chip_spread·exp_sector_dispersion·exp_fx_vol(features/wk_relation.py) 묶음 추가. 2026-11-27 이름을 변수 이름에 맞춤(옛 이름은 renamed 로 학습본 shap_reliability 를 찾음).",
+ "renamed": {"시장 관계(미국 반도체 상대 강세·국내 업종 간 격차·원화 약세와 변동성)": "시장 관계(반도체 강도·업종 분산·환율 변동)"}
 }

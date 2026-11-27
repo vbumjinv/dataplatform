@@ -90,6 +90,15 @@ def seq_rows(X: pd.DataFrame, b) -> pd.DataFrame:
     return X.loc[:pd.Timestamp(b)].tail(40)
 
 
+def serve_rows(m: dict, X: pd.DataFrame, b) -> pd.DataFrame:
+    """서비스 예측(predict.py)이 b 에 넣는 행: 학습본 대상월 첫 기준일(needs_rows_from)부터 b 까지, 그 전 기준일이면 직전 40행."""
+    since = getattr(m["model"], "needs_rows_from", None)
+    b = pd.Timestamp(b)
+    if since and b >= pd.Timestamp(since):
+        return X.loc[(X.index >= pd.Timestamp(since)) & (X.index <= b)]
+    return seq_rows(X, b) if since else X.loc[[b]]
+
+
 class Target:
     """기준일 b 의 설명 함수 f(Z) — Z 는 학습본 변수 열을 가진 행들(마지막 행만 바뀐 b 로 본다)."""
 
@@ -98,9 +107,10 @@ class Target:
         self.comps = getattr(self.model, "components", None)
         self.win = {}
         if self.comps:
+            rows = serve_rows(m, X, b)
             for name, c in self.comps.items():
-                if _is_seq(c["model"]):                                  # b 의 실제 창(직전 행 + b 행). 학습 대상 달 전 기준일(기간 요약)도 되게 직전 40행으로
-                    idx, w = c["model"]._windows(seq_rows(X, b)[c["features"]], history=True)
+                if _is_seq(c["model"]):                                  # b 의 창 = 서비스 예측과 같은 행(대상월 첫 기준일부터 + 학습 끝 history_, 2026-11-25)
+                    idx, w = c["model"]._windows(rows[c["features"]], history=True)
                     self.win[name] = w[list(idx).index(b)]
 
     def raw(self, Z: pd.DataFrame) -> np.ndarray:
@@ -169,9 +179,7 @@ def explain(m: dict, X: pd.DataFrame, b, obj: str, cfg: dict | None = None, tp: 
     fx = float(f(x)[0])
     actual = float(f.raw(x)[0])
     import wk_models                                                     # 설명하는 값 = 서비스 예측(predict.py 와 같은 입력)인지
-    since = getattr(m["model"], "needs_rows_from", None)
-    xin = (X.loc[(X.index >= pd.Timestamp(since)) & (X.index <= b)] if b >= pd.Timestamp(since) else seq_rows(X, b)) if since else x
-    served = float(wk_models.predict(m, xin)[-1])
+    served = float(wk_models.predict(m, serve_rows(m, X, b))[-1])
     if abs(served - actual) > 1e-6:
         raise RuntimeError(f"SHAP 설명 함수 값 {actual} 이 서비스 예측 {served} 과 다릅니다.")
     G = groups_of(feats, cfg)
@@ -358,7 +366,7 @@ def run(tp: str, b, X: pd.DataFrame, write: bool, *, predictions=None, versions=
             flipped = bool(np.sign(e["actual"]) != (1.0 if p >= k1["threshold"] else -1.0))
         rel = m.get("shap_reliability", {})
         for g in e["groups"]:
-            r = rel.get(g["group"], {})
+            r = rel.get(g["group"]) or rel.get(cfg.get("renamed", {}).get(g["group"]), {})  # 학습본은 옛 묶음 이름으로 저장
             g["oos_dir_hit"], g["oos_level"] = r.get("dir_hit"), r.get("level", "판단 어려움")
         e["model_version"] = wk_models.version(slot, m)
         res[obj] = e
